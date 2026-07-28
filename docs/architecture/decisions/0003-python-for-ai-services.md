@@ -106,8 +106,8 @@ is TypeScript, and the two communicate over HTTP using contracts defined as JSON
 - Add a CI check failing when generated types are out of date relative to the schema. Without it,
   the primary risk of this ADR is unmitigated.
 - Add contract tests exercising the real HTTP boundary against fixtures, in both directions.
-- Establish the Python dependency and lint toolchain for `ai/`; its own ADR if the choice has a
-  tradeoff.
+- ~~Establish the Python dependency and lint toolchain for `ai/`.~~ **Done** — Ruff for lint and
+  format (ADR-0005), uv workspace for dependencies (ADR-0006).
 - Standardize FastAPI service structure: health endpoints, error envelope matching
   `.claude/skills/backend-service/SKILL.md`, structured logging with the same correlation id
   propagated across the boundary.

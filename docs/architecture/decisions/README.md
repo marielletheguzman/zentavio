@@ -19,6 +19,7 @@ already ruled out and how the rule is enforced.
 | [0003](0003-python-for-ai-services.md) | Python/FastAPI for `ai/`, TypeScript elsewhere | Accepted | 2026-07-28 |
 | [0004](0004-vector-store-choice.md) | Qdrant behind a swappable port | Accepted | 2026-07-28 |
 | [0005](0005-boundary-enforcement.md) | Boundary enforcement via ESLint + eslint-plugin-boundaries | Accepted | 2026-07-28 |
+| [0006](0006-python-dependency-toolchain.md) | uv workspace for Python dependencies in `ai/` | Accepted | 2026-07-28 |
 
 0001–0004 define the boundaries every skill and context file assumes: one repository, sources as
 plugins, a polyglot contract at the `ai/` boundary, and a vector store that is an index rather than

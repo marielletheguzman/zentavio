@@ -76,6 +76,8 @@ CI and a developer's machine must run the same rule set, or a green run means no
 - **Node** — `22` in CI; `package.json` `engines` requires `>=20.11.0`.
 - **Ruff** — pinned in `requirements-dev.txt`. A different Ruff version is a different rule set.
 - **Installs** — always `pnpm install --frozen-lockfile`.
+- **Third-party actions** — pinned to commit SHAs with the version in a trailing comment
+  (`actions/checkout@11d5960… # v4.4.0`). Tags are mutable; a SHA is not.
 
 ## Local equivalence
 
@@ -96,8 +98,6 @@ Python tooling is separate: `pip install -r requirements-dev.txt` once, then `ru
 - **Path-filtered tasks** via Turborepo's task graph (ADR-0001 follow-up). Deliberately not applied
   to the lint jobs: filtering the checks that enforce boundaries is how a boundary stops being
   enforced.
-- **SHA-pinned actions.** Major tags (`actions/checkout@v4`) are mutable, so a tag pin trusts the
-  publisher continuously rather than once.
 - **Deployment.** Vercel for `apps/*` (`infra/vercel`), containers for `services/*` and `ai/*`
   (`infra/docker`, `infra/terraform`). Environments, promotion, and rollback are undecided; each
   needs its own ADR before it is built.

@@ -36,7 +36,10 @@ answered, which is what makes swapping one a config change rather than a refacto
 - **Turborepo** — task graph and caching across the TypeScript workspaces (ADR-0001)
 - **ESLint** flat config + `eslint-plugin-boundaries` — layer enforcement (ADR-0005)
 - **Ruff** — lint and format for `ai/`, plus the `ai/` statelessness bans (ADR-0005)
-- `ai/` keeps its own Python toolchain inside the same tree; Turborepo does not manage it
+- **uv** — Python dependencies and environments for `ai/`, as a workspace with one
+  committed `uv.lock` (ADR-0006)
+- `ai/` keeps its own Python toolchain inside the same tree; Turborepo does not manage it.
+  Two unrelated "workspace" concepts coexist: pnpm's for TypeScript, uv's for Python.
 
 ### Infrastructure
 - **Docker** — local and deployed runtime (`infra/docker`)

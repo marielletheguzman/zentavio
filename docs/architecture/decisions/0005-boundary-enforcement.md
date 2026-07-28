@@ -127,8 +127,9 @@ is policed separately by Ruff, and the split is documented rather than assumed c
   call; the split is documented in `infra/ci/README.md` and `docs/development/ci-cd.md`.
   Branch protection points at the single aggregating `ci` job, so a new job becomes blocking
   without a settings change.
-- Pin third-party actions to commit SHAs rather than major tags. A tag pin trusts the publisher
-  continuously rather than once.
+- ~~Pin third-party actions to commit SHAs rather than major tags.~~ **Done** — every
+  `actions/*` reference is a commit SHA with its version in a trailing comment. A tag pin trusts
+  the publisher continuously rather than once.
 - Add a check that every top-level TypeScript directory matches a `boundaries/elements` pattern, so
   a new directory cannot silently escape the rules.
 - Extend Ruff config as `ai/` grows — particularly the ban on persistence libraries that enforces

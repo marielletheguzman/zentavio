@@ -75,6 +75,7 @@ An ADR is numbered sequentially and never renumbered.
 | [0003](../../docs/architecture/decisions/0003-python-for-ai-services.md) | Python/FastAPI for `ai/`, TypeScript elsewhere | Accepted |
 | [0004](../../docs/architecture/decisions/0004-vector-store-choice.md) | Qdrant behind a swappable port | Accepted |
 | [0005](../../docs/architecture/decisions/0005-boundary-enforcement.md) | ESLint + eslint-plugin-boundaries for boundary enforcement | Accepted |
+| [0006](../../docs/architecture/decisions/0006-python-dependency-toolchain.md) | uv workspace for Python dependencies in `ai/` | Accepted |
 
 0001–0004 define the boundaries every skill and context file assumes: one repository, sources as
 plugins, a polyglot contract at the `ai/` boundary, and a vector store that is an index rather

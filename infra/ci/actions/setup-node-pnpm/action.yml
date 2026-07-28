@@ -25,7 +25,9 @@ runs:
       run: corepack enable
 
     - name: Setup Node
-      uses: actions/setup-node@v4
+      # Pinned to a commit, not a tag: a tag is mutable, so a tag pin trusts the
+      # publisher continuously rather than once. Comment records the human version.
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
       with:
         node-version: ${{ inputs.node-version }}
         cache: pnpm

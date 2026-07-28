@@ -42,6 +42,9 @@ halves are separate jobs with separate, legible failure signals.
 - **Pinned toolchains.** pnpm comes from `package.json`'s `packageManager` field via corepack;
   Ruff comes from `requirements-dev.txt`. CI and a developer's machine must run the same rule set,
   or a green CI run means nothing.
+- **Third-party actions pinned to commit SHAs**, with the human version in a trailing comment.
+  A tag like `@v4` is mutable, so a tag pin trusts the publisher continuously rather than once.
+  Bump deliberately: resolve the new tag to its SHA, update both the SHA and the comment.
 - **`--frozen-lockfile` always.** A CI run that silently resolves different versions than the
   lockfile is not a verification.
 - **Concurrency cancels superseded runs** on branches, never on `main`.
@@ -51,8 +54,6 @@ halves are separate jobs with separate, legible failure signals.
 
 ## Outstanding
 
-- Pin third-party actions to commit SHAs rather than major tags (`actions/checkout@v4`). Tags are
-  mutable, so a tag pin trusts the publisher continuously rather than once.
 - Path-filtered per-package build and test tasks via Turborepo (ADR-0001 follow-up). Not yet
   needed: lint over an empty tree is seconds, and filtering the checks that enforce boundaries is
   how a boundary stops being enforced.

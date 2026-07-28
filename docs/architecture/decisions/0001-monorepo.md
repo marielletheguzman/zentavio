@@ -112,8 +112,8 @@ own Python toolchain inside the same tree.
 - Author `turbo.json` with `build`, `test`, `lint`, `typecheck` tasks and correct `dependsOn`
   edges, plus remote caching in `infra/ci`.
 - Wire the Python side of CI for `ai/` with its own path filtering.
-- Decide and document the Python dependency tool for `ai/` (its own ADR if the choice has a
-  tradeoff).
+- ~~Decide and document the Python dependency tool for `ai/`.~~ **Done** — ADR-0006 (uv
+  workspace).
 - Add a codeowners file once more than one person contributes.
 
 **Reversal cost.** Moderate, and decreasing over time — which is the argument for this ordering.
