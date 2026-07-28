@@ -179,9 +179,21 @@ approach: the author runs graded evals locally against the pinned model and **at
 the pull request**, which is a required review artifact rather than a mechanised gate. A self-hosted runner
 with Ollama follows when there is a second contributor or the first paying user.
 
-Also still to build: posting the delta report to the pull request, and the check that a changed prompt
-bumped its `promptVersion` — an unchanged version with changed content makes past outputs
-unreproducible and should fail before grading starts.
+**The `promptVersion` check is implemented and runs in CI** (`pnpm check:prompt-versions`,
+`ai/shared/evals/check_prompt_versions.py`). It fails a change that:
+
+- modifies a prompt's content without changing its filename
+- deletes a prompt version
+- **moves** a prompt version — a `git mv` removes the old version just as a delete does
+
+So the workflow is **copy, not move**:
+
+```bash
+cp ai/x/prompts/name-2026-07-01.md ai/x/prompts/name-2026-08-01.md
+# edit the copy; leave the old version untouched
+```
+
+Still to build: posting the delta report to the pull request.
 
 ## Adding a prompt
 

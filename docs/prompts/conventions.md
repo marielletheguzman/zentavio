@@ -43,7 +43,9 @@ docs/prompts/<service>/README.md      ← what each prompt is for, and its contr
 - `promptVersion` is the filename stem: `skill-extract-2026-07-01`.
 - Names are verb-first and describe the extraction, not the feature: `skill-extract`,
   `requirement-extract`, `evidence-explain`, `answer-feedback`.
-- **Old versions stay.** An output must be reproducible from what was recorded.
+- **Old versions stay.** An output must be reproducible from what was recorded, so a new version is a
+  **copy**, never a `git mv`. Enforced in CI by `ai/shared/evals/check_prompt_versions.py`, which fails a
+  modification, a deletion, or a move of a prompt file.
 
 ## Variable naming
 

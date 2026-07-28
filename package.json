@@ -8,6 +8,7 @@
   },
   "scripts": {
     "boundaries:audit": "node tools/scripts/audit-boundary-disables.mjs",
+    "check:prompt-versions": "python ai/shared/evals/check_prompt_versions.py",
     "eval": "python ai/shared/evals/run_evals.py",
     "eval:offline": "python ai/shared/evals/run_evals.py --offline",
     "lint": "eslint .",

@@ -64,6 +64,7 @@ check, so adding a job to `ci.yml` makes it blocking without touching repository
 |---|---|---|---|
 | `ci` status check | every pull request | yes | **yes** — `.github/workflows/ci.yml` |
 | Prompt eval **coverage** (offline) | every pull request | yes | **yes** — `pnpm eval:offline` in the `python` job |
+| `promptVersion` integrity | any prompt change | yes | **yes** — `pnpm check:prompt-versions` in the `python` job |
 | Prompt eval **grading** | any prompt change | review artifact (ADR-0009) | **not in CI** — run locally, report attached to the PR |
 | ADR present | any new dependency, boundary change, or contract change | review | review only |
 | Docs updated | any change to documented behavior | review | review only |
@@ -109,8 +110,6 @@ Python tooling is separate: `pip install -r requirements-dev.txt` once, then `ru
 
 ## Not yet built
 
-- **The `promptVersion` check** — fail a prompt change that did not bump its version. ADR-0009's one
-  mechanisable piece, still unwritten.
 - **A self-hosted runner with Ollama** for graded evals in CI. ADR-0009 defers this until a second
   contributor or the first paying user; until then the delta report is attached to the pull request.
 - **A `test:integration` job.** `test:unit` runs in the `typescript` job now; the integration project has

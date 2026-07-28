@@ -62,6 +62,7 @@ ban-relative-imports = "parents"
 # T201 stays banned everywhere else — a service that prints instead of logging loses the
 # correlation id and leaks into stdout (.claude/skills/backend-service/SKILL.md).
 "ai/shared/evals/run_evals.py" = ["T201"]
+"ai/shared/evals/check_prompt_versions.py" = ["T201"]
 
 [lint.isort]
 known-first-party = ["ai"]

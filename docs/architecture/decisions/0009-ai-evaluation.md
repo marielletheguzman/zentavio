@@ -127,7 +127,8 @@ enforce.
 
 **Follow-up work.**
 
-- The `promptVersion` check: fail CI when a prompt file's content changed and its version did not.
+- ~~The `promptVersion` check.~~ **Done** — also catches deletes and moves, which the original wording
+  did not anticipate.
 - A PR template section for the delta report.
 - Pin `ZENTAVIO_EVAL_MODEL` in `packages/config` and document the local setup.
 - Human review process: a prompt change needs a reviewer who reads the gate results, not only the summary.
@@ -141,7 +142,9 @@ grader, and baselines are unchanged. That is why the runner was built model-agno
 ## Compliance
 
 - Offline checks run on every pull request and block — verifiable in `.github/workflows/ci.yml`.
-- `promptVersion` bump check blocks — to be implemented.
+- `promptVersion` bump check blocks — implemented in `ai/shared/evals/check_prompt_versions.py`, run in
+  the `python` CI job, covered by 19 tests. It also fails a delete or a move, since either removes the
+  version that produced past outputs.
 - A prompt change without an attached delta report is a review rejection.
 - The delta report states gate results and the accuracy delta **separately**. A single blended score is a
   defect in the report format.
