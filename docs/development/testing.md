@@ -2,11 +2,16 @@
 
 > **Purpose:** Test strategy: unit, integration, eval.
 
-**No test framework is installed and no application tests exist**, because there is no application code.
-What *does* run today is `pnpm lint:all` and the offline half of the prompt-eval gate.
+**Vitest and pytest are installed (ADR-0007) and run in `lint:all` and CI.** What exists today:
 
-This document is the strategy the first tests must follow. Full rules and reasoning:
-`.claude/skills/testing/SKILL.md`.
+| Suite | Command | Covers |
+|---|---|---|
+| Vitest `unit` | `pnpm test:unit` | the boundary-disable audit script — 9 tests |
+| Vitest `integration` | `pnpm test:integration` | **nothing yet** — needs `packages/db` and migrations |
+| pytest | `pnpm test:py` | the prompt-eval runner — 43 tests |
+
+**No application tests exist, because there is no application code.** The rest of this document is the
+strategy the first ones must follow. Full rules: `.claude/skills/testing/SKILL.md`.
 
 ## What gets tested where
 
@@ -106,11 +111,19 @@ person's immigration status, salary, or contact details, even scrubbed
 - Test the boundary and the absence, not the middle — bugs live where data is missing.
 - A bug fix ships with the test that would have caught it, at the cheapest level that could have.
 
-## Decided, not yet installed
+## Installed, and what is still missing
 
-**ADR-0007 (Accepted): Vitest for TypeScript, `pytest` for `ai/`**, with `unit` and `integration` as
-separate Vitest projects. Nothing is installed yet — there is no `vitest.workspace.ts`, no `pnpm test`,
-and no test file. The decision is binding; the follow-up work is listed in the ADR.
+**ADR-0007 (Accepted): Vitest for TypeScript, `pytest` for `ai/`.** Configured in `vitest.config.ts`
+(`unit` and `integration` projects) and `pytest.ini`.
+
+Still outstanding from the ADR's follow-up list:
+
+- **The `integration` project has no tests** and no PostgreSQL container helper. Both need `packages/db`
+  and migrations to exist; a helper written now would be a helper for a database that does not exist.
+- **No integration CI job**, for the same reason.
+- **pytest config moves into the uv workspace** when the first `ai/` service exists (ADR-0006). It lives
+  in `pytest.ini` for now, matching how Ruff is pinned in `requirements-dev.txt`.
+- Docker is therefore **not yet** a local prerequisite, despite what the ADR anticipated.
 
 ## Related
 

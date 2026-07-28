@@ -7,22 +7,29 @@
     "node": ">=20.11.0"
   },
   "scripts": {
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "lint:py": "ruff check ai/",
-    "typecheck": "tsc --noEmit",
+    "boundaries:audit": "node tools/scripts/audit-boundary-disables.mjs",
     "eval": "python ai/shared/evals/run_evals.py",
     "eval:offline": "python ai/shared/evals/run_evals.py --offline",
-    "lint:all": "eslint . && tsc --noEmit && ruff check ai/ && node tools/scripts/audit-boundary-disables.mjs",
-    "boundaries:audit": "node tools/scripts/audit-boundary-disables.mjs"
+    "lint": "eslint .",
+    "lint:all": "eslint . && tsc --noEmit && vitest run --project unit && ruff check ai/ && python -m pytest && node tools/scripts/audit-boundary-disables.mjs",
+    "lint:fix": "eslint . --fix",
+    "lint:py": "ruff check ai/",
+    "test": "vitest run",
+    "test:integration": "vitest run --project integration",
+    "test:py": "python -m pytest",
+    "test:unit": "vitest run --project unit",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",
+    "@vitest/coverage-v8": "^4.1.10",
     "eslint": "^9.15.0",
     "eslint-import-resolver-typescript": "^3.6.3",
     "eslint-plugin-boundaries": "^5.0.1",
     "eslint-plugin-import-x": "^4.4.2",
     "typescript": "^5.6.3",
-    "typescript-eslint": "^8.15.0"
+    "typescript-eslint": "^8.15.0",
+    "vitest": "^4.1.10"
   }
 }

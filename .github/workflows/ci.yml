@@ -44,6 +44,11 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      # ADR-0007: the fast project only. Integration tests need a real PostgreSQL and get
+      # their own job once packages/db and migrations exist.
+      - name: Unit tests
+        run: pnpm test:unit
+
       # eslint-plugin-boundaries can be silenced with an inline disable comment.
       # That hole is audited explicitly rather than trusted.
       - name: Audit suppressed boundary rules
@@ -77,6 +82,11 @@ jobs:
 
       - name: Ruff (format check)
         run: ruff format --check ai/
+
+      # ADR-0007: pytest for the Python half. Currently covers the eval runner, which is
+      # the only Python in the tree.
+      - name: Python tests
+        run: python -m pytest
 
       # Offline eval checks only: fixture integrity, that every prompt has all six
       # required case kinds, and that no prompt ships without fixtures. Graded runs need

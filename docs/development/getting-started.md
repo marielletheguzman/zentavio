@@ -16,10 +16,14 @@ Anything below that you cannot execute is a bug in this document — say so rath
 | **pnpm** | from `packageManager` via corepack — do not install separately | workspace management (ADR-0001) |
 | **Python** | 3.12 (CI) or 3.13 | the `ai/` half (ADR-0003) |
 | **Ruff** | pinned in `requirements-dev.txt` | lint and format for `ai/` |
+| **pytest** | pinned in `requirements-dev.txt` | tests for `ai/` (ADR-0007) |
 | **Git** | any recent | — |
 
+Vitest installs with `pnpm install` — no separate step.
+
 Not needed yet, because nothing uses them: Docker, PostgreSQL, Redis, Qdrant, Ollama, uv, Terraform. They
-arrive with the services that need them.
+arrive with the services that need them. **Docker becomes a prerequisite** when the Vitest `integration`
+project gets its first test, which needs `packages/db` to exist first.
 
 ## Setup
 
@@ -51,11 +55,13 @@ That is the whole thing, and it runs exactly what CI runs:
 |---|---|
 | `eslint .` | layer boundaries, banned imports, no `process.env` outside `packages/config` |
 | `tsc --noEmit` | strict TypeScript |
+| `vitest run --project unit` | the fast TypeScript tests (ADR-0007) |
 | `ruff check ai/` | `ai/` statelessness — no database, cache, or vector client |
+| `python -m pytest` | the Python tests — currently the prompt-eval runner |
 | boundary-disable audit | no inline `eslint-disable` silencing a layer rule |
 
-Expect it to pass and report almost nothing, because there is almost no code. `ruff` will say
-`No Python files found`, and the eval runner will say `no prompt fixtures found`. Both are correct.
+Expect it to pass: 9 Vitest tests and 43 pytest tests, and the eval runner reporting `no prompt fixtures
+found` — which is correct, since no prompt exists yet.
 
 ## Individual commands
 
@@ -63,6 +69,10 @@ Expect it to pass and report almost nothing, because there is almost no code. `r
 pnpm lint              # ESLint only
 pnpm lint:fix          # and fix what is auto-fixable
 pnpm typecheck         # tsc --noEmit
+pnpm test              # both Vitest projects
+pnpm test:unit         # the fast project — what lint:all and CI run
+pnpm test:watch        # watch mode
+pnpm test:py           # pytest
 pnpm lint:py           # ruff check ai/
 pnpm eval:offline      # prompt fixture checks (no model needed)
 pnpm eval              # graded evals — needs a local Ollama, skips without one
@@ -111,7 +121,8 @@ Then delete it: `rm -rf packages/db/src`.
 ## What does not exist yet
 
 Named so nobody hunts for them: no dev server, no database, no migrations, no seed data, no Docker
-compose, no application tests, no deployed environment. Sequence in
+compose, no **application** tests (the tests that exist cover tooling), no integration tests, no deployed
+environment. Sequence in
 [`../roadmap/phases.md`](../roadmap/phases.md).
 
 ## Related

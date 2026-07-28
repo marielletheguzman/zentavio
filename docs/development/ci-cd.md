@@ -31,6 +31,7 @@ pull_request / push:main
 |---|---|---|
 | ESLint | `pnpm lint` | the layer model (`boundaries/element-types`), the connector registry rule, banned stack dependencies, no LLM SDK, no `process.env` outside `packages/config`, Qdrant only behind its port |
 | Typecheck | `pnpm typecheck` | strict TypeScript across root tooling, and per-workspace configs as they appear |
+| Unit tests | `pnpm test:unit` | the fast Vitest project (ADR-0007) |
 | Boundary audit | `node tools/scripts/audit-boundary-disables.mjs` | that no inline `eslint-disable` is silencing a layer rule |
 
 `eslint.config.mjs` is the executable form of the layer table in
@@ -49,6 +50,8 @@ in `packages/db` and `knowledge-engine/`.
 
 Markdown is excluded from Ruff. Recent Ruff versions format Python inside fenced code blocks, and a
 formatter rewriting an example inside a document is an unreviewed doc change.
+
+`python -m pytest` also runs here, covering the prompt-eval runner (ADR-0007).
 
 ### `ci`
 
@@ -110,7 +113,8 @@ Python tooling is separate: `pip install -r requirements-dev.txt` once, then `ru
   mechanisable piece, still unwritten.
 - **A self-hosted runner with Ollama** for graded evals in CI. ADR-0009 defers this until a second
   contributor or the first paying user; until then the delta report is attached to the pull request.
-- **`test:unit` and `test:integration` jobs** — ADR-0007 is Accepted, but Vitest is not installed.
+- **A `test:integration` job.** `test:unit` runs in the `typescript` job now; the integration project has
+  no tests and no container helper until `packages/db` and migrations exist.
 - **Test and build jobs** — there is no application code yet. Test levels and what must never be
   mocked: `.claude/skills/testing/SKILL.md`.
 - **Path-filtered tasks** via Turborepo's task graph (ADR-0001 follow-up). Deliberately not applied

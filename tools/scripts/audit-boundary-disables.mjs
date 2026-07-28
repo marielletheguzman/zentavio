@@ -6,6 +6,13 @@
 // explicitly. A boundary disable is an architecture exception and needs an ADR.
 //
 // Exits non-zero on any hit. Wire into CI alongside `pnpm lint`.
+//
+// KNOWN LIMITATION: this is a line grep, not a parser, so it cannot distinguish a real
+// disable comment from a string that describes one. Two files necessarily contain the
+// pattern as data — this script and its test — and both are skipped by exact path below.
+// The tradeoff is deliberate: a parser would be far more code for a check whose value is
+// that it is simple enough to trust. The cost is that a genuine boundary disable hidden in
+// those two files would go unreported; neither contains production code.
 
 import { readdir, readFile } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
@@ -30,11 +37,18 @@ async function* walk(dir) {
   }
 }
 
+// Exact paths, not a pattern: a pattern like `*.test.ts` would let anyone exempt a file by
+// naming it a test.
+const SELF = [
+  join('tools', 'scripts', 'audit-boundary-disables.mjs'),
+  join('tools', 'scripts', 'audit-boundary-disables.test.ts'),
+];
+
 const hits = [];
 
 for await (const file of walk(ROOT)) {
-  // The audit script names the rules it looks for, so it would match itself.
-  if (file.endsWith(join('tools', 'scripts', 'audit-boundary-disables.mjs'))) continue;
+  // These two name the rules by construction, so they would match themselves.
+  if (SELF.some((self) => file.endsWith(self))) continue;
 
   const lines = (await readFile(file, 'utf8')).split('\n');
   lines.forEach((line, i) => {

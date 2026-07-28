@@ -5,7 +5,9 @@
 #
 #   pip install -r requirements-dev.txt
 #   ruff check ai/          # or: pnpm lint:py
+#   python -m pytest        # or: pnpm test:py
 #
 # Pinned so CI and local runs enforce the same rules — a different Ruff version means a
 # different rule set, which means the boundary bans in ruff.toml stop being a guarantee.
 ruff==0.16.0
+pytest==9.1.1
