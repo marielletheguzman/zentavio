@@ -20,6 +20,7 @@ Docs are the detailed source of truth and are part of every change.
 
 | File | Read it when |
 |---|---|
+| **`development-instructions.md`** | **starting any task — workflow, blockers, definition of done** |
 | `business.md` | Deciding what to build, prioritizing, pricing, or scoping a user |
 | `vision.md` | Any design decision — the "does this move us toward the vision?" test |
 | `glossary.md` | Naming anything, or when a term feels ambiguous |
