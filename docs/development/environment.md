@@ -2,8 +2,14 @@
 
 > **Purpose:** Env vars, secrets, config layering.
 
-**No environment variables are required today** — nothing reads configuration yet. This document is the
-contract for when they arrive, and the one rule below is already enforced.
+**`packages/config` exists and is the only reader of the environment.** No variable is *required* today:
+the two keys that exist (`OLLAMA_HOST`, `ZENTAVIO_EVAL_MODEL`) both have working defaults, so the
+repository runs with no `.env` at all.
+
+```ts
+import { load, zentavioSchema } from '@zentavio/config';
+const config = load(zentavioSchema);   // throws ConfigError, naming every problem at once
+```
 
 ## The enforced rule
 
@@ -70,20 +76,26 @@ Recorded now so the shape is predictable, and **not** created until the service 
 | `services/api-gateway` | session secret, allowed origins, rate limits |
 | `services/billing` | provider keys — the most sensitive set |
 
-The eval runner already reads two, and they are optional with working defaults:
+The eval runner reads two, both optional with working defaults, declared in
+`packages/config/src/zentavio.ts`:
 
 ```bash
 OLLAMA_HOST=http://127.0.0.1:11434     # default
 ZENTAVIO_EVAL_MODEL=qwen2.5:7b-instruct
 ```
 
-## Local development
+These are the one place configuration is duplicated across the language boundary: the Python eval
+runner is stdlib-only and cannot import the schema, so it repeats the defaults. Drift would mean a
+graded eval running against a different model than configured, so it is checked by
+`ai/shared/evals/tests/test_config_parity.py` rather than trusted.
 
-There is no `.env` to create yet. When there is:
+## Local development
 
 ```bash
 cp .env.example .env      # then fill in local values
 ```
+
+Not required today — every key has a default.
 
 `.env.example` is committed and lists **every** key with a placeholder — it is the discoverable
 inventory of what configuration exists. A key that exists in code but not in `.env.example` is a
