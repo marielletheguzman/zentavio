@@ -29,9 +29,11 @@ and never as the value a service reads.
 Follow `_TEMPLATE.md`. The full country model is defined in
 `.claude/context/countries.md`.
 
-## Supported markets
+## Markets
 
-`DE` · `CA` · `AU` · `NL` · `SE` · `NO` · `JP` · `SG` · `AE` · `REMOTE`
+**Launch:** `DE` · `LU` · `NZ` · `CH` · `REMOTE`
+**Future:** `NL` · `IE` · `AU` · `CA` · Nordics (`SE`, `NO`, `DK`, `FI`)
+**Origin:** `PH` — carries its own rule domains; see `.claude/context/countries.md`.
 
 `REMOTE` is modeled differently — no jurisdiction, no pathway. Its constraints are employer
 policy, time zone, contracting and tax treatment, and payment mechanics.

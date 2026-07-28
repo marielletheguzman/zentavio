@@ -15,20 +15,52 @@ and outcomes), and the pricing (a decision is worth paying for; a list is not).
 
 ## Who it is for
 
-**Primary — the international mover.** A mid-career professional who wants to work in another
-country and does not know whether they are eligible, employable, or competitive there. They
-are currently reading forum threads and guessing. High willingness to pay, because the
-alternative is an expensive mistake.
+**The origin is specific: the Philippines.** Not a segment we happen to serve first — it is the fact
+the product is designed around, and it changes the architecture (see below).
 
-**Secondary — the career switcher.** Someone in an adjacent role who wants to move into a
-better track and does not know what the gap actually is. They need an honest number and an
-ordered plan, not encouragement.
+**Primary — the Filipino professional planning an international move.** Mid-career, wants to work in
+Germany, Luxembourg, New Zealand, or Switzerland, and does not know whether they are eligible,
+employable, or competitive there. Currently reading forum threads, Facebook groups, and agency sales
+pages, and guessing. High willingness to pay, because the alternative is an expensive, sometimes
+exploitative, mistake.
 
-**Tertiary — the level-upper.** Someone happy in their track who wants the next rung: what
-they are missing, what the market pays, whether they are interview-ready.
+**Primary — the Filipino student or recent graduate.** Choosing what to study or which first role to
+take *with the international move already in mind*. Needs to know which qualifications and licences
+actually transfer, and what the realistic timeline is. Low ability to pay now, high lifetime value, and
+the group most damaged by bad information early.
 
-All three ask the same question — *what should I do next?* — and all three are badly served
-by keyword matching, which is why they are the same product.
+**Secondary — the skilled worker planning a career change alongside the move.** Two hard problems at
+once: a new track and a new country. Needs to know which order to do them in, and whether doing both is
+realistic at all.
+
+All of them ask the same question — *what should I do next?* — and all of them are badly served both by
+keyword matching and by the incumbent alternative, which is a recruitment agency whose incentive is
+placement rather than the person's best outcome.
+
+## What being Philippines-origin changes
+
+Not marketing copy. Four concrete design consequences:
+
+1. **Two jurisdictions per answer.** Viability depends on origin-side requirements — overseas
+   employment regulation, professional-licence recognition, credential evaluation, document
+   authentication — as much as on destination rules. Destination-only platforms miss half the problem.
+   Our rule model does not express this yet, and that is a tracked gap
+   (`.claude/context/countries.md`).
+2. **Recognition is often the binding constraint, not the visa.** For regulated professions, a
+   destination may be visa-accessible while the licence is not transferable without re-assessment.
+   Reporting eligibility without recognition would be actively misleading.
+3. **English is an asset, and it is not sufficient.** It genuinely opens New Zealand and much of remote
+   work. It does not make German, Luxembourgish, or Swiss workplace-language requirements disappear, and
+   pretending otherwise is the most common error in this market.
+4. **Remote is frequently the right answer.** Earning in a stronger currency without relocating is often
+   the fastest real improvement available, so `REMOTE` is a first-class target rather than a fallback.
+
+## Who we are not for
+
+Undocumented or irregular migration routes. Anything requiring us to advise on circumventing a rule.
+We report sourced requirements and name who to consult — that boundary is in
+`.claude/context/ai-principles.md` and it is not negotiable, because the users most likely to be
+harmed by getting it wrong are exactly our users.
 
 ## What they will pay for
 

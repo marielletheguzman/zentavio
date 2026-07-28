@@ -72,14 +72,15 @@ enforcement in `eslint.config.mjs` and `ruff.toml`.
 | `database/` | 14 / 14 | complete |
 | `prompts/` | 9 / 9 | complete |
 | `development/` | 2 / 11 | `conventions.md`, `ci-cd.md` |
-| `roadmap/` | 1 / 6 | `vision.md` |
-| `features/` | 0 / 11 | not started |
+| `roadmap/` | 6 / 6 | complete |
+| `features/` | 11 / 11 | complete |
 | root | `GLOSSARY.md`, `09_AI_SKILLS/AI_SKILLS.md` | this file included |
 
 Filling a placeholder means writing what its purpose line declares — that line is the specification.
 The six Accepted ADRs are binding on everything written afterward; read them before changing a
 boundary they cover.
 
-Two documents describe things that are **specified but not built**, and say so in place: the
-prompt-eval gate in `prompts/evals.md` (no runner, no CI job yet) and the deployment section of
-`development/ci-cd.md`.
+Documents that describe things **not yet built**, and say so in place: graded prompt evals
+(`prompts/evals.md` — runner exists, needs a model host), deployment (`development/ci-cd.md`), and
+**origin-side immigration rules** (`architecture/immigration.md` — the rule model cannot express them
+yet, which blocks any eligibility verdict for regulated professions).

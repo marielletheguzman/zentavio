@@ -13,6 +13,19 @@ Not a job board. A job board matches strings and leaves the judgment to the user
 reasons about a career: where this person can realistically work, what they would have to
 become, how long it takes, and whether it is worth it.
 
+## Who, and where
+
+**Users:** professionals and students from the Philippines, and skilled workers planning
+international careers.
+**Launch destinations:** Germany · Luxembourg · New Zealand · Switzerland.
+**Future:** Netherlands · Ireland · Australia · Canada · Nordics. **Remote** is first-class.
+
+The origin is a design constraint, not a segment. Filipino applicants face **origin-side**
+requirements — overseas employment regulation, licence recognition, credential evaluation,
+document authentication — as binding as destination visa rules, and often *more* binding:
+a country can be visa-accessible while a professional licence is not transferable.
+Destination-only reasoning answers half the question.
+
 ## The design test
 
 Apply to every table, endpoint, prompt, screen, and ADR:

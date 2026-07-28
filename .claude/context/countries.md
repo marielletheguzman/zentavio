@@ -6,20 +6,60 @@
 > `.claude/skills/immigration/references/countries/<code>.md` as the reference model.
 > **Never state a country fact from this file or from memory.**
 
-## Supported markets
+## Origin market
 
-| Code | Market | Primary language(s) | Notes |
+**The Philippines (`PH`) is the primary origin**, and that is a structural fact, not a marketing
+segment. Filipino professionals and students face an **origin-side** regulatory layer that
+destination-only platforms ignore: overseas employment regulation, professional-licence and
+qualification recognition, and document authentication.
+
+So a country target has two jurisdictions in play — where the person is coming *from* and where they
+are going. See "Origin-side rules" below; the current rule model does not yet express this.
+
+## Launch markets
+
+| Code | Market | Primary language(s) | Why it is in the launch set |
 |---|---|---|---|
-| `DE` | Germany | German | Large market, structured pathways |
-| `CA` | Canada | English, French | Points-based system |
-| `AU` | Australia | English | Points-based, occupation lists |
-| `NL` | Netherlands | Dutch, English | High English availability |
-| `SE` | Sweden | Swedish, English | |
-| `NO` | Norway | Norwegian, English | |
-| `JP` | Japan | Japanese | Language is often the binding constraint |
-| `SG` | Singapore | English | Employer-driven pathways |
-| `AE` | United Arab Emirates | Arabic, English | Sponsorship-based, no PR path in the usual sense |
-| `REMOTE` | Remote worldwide | English | Not a jurisdiction — see below |
+| `DE` | Germany | German | Large demand, structured and documented pathways |
+| `LU` | Luxembourg | Luxembourgish, French, German | Multilingual working reality; small, high-value market |
+| `NZ` | New Zealand | English | English-medium; occupation-list driven |
+| `CH` | Switzerland | German, French, Italian | High compensation; third-country-national access is the constraint to model carefully |
+
+## Future markets
+
+`NL` · `IE` · `AU` · `CA` · Nordics (`SE`, `NO`, `DK`, `FI`)
+
+Not built yet, and deliberately not half-built. Depth before breadth
+(`.claude/skills/roadmap/SKILL.md`): each is a reference file, connector coverage, ingested rules, and a
+registry entry — never a code change.
+
+## Remote
+
+`REMOTE` is a first-class target but modelled differently: no jurisdiction, no pathway. Its constraints
+are employer policy, time zone overlap, contracting and tax treatment, and payment mechanics. For a
+Philippines-based user it is often the *correct* answer and the fastest one, so it never renders as a
+country with an empty visa section.
+
+## Origin-side rules
+
+A Filipino applicant's viability depends on requirements that are **not** destination rules:
+
+| Domain | Why it is structural |
+|---|---|
+| Overseas employment regulation | processing and clearance requirements imposed by the origin state |
+| Professional licence recognition | regulated professions (nursing, engineering, teaching) are licensed at origin and re-assessed at destination |
+| Academic credential evaluation | destination bodies assess origin qualifications against their own frameworks |
+| Document authentication | apostille and authentication chains for civil and academic documents |
+| Language certification | which test and which level a destination accepts |
+
+**These are tier-1-sourced rules like any other**, and every value must come from the responsible
+authority with a date. Nothing above asserts a specific requirement — it names the domains that must be
+modelled and sourced.
+
+**Open design gap:** `immigration_rules.jurisdiction` currently assumes the destination. Origin-side
+rules need a jurisdiction *role* (origin vs destination) or a separate rule kind, or Filipino-specific
+requirements cannot be evaluated at all. Recorded in
+`docs/architecture/immigration.md` and tracked; it is a schema decision, not a content gap.
 
 `REMOTE` is a first-class target because it is what many users should actually pursue, but it
 is modeled differently: no immigration pathway, and its constraints are employer policy, time

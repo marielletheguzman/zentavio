@@ -15,7 +15,7 @@ CREATE TABLE immigration_rules (
   id              uuid         PRIMARY KEY,           -- UUIDv7
   rule_id         text         NOT NULL,              -- 'de.eu-blue-card.salary-threshold.it' — stable, permanent
   pathway_id      text         NOT NULL,              -- 'de.eu-blue-card'
-  jurisdiction    char(2)      NOT NULL,
+  jurisdiction    char(2)      NOT NULL,              -- SEE GAP BELOW: currently assumes the destination
   subdivision     text,                               -- where a rule is subnational
 
   kind            text         NOT NULL,
@@ -79,6 +79,20 @@ Never resolved by picking the friendlier reading.
 **`needs_input`.** The person facts required to evaluate this rule. It is what produces
 `needsFromUser` in an eligibility response — the most actionable field we return, because it converts
 an `undetermined` into a definite answer with one input.
+
+## Open gap: `jurisdiction` assumes the destination
+
+Zentavio's primary users are from the Philippines, and their viability depends on **origin-imposed**
+requirements — overseas employment regulation, professional-licence recognition, credential evaluation,
+document authentication — as much as on destination rules. This table cannot currently express one.
+
+Likely resolution: a `jurisdiction_role` column (`origin` | `destination` | `bilateral`), so a rule states
+who imposes it and the evaluator can gather both sides for one verdict. That is a schema and evaluation
+change with a real tradeoff, so it needs an ADR before the first migration
+(`docs/architecture/immigration.md`).
+
+**Until then, regulated professions must return `unknown`** with recognition named as the missing piece,
+rather than a visa-only verdict that reads as an answer.
 
 ## One requirement per row
 

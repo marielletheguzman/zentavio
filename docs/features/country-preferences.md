@@ -73,9 +73,11 @@ Unsupported markets say so plainly and record the request, which is the backlog 
 The highest-value output this feature produces: *"two skills from a materially better market"*. Surfaced
 where it exists, because it changes plans in a way a ranked list does not.
 
-## Supported markets
+## Markets
 
-`DE` · `CA` · `AU` · `NL` · `SE` · `NO` · `JP` · `SG` · `AE` · `REMOTE`
+**Launch:** `DE` · `LU` · `NZ` · `CH` · `REMOTE`
+**Future:** `NL` · `IE` · `AU` · `CA` · Nordics (`SE`, `NO`, `DK`, `FI`)
+**Origin:** `PH` — carries its own rule domains; see `.claude/context/countries.md`.
 
 Adding one is a reference file, connector coverage, ingested facts, and a registry entry — **zero code
 changes** (`.claude/context/countries.md`).

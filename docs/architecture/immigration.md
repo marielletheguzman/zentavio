@@ -6,6 +6,38 @@ Immigration is the highest-stakes knowledge in Zentavio. A wrong threshold or a 
 someone into a failed application, a lost deposit, or a relocation that collapses. The architecture
 makes that structurally hard rather than relying on care.
 
+## Open gap: origin-side rules
+
+**The model currently assumes one jurisdiction — the destination. That is not sufficient for our primary
+users.**
+
+Zentavio's primary users are professionals and students from the Philippines
+(`docs/roadmap/vision.md`). Their viability depends on requirements imposed at **origin** as well as
+destination:
+
+| Domain | Imposed by |
+|---|---|
+| Overseas employment regulation and clearance | origin state |
+| Professional-licence recognition for regulated professions | origin licensing body, re-assessed at destination |
+| Academic credential evaluation | destination body, assessing an origin qualification |
+| Document authentication / apostille | origin authorities |
+| Language certification acceptance | destination, but obtained at origin |
+
+Two consequences:
+
+1. **`immigration_rules.jurisdiction` has no way to say "this rule is imposed by the origin".** Either
+   the column needs a companion `jurisdiction_role` (`origin` | `destination` | `bilateral`), or
+   origin-side requirements need a distinct rule kind. Without one of those, Filipino-specific
+   requirements cannot be modelled, let alone evaluated.
+2. **The binding constraint is frequently recognition, not the visa.** A destination can be
+   visa-accessible while a licence is not transferable without re-assessment. An eligibility verdict that
+   reports only the visa would be actively misleading for a nurse, engineer, or teacher — which is worse
+   than returning `unknown`.
+
+This is a schema and evaluation decision with a real tradeoff, so it belongs in an ADR rather than being
+patched in silently. Until it is resolved, **regulated professions cannot be given an eligibility
+verdict** — they must return `unknown` with recognition named as the missing piece.
+
 ## Rules as data, never as code
 
 A rule is a **row**, not a branch. There is no `if (country === 'DE')` anywhere in `services/` or

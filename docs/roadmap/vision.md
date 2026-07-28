@@ -11,6 +11,25 @@ Zentavio is not a job board. A job board matches strings and leaves the judgment
 user. Zentavio reasons about a career: where this person can realistically work, what they
 would have to become, how long that takes, and whether it is worth it.
 
+## Who, and where
+
+| | |
+|---|---|
+| **Primary users** | Professionals from the Philippines · students from the Philippines · skilled workers planning international careers |
+| **Launch destinations** | Germany · Luxembourg · New Zealand · Switzerland |
+| **Future destinations** | Netherlands · Ireland · Australia · Canada · Nordic countries |
+| **Also first-class** | Remote worldwide — often the fastest real improvement available |
+
+The origin is as specific as the destinations, and it is a design constraint rather than a market
+segment. A Filipino applicant's viability depends on **origin-side** requirements — overseas employment
+regulation, professional-licence recognition, credential evaluation, document authentication — as much as
+on destination visa rules. Platforms that model only the destination answer half the question, and the
+missing half is where people lose money.
+
+The corollary: **the binding constraint is frequently recognition, not the visa.** A destination can be
+visa-accessible while a professional licence is not transferable without re-assessment. Reporting
+eligibility without recognition would be worse than saying nothing.
+
 ## The question that defines the product
 
 > **"What should I do next?"**
