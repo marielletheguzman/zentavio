@@ -14,8 +14,6 @@ Not features. Each one gates work that cannot start without it.
 
 | Item | Question served | Blocks |
 |---|---|---|
-| **MVP feature scope** | What should I do next? | Phase 1 — see `mvp-scope-options.md` |
-| **Which node inside software / IT** | What could I do? | seeding the skill graph |
 | **Source origin-side authorities** | Does my licence transfer? | any verdict for a regulated profession (ADR-0010 is Accepted; the data is not sourced) |
 | **Observability backend** | — engineering | dashboards and alert routing (ADR-0008 deferred it) |
 | **`ci` as a required status check** | — engineering | ADR-0005 being enforced rather than advisory; needs one observed green run first |

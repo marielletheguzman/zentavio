@@ -9,13 +9,18 @@ additive (`.claude/skills/roadmap/SKILL.md`).
 ## The MVP question
 
 > **"Can I realistically work in Germany, and what would it take?"**
-> — asked by a Filipino professional in **software / IT**.
+> — asked by a Filipino professional targeting **cloud / platform engineering**.
 
-**Track decided: software / IT** (2026-07-28). Chosen on the criterion in
+**Track decided: cloud / platform engineering** (2026-07-28), inside the software / IT family. Chosen on the criterion in
 [`mvp-scope-options.md`](mvp-scope-options.md): the largest Philippines→Germany demand whose recognition
-path is **not** licence-gated. Software and IT roles are not regulated professions, so they need no licence
-recognition — which means Phase 1 does not depend on the origin-side rules being sourced (task: ADR-0010
-follow-up).
+path is **not** licence-gated. Software and IT roles are not regulated professions, so they need no licence recognition — which means
+Phase 1 does not depend on the origin-side rules being sourced (ADR-0010 follow-up).
+
+Cloud / platform specifically, because its skill set is unusually well-defined — containers,
+orchestration, infrastructure as code, one cloud provider — so the `requires` edges in the skill graph are
+genuinely derivable rather than guessed. It is also the clearest transition target from IT support and
+sysadmin work, a common Philippines starting point, which makes the transferability story real rather than
+theoretical.
 
 Nursing and regulated engineering remain Phase 3, not because they matter less — nursing is likely the
 largest real flow — but because serving them honestly requires recognition rules that do not exist yet.
@@ -88,16 +93,22 @@ Cut coverage — fewer tracks, fewer sources, manual ingest — before touching 
 - Docs match what was built; invariant tests pass (determinism, evidence, provenance, unknown).
 - Outcomes are being recorded.
 
-## Open decisions
+## Scope confirmed
 
-**1 — Feature scope.** Options and a recommendation in
-[`mvp-scope-options.md`](mvp-scope-options.md). The recommendation is a modified Option A: Career Profile +
-Skill Gap + Immigration & Sponsorship view, swapping résumé optimization for eligibility. Not yet confirmed.
+**Modified Option A** (2026-07-28): Career Profile + Skill Gap + Immigration & Sponsorship view, one track
+× Germany, with `REMOTE` as a comparison target. Eligibility replaces résumé optimization
+([`mvp-scope-options.md`](mvp-scope-options.md)).
 
-**2 — Which specific track inside software / IT.** "Software / IT" is a family, and the skill graph and
-`references/careers/<track>.md` need one concrete node: software engineering, cloud / platform
-engineering, and IT support are different career nodes with different requirement sets and different German
-demand. Needed before the graph is seeded.
+Deferred deliberately: **résumé generation**, a fabrication surface pointed at a document the user submits
+to an employer, and **interview prep**, which is blocked by report volume rather than effort.
+
+### One reconciliation
+
+The in-scope table above includes **learning paths**, which the three named capabilities do not mention.
+Kept in, because it is the direct consumer of the gap and cheap once the gap exists — ordered steps with
+real ingested resources, or an explicit absence where none are ingested. It is also the **first thing to
+cut** if scope pressure arrives, since a gap without a plan is still a useful answer and a plan without
+verification cannot move readiness anyway (`.claude/skills/roadmap/SKILL.md`, cut coverage before quality).
 
 ## Related
 

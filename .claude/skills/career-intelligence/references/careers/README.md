@@ -43,7 +43,13 @@ Zero changes to `services/` or `ai/` should be required.
 
 ## Status
 
-No career reference files authored yet. `_TEMPLATE.md` defines the shape.
+| Track | File | Status |
+|---|---|---|
+| Cloud / platform engineer | [`cloud-platform-engineer.md`](cloud-platform-engineer.md) | **the MVP track** — model written, values unmeasured |
+
+`_TEMPLATE.md` defines the shape. The MVP track's skill list is **curated and pending derivation**: written
+from the shape of the work, not from measured posting frequency, because no postings are ingested. Every
+entry is a hypothesis to be replaced by `posting-cooccurrence` with real support counts.
 
 ## Related
 

@@ -21,16 +21,17 @@ Phases are named after the user's question, which keeps scope arguments anchored
 eval harness, the monorepo skeleton.
 
 **Exit:** CI green and blocking on `main`; every architectural boundary enforced by a tool rather than by
-review; ADRs 0001–0006 Accepted.
+review; ADRs 0001–0011 Accepted.
 
-**Status:** substantially complete. Outstanding: `ci` as a required check, project references, graded
-evals in CI.
+**Status:** substantially complete. ADRs 0001–0011 Accepted; Vitest and pytest installed; the
+`promptVersion` check running. Outstanding: `ci` as a required status check (needs one observed green run),
+TypeScript project references, and graded evals in CI (ADR-0009 defers the runner deliberately).
 
 ---
 
 ## Phase 1 — "Can I realistically work in Germany?"
 
-**Question:** a Filipino professional in one track, asking about one destination.
+**Question:** a Filipino professional targeting **cloud / platform engineering**, asking about **Germany**.
 
 **Entry:** Phase 0 exit met.
 
@@ -69,13 +70,13 @@ anywhere in `services/` or `ai/`; unsupported-market requests recorded.
 **Question:** the regulated professions — nursing, engineering, teaching — which are among the largest
 Philippines→Europe flows and are blocked until now.
 
-**Entry:** the origin-jurisdiction ADR Accepted (`docs/architecture/immigration.md`), because the rule
-model cannot express origin-imposed requirements before that.
+**Entry:** ~~ADR-0010 Accepted~~ **met** — the `requirements` model can express origin-imposed
+requirements. The remaining entry condition is **data**: each profession's recognition rules sourced from
+its authority, dated (ADR-0010 follow-up). Schema is no longer the blocker; research is.
 
-**Contents:** the `requirements` generalization from ADR-0010 (`domain`, `imposed_by`, `authority`);
-origin-side rules ingested — overseas employment
-regulation, licence recognition, credential evaluation, document authentication; evaluation gathering both
-sides for one verdict; recognition named as the binding constraint where it is.
+**Contents:** origin-side rules ingested — overseas employment regulation, licence recognition, credential
+evaluation, document authentication; the ordered evaluation pass gathering every domain for one verdict;
+recognition named as the binding constraint where it is. The schema itself already exists (ADR-0010).
 
 **Exit:** a regulated-profession user gets a real verdict rather than `unknown`; recognition and visa are
 reported as distinct constraints; no path where a visa-only verdict reads as an answer.

@@ -62,7 +62,6 @@ exists when it does not, that is a bug worth fixing immediately.
 | Decision | Blocks |
 |---|---|
 | Origin-side immigration rules (ADR-0010, reserved) | any verdict for regulated professions |
-| MVP feature scope, and which node inside software / IT | Phase 1 — `../roadmap/mvp-scope-options.md` |
 | Observability backend | dashboards and alert routing |
 
 ## Related

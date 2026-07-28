@@ -49,14 +49,14 @@ entity document does not require the test runner. Writing a test does.
 
 | Decision | Blocks | Needs |
 |---|---|---|
-| Origin-side immigration rules | any verdict for a regulated profession | ADR-0010 (reserved, not drafted) |
-| MVP feature scope | Phase 1 | product decision — `docs/roadmap/mvp-scope-options.md` |
-| Which node inside software / IT | seeding the skill graph | product decision — track family decided |
+| Origin-side authorities per domain | any verdict for a regulated profession | **research, not a decision** — ADR-0010 is Accepted and the schema exists; no recognition rule is sourced |
 | Observability **backend** | dashboards and alert routing | follow-up ADR (ADR-0008 deferred it deliberately) |
 
-Where each is documented: `docs/development/testing.md` ·
-`docs/development/observability.md` · `docs/architecture/immigration.md` ·
-`docs/development/branching.md` · `docs/prompts/evals.md` · `docs/roadmap/mvp-scope-options.md`.
+Where each is documented: `docs/architecture/immigration.md` (origin-side data) ·
+`docs/development/observability.md` (backend).
+
+**All eleven ADRs are Accepted and the MVP is settled** — modified Option A, cloud / platform engineering,
+Germany. What remains is implementation and research, not decisions.
 
 **Accepted is not implemented.** An Accepted ADR authorises work; it does not perform it. Claiming a
 capability exists because its ADR was accepted is the same error as claiming a gate blocks because it is

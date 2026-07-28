@@ -1,7 +1,8 @@
 # MVP Scope — Options and Recommendation
 
-> **Purpose:** Analyse the candidate MVP scopes and recommend one. **Product decision, not an ADR** — awaiting
-> approval. Canonical MVP definition once approved: [`mvp.md`](mvp.md).
+> **Purpose:** Analyse the candidate MVP scopes and recommend one. **Product decision, not an ADR.**
+> **Decided 2026-07-28: modified Option A, cloud / platform engineering, Germany.** Canonical definition:
+> [`mvp.md`](mvp.md) — this document is kept for the reasoning and the rejected options.
 
 ## First: these are two separate decisions
 
@@ -137,12 +138,12 @@ Both alternatives are defensible with a stated reason, and neither is wrong:
 What I would not recommend is Option C, and the reason is structural rather than about effort: it produces
 ten shallow answers and a design that cannot be deepened.
 
-## Decision status
+## Decision status — all settled 2026-07-28
 
-- [ ] **Feature scope** — modified Option A, Option A as posed, eligibility-only, or Option B/C
-- [x] **Career track** — **software / IT**, decided 2026-07-28
-- [ ] **Narrow the track** to one node: software engineering · cloud / platform · IT support
-- [x] Germany as the launch destination (already in `mvp.md`)
+- [x] **Feature scope** — modified Option A
+- [x] **Career track family** — software / IT
+- [x] **Track node** — **cloud / platform engineering**
+- [x] **Launch destination** — Germany
 
 Once approved, `mvp.md` is updated to match and Phase 1 is unblocked — subject to the remaining
 architectural blockers in `.claude/context/decision-gate.md`.
