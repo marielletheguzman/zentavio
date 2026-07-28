@@ -9,7 +9,16 @@ additive (`.claude/skills/roadmap/SKILL.md`).
 ## The MVP question
 
 > **"Can I realistically work in Germany, and what would it take?"**
-> — asked by a Filipino professional in one career track.
+> — asked by a Filipino professional in **software / IT**.
+
+**Track decided: software / IT** (2026-07-28). Chosen on the criterion in
+[`mvp-scope-options.md`](mvp-scope-options.md): the largest Philippines→Germany demand whose recognition
+path is **not** licence-gated. Software and IT roles are not regulated professions, so they need no licence
+recognition — which means Phase 1 does not depend on the origin-side rules being sourced (task: ADR-0010
+follow-up).
+
+Nursing and regulated engineering remain Phase 3, not because they matter less — nursing is likely the
+largest real flow — but because serving them honestly requires recognition rules that do not exist yet.
 
 **Germany first** because it has the largest demand of the four launch markets, the most
 publicly-documented pathways, and the clearest tier-1 sources — so the hardest part of the product
@@ -79,15 +88,16 @@ Cut coverage — fewer tracks, fewer sources, manual ingest — before touching 
 - Docs match what was built; invariant tests pass (determinism, evidence, provenance, unknown).
 - Outcomes are being recorded.
 
-## Open decision
+## Open decisions
 
-Options, analysis, and a recommendation: [`mvp-scope-options.md`](mvp-scope-options.md).
+**1 — Feature scope.** Options and a recommendation in
+[`mvp-scope-options.md`](mvp-scope-options.md). The recommendation is a modified Option A: Career Profile +
+Skill Gap + Immigration & Sponsorship view, swapping résumé optimization for eligibility. Not yet confirmed.
 
-**Which career track?** Not chosen here — it is a product decision, not an engineering one. The criterion
-I would use: the track with the largest Philippines→Germany demand whose recognition path is *not*
-licence-gated, since licence-gated tracks are blocked by the origin-rule gap above. That points away from
-nursing for the MVP despite its demand, and toward something like software or IT infrastructure — but the
-call is yours.
+**2 — Which specific track inside software / IT.** "Software / IT" is a family, and the skill graph and
+`references/careers/<track>.md` need one concrete node: software engineering, cloud / platform
+engineering, and IT support are different career nodes with different requirement sets and different German
+demand. Needed before the graph is seeded.
 
 ## Related
 

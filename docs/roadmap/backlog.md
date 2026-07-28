@@ -14,11 +14,15 @@ Not features. Each one gates work that cannot start without it.
 
 | Item | Question served | Blocks |
 |---|---|---|
-| **ADR: origin-side immigration rules** | Does my licence transfer? | M5, and any verdict for regulated professions |
-| **Which MVP career track** | What should I do next? | Phase 1 — see `mvp.md` |
-| **ADR: graded evals in CI** | — engineering | the eval gate being truly blocking |
-| **`applications` / `practice_sessions` entity docs** | — engineering | the migrations that reference them |
-| **`ci` as a required status check** | — engineering | ADR-0005 being enforced rather than advisory |
+| **MVP feature scope** | What should I do next? | Phase 1 — see `mvp-scope-options.md` |
+| **Which node inside software / IT** | What could I do? | seeding the skill graph |
+| **Source origin-side authorities** | Does my licence transfer? | any verdict for a regulated profession (ADR-0010 is Accepted; the data is not sourced) |
+| **Observability backend** | — engineering | dashboards and alert routing (ADR-0008 deferred it) |
+| **`ci` as a required status check** | — engineering | ADR-0005 being enforced rather than advisory; needs one observed green run first |
+
+**Resolved since this list was written:** ADRs 0007–0011 are all Accepted, and the
+`applications` / `practice_sessions` entity documents exist. What remains of those decisions is
+implementation, tracked as follow-up in each ADR rather than as a blocker here.
 
 ## Near — inside the current phases
 

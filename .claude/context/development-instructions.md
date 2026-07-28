@@ -62,7 +62,7 @@ but **none of their follow-up work is done**. Current state and what remains:
 | Still blocked | Blocks |
 |---|---|
 | Origin-side immigration rules (ADR-0010, reserved) | any verdict for regulated professions |
-| MVP scope and career track | Phase 1 |
+| MVP feature scope, and which node inside software / IT | Phase 1 |
 | Observability backend | dashboards and alert routing |
 
 **3 — Build**, doc first where behaviour is being defined, then reconcile the doc with what was built.

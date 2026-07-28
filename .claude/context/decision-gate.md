@@ -50,7 +50,8 @@ entity document does not require the test runner. Writing a test does.
 | Decision | Blocks | Needs |
 |---|---|---|
 | Origin-side immigration rules | any verdict for a regulated profession | ADR-0010 (reserved, not drafted) |
-| MVP scope and career track | Phase 1 | product decision — `docs/roadmap/mvp-scope-options.md` |
+| MVP feature scope | Phase 1 | product decision — `docs/roadmap/mvp-scope-options.md` |
+| Which node inside software / IT | seeding the skill graph | product decision — track family decided |
 | Observability **backend** | dashboards and alert routing | follow-up ADR (ADR-0008 deferred it deliberately) |
 
 Where each is documented: `docs/development/testing.md` ·

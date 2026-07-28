@@ -77,9 +77,12 @@ Phase 0 substantially complete: documentation, boundary enforcement, CI, the eva
 application code yet, and none of the newly accepted follow-up work is done — no test runner installed,
 nothing instrumented, branch protection unconfigured.
 
-Outstanding before Phase 1: approve the MVP scope and career track
-([`mvp-scope-options.md`](mvp-scope-options.md)). Regulated professions additionally need the 0010
-decision.
+**MVP track decided: software / IT** — not licence-gated, so Phase 1 does not wait on origin-side
+recognition rules. Outstanding before Phase 1: the MVP feature scope, and narrowing software / IT to one
+concrete node ([`mvp-scope-options.md`](mvp-scope-options.md)).
+
+Regulated professions — nursing, engineering, teaching — are Phase 3: ADR-0010 is Accepted so the schema
+can express recognition, but no recognition rule is sourced yet.
 
 ## Related
 

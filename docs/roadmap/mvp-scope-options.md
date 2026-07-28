@@ -99,15 +99,20 @@ where they can be done properly.
 Résumé generation · interview prep · the other three destinations · a second career track · job aggregation
 at scale (seeded facts with real provenance are acceptable) · billing · prediction.
 
-### The track choice, still open
+### The track choice — decided: software / IT
 
-Separate from scope, and still yours. The criterion in `mvp.md`: largest Philippines→Germany demand whose
-recognition path is **not** licence-gated, because licence-gated tracks are blocked by the
-origin-jurisdiction gap.
+**Decided 2026-07-28: software / IT.** It satisfies the criterion below, and it means Phase 1 does not wait
+on origin-side recognition rules being sourced.
+
+Still to narrow: which concrete node inside that family — software engineering, cloud / platform, or IT
+support. The skill graph and `references/careers/<track>.md` need one, not a family.
+
+The criterion that produced the decision: largest Philippines→Germany demand whose recognition path is
+**not** licence-gated, because licence-gated tracks are blocked until ADR-0010's rules are ingested.
 
 | Candidate | Demand | Licence-gated? | Viable for MVP |
 |---|---|---|---|
-| Software / IT infrastructure | high | no | **yes** |
+| **Software / IT** | high | no | **CHOSEN** |
 | Nursing | very high | **yes** — licence recognition required | no, until the origin ADR |
 | Engineering (regulated disciplines) | high | **yes** in several disciplines | no, until the origin ADR |
 | Skilled trades | high | varies by trade | needs per-trade checking |
@@ -132,12 +137,12 @@ Both alternatives are defensible with a stated reason, and neither is wrong:
 What I would not recommend is Option C, and the reason is structural rather than about effort: it produces
 ten shallow answers and a design that cannot be deepened.
 
-## Decision required
+## Decision status
 
 - [ ] **Feature scope** — modified Option A, Option A as posed, eligibility-only, or Option B/C
-- [ ] **Career track** — software/IT recommended; nursing and regulated engineering blocked until the
-      origin-jurisdiction ADR
-- [ ] Confirm Germany as the launch destination (already in `mvp.md`)
+- [x] **Career track** — **software / IT**, decided 2026-07-28
+- [ ] **Narrow the track** to one node: software engineering · cloud / platform · IT support
+- [x] Germany as the launch destination (already in `mvp.md`)
 
 Once approved, `mvp.md` is updated to match and Phase 1 is unblocked — subject to the remaining
 architectural blockers in `.claude/context/decision-gate.md`.
