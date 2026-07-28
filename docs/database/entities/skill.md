@@ -160,7 +160,7 @@ moment someone typed it (`.claude/skills/ai-matching/SKILL.md`).
 ## Related
 
 - `docs/architecture/knowledge-engine.md` — the graphs and how edges are derived
-- `entities/job.md` (`job_posting_skills`), `entities/user.md` (`profile_skills`)
+- `job.md` (`job_posting_skills`), `user.md` (`profile_skills`)
 - `.claude/skills/career-intelligence/references/careers/_TEMPLATE.md` — where a track's skill set is
   modeled before it is seeded
 - `.claude/skills/learning-paths/SKILL.md` — the consumer of `requires`

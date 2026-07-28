@@ -71,7 +71,7 @@ reliability = f(validation pass rate, uptime, freshness accuracy, outcome feedba
 Recomputed per run window. The tier bounds the ceiling; observation sets the value — so a tier-2 source
 failing validation 30% of the time is treated as worse than its tier, and a source whose postings
 repeatedly turn out dead loses reliability through the outcome loop
-(`entities/outcome.md`).
+(`outcome.md`).
 
 It feeds reconciliation tie-breaks: equal tier, more recent, then more reliable.
 
@@ -124,7 +124,7 @@ CREATE INDEX idx_qr__source_created ON quarantined_records (source_id, created_a
 reject rate spikes has changed format — and this table is where that becomes visible before the data
 quietly degrades. Rejected records are never "fixed" by inventing a value.
 
-Retention: 6 months (`data-retention.md`) — long enough to spot a pattern, not forever.
+Retention: 6 months (`../data-retention.md`) — long enough to spot a pattern, not forever.
 
 ## `raw_payloads`
 
@@ -164,5 +164,5 @@ Safe to retain indefinitely: this is what a *source* published about a *job*, no
 
 - `docs/architecture/connectors.md` — the contract these rows describe
 - `.claude/skills/connectors/SKILL.md`, `.claude/skills/job-aggregation/SKILL.md`
-- `entities/job.md` (`job_posting_sources`), `data-retention.md`
+- `job.md` (`job_posting_sources`), `../data-retention.md`
 - ADR-0002

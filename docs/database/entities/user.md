@@ -213,11 +213,11 @@ path back to the individual and are not withdrawn.
 ## Retention
 
 Active-account lifetime, then erasure on request or after the inactivity window in
-`data-retention.md`. Resume documents are not retained at all beyond parsing.
+`../data-retention.md`. Resume documents are not retained at all beyond parsing.
 
 ## Related
 
 - `docs/architecture/privacy.md`, `docs/architecture/security.md`
-- `entities/outcome.md`, `entities/skill.md`, `entities/match.md`
+- `outcome.md`, `skill.md`, `match.md`
 - `docs/features/resume-parsing.md`, `docs/features/country-preferences.md`
 - `.claude/skills/database/SKILL.md`, `.claude/context/career-philosophy.md`

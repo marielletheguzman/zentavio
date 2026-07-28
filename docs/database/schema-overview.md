@@ -62,6 +62,12 @@ deleted on erasure and takes market intelligence with it.
 | `profile_skills` | skill per user with `evidenced` / `claimed` status and source span |
 | `user_country_preferences` | target markets, ranked |
 | `user_targets` | target careers, with the readiness they are pursuing |
+| `applications` | a person's application to a posting: submitted at, status, tracked stage |
+| `practice_sessions` | interview practice attempts, per theme, with evaluated strength |
+
+`applications` and `practice_sessions` have no entity document yet. They are referenced by
+`relationships.md`, `data-retention.md`, and `entities/outcome.md` (which carries an
+`application_id` foreign key), so their documents are owed before those migrations are written.
 
 ### Sources and postings — world facts
 

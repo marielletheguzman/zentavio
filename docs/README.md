@@ -63,11 +63,23 @@ Full rules: the `documentation` skill (`.claude/skills/documentation/SKILL.md`) 
 
 ## Current state
 
-The repository is a documentation-first skeleton. Most documents under `architecture/`,
-`features/`, `database/`, `prompts/`, `development/`, and `roadmap/` are still placeholders.
+The repository is a documentation-first skeleton — no application code yet, beyond the boundary
+enforcement in `eslint.config.mjs` and `ruff.toml`.
 
-Authored: `GLOSSARY.md` · `roadmap/vision.md` · `09_AI_SKILLS/AI_SKILLS.md` ·
-`architecture/decisions/` (README, template, and ADRs 0001–0004, all Accepted).
+| Area | Authored | Status |
+|---|---|---|
+| `architecture/` (incl. `decisions/`) | 18 / 18 | complete — ADRs 0001–0006 Accepted and binding |
+| `database/` | 14 / 14 | complete |
+| `prompts/` | 9 / 9 | complete |
+| `development/` | 2 / 11 | `conventions.md`, `ci-cd.md` |
+| `roadmap/` | 1 / 6 | `vision.md` |
+| `features/` | 0 / 11 | not started |
+| root | `GLOSSARY.md`, `09_AI_SKILLS/AI_SKILLS.md` | this file included |
 
-Filling a placeholder means writing what its purpose line declares. The four Accepted ADRs are
-binding on everything written afterward — read them before changing a boundary they cover.
+Filling a placeholder means writing what its purpose line declares — that line is the specification.
+The six Accepted ADRs are binding on everything written afterward; read them before changing a
+boundary they cover.
+
+Two documents describe things that are **specified but not built**, and say so in place: the
+prompt-eval gate in `prompts/evals.md` (no runner, no CI job yet) and the deployment section of
+`development/ci-cd.md`.

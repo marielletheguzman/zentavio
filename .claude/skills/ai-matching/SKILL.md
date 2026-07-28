@@ -30,6 +30,7 @@ delivery of suggestions (`recommendations`).
 | **Career Readiness Score** | closeness to a **target**, forward-looking | person × target |
 | **Opportunity Score** | attractiveness of a market/career | career × market |
 | **Resume Score** | quality of the **document** | document |
+| **Interview Readiness** | preparedness for **this process** | person × company/role — owned by `interviews` |
 
 Never compute one and label it another. `docs/GLOSSARY.md` is binding here — this is the most
 common source of confusion in the product.

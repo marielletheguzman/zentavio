@@ -9,13 +9,19 @@ review, and rules held by review decay.
 
 Formatting is not a matter of opinion here; it is delegated.
 
-| Language | Tool | Config |
-|---|---|---|
-| TypeScript, JSON, YAML, Markdown | ESLint (+ formatter) | `eslint.config.mjs` |
-| Python | Ruff (`ruff format`) | `ruff.toml` |
+| Language | Tool | Config | Enforced? |
+|---|---|---|---|
+| TypeScript (`.ts`, `.tsx`, `.mts`, `.cts`) | ESLint | `eslint.config.mjs` | **yes** — CI fails |
+| Python (`ai/` only) | Ruff (`ruff check`, `ruff format`) | `ruff.toml` | **yes** — CI fails |
+| Markdown, JSON, YAML | none yet | — | convention only, held by review |
+
+Markdown, JSON, and YAML are **not** currently linted or formatted by any tool: `eslint.config.mjs`
+matches TypeScript extensions only, and Ruff is scoped to `ai/` with Markdown excluded. The rules
+below still apply to them, but a reviewer is the only thing enforcing it. Adding a formatter for
+those file types is outstanding work, not a silent gap.
 
 - **Line length:** 100 characters. Applies to prose in Markdown too — long lines make diffs
-  unreadable.
+  unreadable. Enforced by tooling in TypeScript and Python; by convention elsewhere.
 - **Quotes:** single in TypeScript, double in Python (Ruff's default; consistency beats preference).
 - **Semicolons:** yes, in TypeScript.
 - **Indentation:** 2 spaces TypeScript, 4 Python.

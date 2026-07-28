@@ -140,7 +140,7 @@ readiness number with no remainder is a vanity metric
 ## Retention
 
 Person data by association. Deleted on erasure — cheaply, because everything here is recomputable
-(`entities/user.md`). Not retained after the account is erased, and not contributed to aggregates:
+(`user.md`). Not retained after the account is erased, and not contributed to aggregates:
 what feeds the learning loop is `outcomes`, not `matches`.
 
 ## Invariants
@@ -157,6 +157,6 @@ what feeds the learning loop is `outcomes`, not `matches`.
 ## Related
 
 - `.claude/skills/ai-matching/SKILL.md` — the output contract this table persists
-- `entities/user.md`, `entities/job.md`, `entities/outcome.md`
-- `docs/features/job-matching.md`, `docs/GLOSSARY.md` (the five distinct scores)
+- `user.md`, `job.md`, `outcome.md`
+- `docs/features/job-matching.md`, `docs/GLOSSARY.md` (the six distinct scores)
 - `docs/architecture/ai-services.md`

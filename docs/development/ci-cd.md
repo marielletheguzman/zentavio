@@ -57,15 +57,21 @@ check, so adding a job to `ci.yml` makes it blocking without touching repository
 
 ## Gates
 
-| Gate | When | Blocking |
-|---|---|---|
-| `ci` status check | every pull request | yes |
-| Prompt evals | any change to a prompt under `docs/prompts/` or `ai/` | yes — see `docs/prompts/evals.md` |
-| ADR present | any new dependency, boundary change, or contract change | review |
-| Docs updated | any change to documented behavior | review |
+| Gate | When | Blocking | Implemented |
+|---|---|---|---|
+| `ci` status check | every pull request | yes | **yes** — `.github/workflows/ci.yml` |
+| Prompt evals | any change to a prompt under `docs/prompts/` or `ai/` | yes, by policy | **no** — see below |
+| ADR present | any new dependency, boundary change, or contract change | review | review only |
+| Docs updated | any change to documented behavior | review | review only |
 
-A regression on a prompt eval's unknown-handling or injection cases blocks regardless of average
-score improvement. Those cases are what protect users from confident wrong answers.
+**The prompt-eval gate is specified but not yet wired.** `docs/prompts/evals.md` defines the policy,
+the required cases, and the regression rules, and the `pnpm eval` commands it describes do not exist
+yet — there is no eval runner, no eval job in `ci.yml`, and no prompt to evaluate, since `ai/` has no
+code. It is listed here because the policy is binding the moment the first prompt is written, not
+because CI currently enforces it. Building the runner is tracked as outstanding work below.
+
+Once wired: a regression on a prompt eval's unknown-handling or injection cases blocks regardless of
+average score improvement. Those cases are what protect users from confident wrong answers.
 
 ## Toolchain pinning
 
@@ -93,6 +99,9 @@ Python tooling is separate: `pip install -r requirements-dev.txt` once, then `ru
 
 ## Not yet built
 
+- **The prompt-eval runner and its CI job.** The policy in `docs/prompts/evals.md` is complete; the
+  `pnpm eval` script, the fixture loader, the grader, the baseline store, and the workflow job are
+  all unbuilt. Needed before the first prompt ships, not before the first service.
 - **Test and build jobs** — there is no application code yet. Test levels and what must never be
   mocked: `.claude/skills/testing/SKILL.md`.
 - **Path-filtered tasks** via Turborepo's task graph (ADR-0001 follow-up). Deliberately not applied

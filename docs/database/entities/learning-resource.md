@@ -145,7 +145,7 @@ which coverage to add.
 
 Indefinite for resources; not personal data. Retired and dead-link rows are kept so a historical path
 remains explicable. `learning_paths` and their steps are person data by association and are erased with
-the account (`data-retention.md`).
+the account (`../data-retention.md`).
 
 ## Invariants
 
@@ -162,5 +162,5 @@ the account (`data-retention.md`).
 
 - `.claude/skills/learning-paths/SKILL.md` — ordering, estimates, verification
 - `docs/features/learning-paths.md`
-- `entities/skill.md` (`requires` edges drive `position`), `entities/user.md`
+- `skill.md` (`requires` edges drive `position`), `user.md`
 - `.claude/context/knowledge-sources.md` — the tier-2 floor

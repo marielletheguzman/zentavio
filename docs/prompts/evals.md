@@ -5,6 +5,11 @@
 Evals are a **blocking CI gate**, not a quality report. No prompt change ships without one
 (`docs/development/ci-cd.md`).
 
+> **Status: policy defined, runner not built.** Everything below is binding from the moment the first
+> prompt exists, and none of it is automated yet — the `pnpm eval` commands, the grader, the baseline
+> store, and the CI job are unbuilt, because `ai/` has no code and therefore no prompt to evaluate.
+> Do not read the command examples as available today.
+
 They are separate from unit tests: unit tests use canned model responses to check the code around a
 prompt; evals check the prompt against a real model on a fixed dataset.
 
@@ -112,6 +117,8 @@ the same gate — a cheaper model that fails the unknown cases is not shippable 
 
 ## Running
 
+The intended interface, once the runner exists:
+
 ```bash
 pnpm eval <prompt-name>        # one prompt against its dataset
 pnpm eval --all                # everything, on CI
@@ -124,7 +131,9 @@ default test suite — that suite must stay fast enough to run on every save
 
 ## CI wiring
 
-Triggered when a change touches `ai/**/prompts/**`, `docs/prompts/**`, or the model routing config.
+**Not yet implemented** — no eval job exists in `.github/workflows/ci.yml`. The design, for when it is
+built: triggered when a change touches `ai/**/prompts/**`, `docs/prompts/**`, or the model routing
+config.
 
 - Non-skippable once triggered.
 - The delta report is posted to the pull request.

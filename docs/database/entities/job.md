@@ -159,7 +159,7 @@ history.
 ## Retention
 
 Indefinite. Not personal data. An application linking a person to a posting is person data and lives
-in its own table with its own retention (`data-retention.md`).
+in its own table with its own retention (`../data-retention.md`).
 
 ## Invariants
 
@@ -174,5 +174,5 @@ in its own table with its own retention (`data-retention.md`).
 
 - `docs/architecture/connectors.md` — where `dedup_key` and `normalize` are specified
 - `docs/architecture/data-flow.md` — the eight-stage lifecycle
-- `entities/connector-source.md`, `entities/skill.md`, `entities/match.md`
+- `connector-source.md`, `skill.md`, `match.md`
 - `.claude/skills/database/SKILL.md`, `.claude/skills/job-aggregation/SKILL.md`

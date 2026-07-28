@@ -115,7 +115,7 @@ sensitive and least controllable column in the schema.
 
 ## Retention and erasure
 
-Indefinite, **detached** rather than deleted (`data-retention.md`):
+Indefinite, **detached** rather than deleted (`../data-retention.md`):
 
 ```text
 erasure → user_id = NULL, application_id = NULL, anonymized_at = now()
@@ -141,6 +141,6 @@ recovered or backfilled.
 ## Related
 
 - `docs/architecture/knowledge-engine.md` — the feedback loop
-- `docs/architecture/privacy.md`, `data-retention.md` — the detachment rule
+- `docs/architecture/privacy.md`, `../data-retention.md` — the detachment rule
 - `docs/features/outcomes-learning.md`
-- `entities/user.md` (erasure order), `entities/match.md` (what `predicted_score` came from)
+- `user.md` (erasure order), `match.md` (what `predicted_score` came from)

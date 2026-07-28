@@ -250,7 +250,7 @@ co-occurrence edges carrying `basis`, `support`, and `computeVersion`.
 
 **Purpose** — define how a Zentavio score is computed, what it carries, and how it stays honest.
 
-**Responsibilities** — keep the five scores distinct; emit score + confidence + evidence +
+**Responsibilities** — keep the six scores distinct; emit score + confidence + evidence +
 versions; compute the number in code, never in the model; weight requirements from knowledge,
 not constants; apply constraints by name; degrade confidence to the weakest input; calibrate
 against outcomes.
