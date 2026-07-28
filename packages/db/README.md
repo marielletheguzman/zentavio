@@ -10,10 +10,12 @@ No ORM and no schema DSL: `docs/database/entities/*.md` is the schema specificat
 | Part | Status |
 |---|---|
 | Migration runner (`src/migrations/runner.ts`) | **built**, 22 unit tests |
+| `Database` interface (`src/schema.ts`) | **built** for `requirements`, `immigration_pathways`, `schema_migrations` |
+| Client (`src/client.ts`) | **built** — connecting and compile-only factories |
+| `requirements` repository | **built**, 21 tests |
 | Migration `.sql` files | **not written** — see below |
-| `Database` interface for Kysely | not written |
-| Repositories | not written |
-| Schema-drift test | not written |
+| Schema-drift test | **not written** — needs a database |
+| Repositories for the other tables | not written |
 
 ## Why the migrations are not written yet
 
@@ -42,6 +44,27 @@ schema's most important rules into the repository as untested assertions.
 **To unblock:** start Docker Desktop. Then the migrations can be written from the entity documents,
 applied to a real database, and each constraint verified by attempting to violate it — which also
 gives the Vitest `integration` project its first real tests (ADR-0007 follow-up).
+
+## How the repository is verified without a database
+
+Kysely compiles SQL without connecting, so `createCompileOnlyDb()` makes two things assertable:
+
+- **the guards reject what they should**, before any round trip
+- **the SQL we intend to send**, including that values are bound as parameters rather than
+  interpolated — the difference between a query and an injection
+
+What it does **not** prove is that PostgreSQL accepts that SQL, or that a `CHECK` constraint rejects
+what it should. `docs/development/testing.md` forbids mocking PostgreSQL for exactly this reason: a
+compiled query is evidence about our code, never about the database.
+
+## A date is not an instant
+
+`schema.ts` types `date` columns as ISO `YYYY-MM-DD` strings, and `createDb` configures `pg` to
+return DATE unparsed. `pg` otherwise parses DATE into a `Date` at local midnight, so `2026-01-01`
+read in a negative-offset timezone formats as `2025-12-31`.
+
+`effective_from` and `effective_to` decide whether a requirement applied on a given day, and that
+day decides an eligibility verdict. An off-by-one is a wrong answer, not a display quirk.
 
 ## The runner
 

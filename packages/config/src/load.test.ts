@@ -171,10 +171,25 @@ describe('secrets', () => {
 });
 
 describe('the Zentavio schema', () => {
-  it('loads with no environment set, because every key has a default today', () => {
-    const config = load(zentavioSchema, {});
+  it('fails with no environment set, because the database url has no default', () => {
+    // Deliberate: a plausible-but-wrong default is how migrations reach the wrong database.
+    expect(() => load(zentavioSchema, {})).toThrow(/ZENTAVIO_DATABASE_URL/);
+  });
+
+  it('loads once the database url is supplied', () => {
+    const config = load(zentavioSchema, { ZENTAVIO_DATABASE_URL: 'postgresql://localhost/z' });
     expect(config.ollamaHost).toBe('http://127.0.0.1:11434');
-    expect(config.evalModel).toBe('qwen2.5:7b-instruct');
+    expect(config.databaseMaxConnections).toBe(10);
+  });
+
+  it('never leaks the database url into an error', () => {
+    // It carries credentials, so it is marked secret.
+    try {
+      load(zentavioSchema, { ZENTAVIO_DATABASE_URL: '', ZENTAVIO_DATABASE_MAX_CONNECTIONS: 'x' });
+      expect.unreachable('should have thrown');
+    } catch (error) {
+      expect((error as Error).message).not.toContain('postgresql://');
+    }
   });
 
   it('pins the defaults that the Python side duplicates', () => {
@@ -182,12 +197,18 @@ describe('the Zentavio schema', () => {
     // stdlib-only and cannot import from here. This test pins the TypeScript values; it cannot
     // see the Python ones. The actual drift check is
     // ai/shared/evals/tests/test_config_parity.py, which parses this schema and compares.
-    const config = load(zentavioSchema, {});
+    const config = load(zentavioSchema, { ZENTAVIO_DATABASE_URL: 'postgresql://localhost/z' });
     expect(config.ollamaHost).toBe('http://127.0.0.1:11434');
     expect(config.evalModel).toBe('qwen2.5:7b-instruct');
   });
 
   it('exposes every key for generating .env.example', () => {
-    expect(envKeys(zentavioSchema)).toEqual(['OLLAMA_HOST', 'ZENTAVIO_EVAL_MODEL']);
+    expect(envKeys(zentavioSchema)).toEqual([
+      'OLLAMA_HOST',
+      'ZENTAVIO_DATABASE_CONNECTION_TIMEOUT_MS',
+      'ZENTAVIO_DATABASE_MAX_CONNECTIONS',
+      'ZENTAVIO_DATABASE_URL',
+      'ZENTAVIO_EVAL_MODEL',
+    ]);
   });
 });

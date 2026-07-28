@@ -34,11 +34,47 @@ export const evalSchema = {
 } as const satisfies Schema;
 
 /**
+ * PostgreSQL, added with `createDb` in `@zentavio/db` (ADR-0012's follow-up says these arrive in
+ * the same change as the first connection code, not before).
+ *
+ * `databaseUrl` has **no default**: a wrong-but-plausible default is how a developer runs
+ * migrations against the wrong database. Absent means the process fails to start and says which
+ * variable is missing.
+ */
+export const databaseSchema = {
+  databaseUrl: {
+    env: 'ZENTAVIO_DATABASE_URL',
+    type: 'string',
+    minLength: 1,
+    secret: true,
+    description: 'PostgreSQL connection string (contains credentials)',
+  },
+  databaseMaxConnections: {
+    env: 'ZENTAVIO_DATABASE_MAX_CONNECTIONS',
+    type: 'number',
+    integer: true,
+    min: 1,
+    max: 100,
+    default: 10,
+    description: 'Pool size per process',
+  },
+  databaseConnectionTimeoutMs: {
+    env: 'ZENTAVIO_DATABASE_CONNECTION_TIMEOUT_MS',
+    type: 'number',
+    integer: true,
+    min: 100,
+    default: 5000,
+    description: 'Fail fast rather than queueing behind an exhausted pool',
+  },
+} as const satisfies Schema;
+
+/**
  * The whole schema. One object so `envKeys` can generate the complete `.env.example`, and so a
  * reader cannot forget a section exists.
  */
 export const zentavioSchema = {
   ...evalSchema,
+  ...databaseSchema,
 } as const satisfies Schema;
 
 export type ZentavioConfig = {

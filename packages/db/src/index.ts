@@ -5,10 +5,11 @@
  * migrations are plain `.sql` files applied by the runner here — no ORM and no schema DSL, because
  * `docs/database/entities/*.md` is the schema specification.
  *
- * **What exists so far:** the migration runner and its tests. The migration SQL, the `Database`
- * interface, and the repositories are not written yet — see the README for why, and what unblocks
- * them.
+ * **What is not here yet:** the migration `.sql` files, because no PostgreSQL was reachable to
+ * execute them and this schema's meaning lives largely in `CHECK` constraints. See the README.
  */
+
+export { createCompileOnlyDb, createDb, type DbConnectionOptions } from './client.js';
 
 export {
   MigrationError,
@@ -21,3 +22,24 @@ export {
   type MigrationFile,
   type PlanEntry,
 } from './migrations/runner.js';
+
+export {
+  RequirementInvariantError,
+  insertRequirement,
+  requirementsAsOf,
+  staleRequirements,
+  supersedeRequirement,
+  validateRequirement,
+  type NewRequirement,
+} from './repositories/requirements.js';
+
+export type {
+  Database,
+  EvaluationColumn,
+  ImmigrationPathwaysTable,
+  ImposedByColumn,
+  RequirementDomainColumn,
+  RequirementKindColumn,
+  RequirementsTable,
+  SchemaMigrationsTable,
+} from './schema.js';

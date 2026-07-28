@@ -26,4 +26,4 @@ export type {
   UrlSpec,
   ValidationIssue,
 } from './schema.js';
-export { evalSchema, zentavioSchema, type ZentavioConfig } from './zentavio.js';
+export { databaseSchema, evalSchema, zentavioSchema, type ZentavioConfig } from './zentavio.js';
