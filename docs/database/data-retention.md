@@ -28,7 +28,11 @@ in the schedule below is unfinished (`docs/architecture/privacy.md`).
 | `user_immigration_facts` | while active; on request, immediately | hard delete |
 | `user_consents` | 6 years after revocation | **retained** — the record that consent existed is itself the legal basis |
 | `applications` | while active | hard delete |
+| `application_events` | with its application | cascade |
 | `practice_sessions` | 12 months, then aggregate signal only | hard delete |
+| `user_certifications` | while active; expired retained with lowered confidence | hard delete |
+| `user_ai_preferences` | while active | hard delete |
+| `user_documents` | while active; individually user-deletable | hard delete |
 
 The uploaded **resume document** is not in this table because it is not retained: it is parsed and the
 file discarded (`docs/architecture/data-flow.md`). The parsed profile is the asset; the document is a
@@ -88,7 +92,11 @@ So the rule is: **the aggregate survives, the link does not.**
 
 `job_postings`, `companies`, `skills`, `skill_edges`, `careers`, `career_edges`, `career_skills`,
 `immigration_pathways`, `immigration_rules`, `salary_bands`, `market_signals`, `learning_resources`,
-`connector_sources` — **indefinite, and versioned rather than overwritten**.
+`connector_sources`, `employer_sponsorship_facts` — **indefinite, and versioned rather than
+overwritten**.
+
+Derived world data — `employer_migration_scores` — is recomputable and superseded rather than retained as
+history.
 
 Two reasons beyond storage being cheap:
 

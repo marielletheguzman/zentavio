@@ -62,12 +62,17 @@ deleted on erasure and takes market intelligence with it.
 | `profile_skills` | skill per user with `evidenced` / `claimed` status and source span |
 | `user_country_preferences` | target markets, ranked |
 | `user_targets` | target careers, with the readiness they are pursuing |
-| `applications` | a person's application to a posting: submitted at, status, tracked stage |
+| `user_consents` | append-only consent facts, per purpose and policy version |
+| `user_immigration_facts` | citizenship, residence, permits — isolated and encrypted |
+| `applications`, `application_events` | a person's application, and its stage timeline |
 | `practice_sessions` | interview practice attempts, per theme, with evaluated strength |
+| `user_certifications` | credentials with issuer, expiry, and verification level |
+| `user_ai_preferences` | assistant behaviour: tone, detail, notifications, memory on/off |
+| `user_documents` | generated résumé and cover-letter versions |
 
-`applications` and `practice_sessions` have no entity document yet. They are referenced by
-`relationships.md`, `data-retention.md`, and `entities/outcome.md` (which carries an
-`application_id` foreign key), so their documents are owed before those migrations are written.
+Documented in `entities/application.md` and `entities/user-memory.md`. The memory tables are
+deliberately few: most of "AI memory" is a view over the person data already listed here, not a second
+store (`.claude/context/ai-memory.md`).
 
 ### Sources and postings — world facts
 
@@ -81,12 +86,13 @@ deleted on erasure and takes market intelligence with it.
 | `job_posting_sources` | which sources contributed to one reconciled posting |
 | `job_posting_skills` | requirement per posting, with weight |
 | `companies`, `company_aliases` | company registry and alias resolution |
+| `employer_sponsorship_facts` | per-employer, per-country migration support, four-valued and versioned |
 
 ### Graphs — world facts
 
 | Table | Holds |
 |---|---|
-| `skills` | canonical skill, with aliases |
+| `skills`, `skill_aliases` | canonical skill and its alias resolution |
 | `skill_edges` | typed weighted edges: `requires`, `adjacent_to`, `transfers_to`, `subsumes`, `tooling_of` |
 | `careers` | career track |
 | `career_edges` | `adjacent_to`, `transition_path` (with observed frequency), `seniority_of` |
@@ -100,7 +106,7 @@ deleted on erasure and takes market intelligence with it.
 | `immigration_rules` | one requirement per row, versioned and dated |
 | `salary_bands` | compensation by career, seniority, market, with `asOf` |
 | `market_signals` | demand, hiring difficulty, trend, per market |
-| `learning_resources` | course, doc, book, lab, certification |
+| `learning_resources`, `learning_resource_skills` | resources, and which skills each covers |
 | `interview_reports` | anonymized experiential reports, tier 4 |
 
 ### Derived
@@ -108,6 +114,7 @@ deleted on erasure and takes market intelligence with it.
 | Table | Holds |
 |---|---|
 | `matches` | person × posting score with `evidence` and `scorer_version` |
+| `employer_migration_scores` | per-employer migration support score, with how many factors were known |
 | `readiness_scores` | person × target readiness with its remainder |
 | `skill_gaps` | computed gap per person and target |
 | `learning_paths`, `learning_path_steps` | generated plan and its ordered steps |

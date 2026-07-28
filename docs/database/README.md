@@ -63,6 +63,9 @@ Detail in `schema-overview.md`. Confusing the classes is the expensive mistake h
 | [`immigration-rule.md`](entities/immigration-rule.md) | world | `immigration_rules`, `immigration_pathways` |
 | [`learning-resource.md`](entities/learning-resource.md) | world | resources, skill coverage, path steps |
 | [`connector-source.md`](entities/connector-source.md) | world | sources, runs, quarantine, raw payloads |
+| [`application.md`](entities/application.md) | person | `applications`, `application_events`, `practice_sessions` |
+| [`user-memory.md`](entities/user-memory.md) | person | certifications, AI preferences, generated documents |
+| [`employer-sponsorship.md`](entities/employer-sponsorship.md) | world + derived | sponsorship facts and the employer migration score |
 | [`match.md`](entities/match.md) | derived | `matches` and its sibling score tables |
 | [`outcome.md`](entities/outcome.md) | special | `outcomes` — detached on erasure, never deleted |
 
