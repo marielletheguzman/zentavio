@@ -1,6 +1,7 @@
 # ADR 0012: Database access layer and migration runner
 
-- **Status:** **Proposed** — awaiting acceptance
+- **Status:** Accepted
+- **Accepted:** 2026-07-28
 - **Date:** 2026-07-28
 - **Deciders:** project lead
 - **Affects:** `packages/db`, every service, `knowledge-engine/*`, `infra/ci`, `tests/integration`
@@ -90,8 +91,8 @@ which is the pattern `decision-gate.md` forbids.
 
 ## Decision
 
-**Recommended: Option B — `pg` as the driver, Kysely for typed queries, plain `.sql` migration files,
-and a small hand-written migration runner.**
+**Option B — `pg` as the driver, Kysely for typed queries, plain `.sql` migration files, and a small
+hand-written migration runner.**
 
 The runner is deliberately ours rather than Kysely's migrator: perhaps sixty lines that apply
 ordered `.sql` files inside a transaction, record them in a `schema_migrations` table, and refuse to

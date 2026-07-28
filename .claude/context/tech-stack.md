@@ -20,6 +20,9 @@
 
 ### Data
 - **PostgreSQL** — system of record. Schema and migrations in `packages/db`.
+- **`pg`** — the driver; **Kysely** — typed queries. Plain `.sql` migrations, applied by our own
+  runner so `migrations.md`'s CONCURRENTLY and NOT VALID rules stay expressible (ADR-0012).
+  **No ORM and no schema DSL:** the entity documents are the schema.
 - **Redis** — cache, rate limiting, and the event transport between services
 - **Qdrant** — vector store for embeddings (`knowledge-engine/vector-store`)
 

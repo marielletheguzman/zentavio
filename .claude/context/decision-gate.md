@@ -50,13 +50,12 @@ entity document does not require the test runner. Writing a test does.
 | Decision | Blocks | Needs |
 |---|---|---|
 | Origin-side authorities per domain | any verdict for a regulated profession | **research, not a decision** — ADR-0010 is Accepted and the schema exists; no recognition rule is sourced |
-| Database access layer | `packages/db` repositories, and therefore every read and write | **ADR-0012 Proposed** — awaiting acceptance |
 | Observability **backend** | dashboards and alert routing | follow-up ADR (ADR-0008 deferred it deliberately) |
 
 Where each is documented: `docs/architecture/immigration.md` (origin-side data) ·
 `docs/development/observability.md` (backend).
 
-**Eleven ADRs Accepted, 0012 Proposed. The MVP is settled** — modified Option A, cloud / platform engineering,
+**All twelve ADRs are Accepted and the MVP is settled** — modified Option A, cloud / platform engineering,
 Germany. What remains is implementation and research, not decisions.
 
 **Accepted is not implemented.** An Accepted ADR authorises work; it does not perform it. Claiming a

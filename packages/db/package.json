@@ -1,0 +1,13 @@
+{
+  "name": "@zentavio/db",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Schema, migrations, and repositories. PostgreSQL via pg + Kysely (ADR-0012).",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}
