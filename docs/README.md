@@ -71,10 +71,12 @@ enforcement in `eslint.config.mjs` and `ruff.toml`.
 | `architecture/` (incl. `decisions/`) | 18 / 18 | complete — ADRs 0001–0006 Accepted and binding |
 | `database/` | 14 / 14 | complete |
 | `prompts/` | 9 / 9 | complete |
-| `development/` | 2 / 11 | `conventions.md`, `ci-cd.md` |
+| `development/` | 11 / 11 | complete |
 | `roadmap/` | 6 / 6 | complete |
 | `features/` | 11 / 11 | complete |
 | root | `GLOSSARY.md`, `09_AI_SKILLS/AI_SKILLS.md` | this file included |
+
+**Every document in `docs/` is authored — no placeholders remain.**
 
 Filling a placeholder means writing what its purpose line declares — that line is the specification.
 The six Accepted ADRs are binding on everything written afterward; read them before changing a
