@@ -33,6 +33,10 @@ Docs are the detailed source of truth and are part of every change.
 | `knowledge-sources.md` | Adding a source, or assigning confidence to a fact |
 | `feature-philosophy.md` | Justifying a feature's existence |
 | `decisions.md` | Before changing a technology, boundary, or contract |
+| `ai-memory.md` | Anything touching persistent user memory |
+| `ai-session.md` | Anything touching conversation-scoped context |
+| `ai-memory-policy.md` | Privacy, retention, precedence — binding on all memory reads and writes |
+| `memory-manager.md` | Routing between memory layers, and the agent-to-service mapping |
 
 ## Rules for this directory
 

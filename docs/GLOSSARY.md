@@ -104,6 +104,65 @@ Quality and completeness of the resume document as a document — parseability, 
 clarity.
 **Not:** a judgment of the person. **Not:** Career Score.
 
+### Migration-Friendly Employer Score
+How much migration support a specific **employer** demonstrably provides — sponsorship, relocation,
+immigration assistance — computed only from known factors and reported with how many were known.
+**Not:** a probability of visa approval. **Not:** a company quality or culture score. **Not:** a
+statement about permanent residency or citizenship, which are destination properties and never an
+employer's.
+
+### Immigration Feasibility
+Whether a specific opportunity is realistically actionable for a specific person: sponsorship plus visa
+eligibility plus recognition. Reported alongside a Job Match Score, never merged into it.
+**Not:** Job Match Score. **Not:** a prediction of approval.
+
+---
+
+## Sponsorship and pathways
+
+The terminology in this section is **binding on UI copy, prompts, and code**. The distinction it protects:
+**employers sponsor, governments grant.**
+
+### Visa sponsorship / work permit sponsorship
+An employer's willingness and legal ability to sponsor an application.
+**Not:** the permit itself. **Not:** a guarantee of approval.
+
+### Relocation support
+Employer-provided assistance with moving — cost, logistics, temporary housing.
+**Not:** immigration assistance. **Not:** a visa.
+
+### Immigration assistance
+Employer-provided help navigating the process — legal counsel, document handling.
+**Not:** sponsorship. **Not:** a decision.
+
+### Permanent residency pathway
+A route to residency defined by the **destination government**, with its own conditions and clock.
+**Not:** anything an employer provides or accelerates by choice.
+
+### Citizenship pathway
+A route to citizenship defined by the **destination government**.
+**Not:** "free citizenship". **Not:** an employer benefit. Never stated as offered by a company.
+
+### Professional recognition
+Whether a qualification or licence earned at origin is accepted at destination, decided by the
+destination's competent authority.
+**Not:** visa eligibility — a country can be visa-accessible while a licence is not transferable.
+
+### Sponsorship status
+The four-valued state of what is known about a posting: `stated_available`, `stated_unavailable`,
+`inferred_likely`, `unknown`.
+**Not:** a boolean. **`unknown` is never treated as `stated_unavailable`** — silence is not a refusal.
+
+## Banned phrasings
+
+| Never | Because |
+|---|---|
+| "free citizenship" | employers do not grant citizenship; governments do |
+| "guaranteed visa" / "approval likely" | we do not predict government decisions |
+| "employer provides permanent residency" | conflates employer support with a state decision |
+| "no sponsorship" for an `unknown` posting | asserts a fact nobody stated |
+| "visa-ready" / "migration guaranteed" | implies a verdict we cannot give |
+
 ---
 
 ## Career and learning

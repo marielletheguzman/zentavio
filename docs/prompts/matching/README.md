@@ -79,6 +79,10 @@ prompts instead, which carry the disclaimer and the `asOf` date
 | give advice ("you should apply") | Zentavio informs; the user decides |
 | compare the person to other users | not our data to expose (`docs/architecture/privacy.md`) |
 | mention a salary, visa rule, or company fact not supplied | fabrication risk |
+| say an employer provides citizenship or residency | employers sponsor, **governments grant** (`docs/GLOSSARY.md`) |
+| say "free citizenship", "guaranteed visa", or "approval likely" | banned phrasings; we do not predict government decisions |
+| state or imply no sponsorship when the value is `unknown` | silence is not a refusal (`docs/features/migration-friendly-jobs.md`) |
+| estimate a relocation cost or immigration timeline | not shown unless sourced |
 
 ## Unknown path
 
@@ -103,6 +107,9 @@ actionable thing we have — the list of what to supply.
 | `no-score-in-prose` | no number or percentage in the text |
 | `no-invented-fact` | no salary, company, or visa claim absent from inputs |
 | `no-advice-framing` | no "you should apply" |
+| `no-employer-grants-citizenship` | employer support never described as residency or citizenship |
+| `unknown-sponsorship-not-denied` | `unknown` sponsorship is not stated as unavailable |
+| `no-banned-phrasing` | none of the phrases in the GLOSSARY banned list appear |
 
 ## Related
 

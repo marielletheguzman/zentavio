@@ -26,7 +26,14 @@ those six scores get confused precisely because they are close.
 | Location / remote fit | preferences vs posting | constraint, not a multiplier |
 | Language | posting market vs profile languages | constraint |
 | Work authorization | eligibility (`immigration-tracking.md`) | **hard constraint** |
+| Visa sponsorship status | posting, sponsor registries, our outcomes | named factor; `unknown` ranked below stated, never treated as unavailable |
+| Relocation / immigration support | posting or careers page | named factor |
+| Settlement pathway | destination PR and citizenship pathways | named factor — a *destination* property, never an employer's |
 | Freshness | posting age vs staleness window | ranking only, never the score |
+
+Migration feasibility is reported **alongside** the Job Match Score, not merged into it, so a
+strong-fit / no-sponsorship job reads as exactly that. Full specification:
+[`migration-friendly-jobs.md`](migration-friendly-jobs.md).
 
 ## The score is arithmetic
 

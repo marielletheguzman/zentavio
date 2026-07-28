@@ -29,6 +29,8 @@ follow as data, not code.
 | Recognition | **status surfaced, not decided** — see out of scope |
 | Viability | eligibility × employability, with the binding constraint named |
 | Remote | as a comparison target, since it is often the better answer |
+| Migration-friendly filtering | Germany only: sponsorship status (four-valued), relocation support, pathway visibility (`docs/features/migration-friendly-jobs.md`) |
+| AI memory | long-term profile memory with source, status, and confidence; session memory discarded (`.claude/context/ai-memory.md`) |
 | Dashboard | one surface answering "what should I do next?" with evidence reachable |
 | Outcomes | recorded from day one, even though nothing reads them yet |
 

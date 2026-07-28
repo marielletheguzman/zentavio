@@ -13,6 +13,7 @@ Every feature answers a user question. A feature that answers none is not a Zent
 | [skill-gap-analysis](skill-gap-analysis.md) | What am I missing, and what matters most? | specified |
 | [learning-paths](learning-paths.md) | What should I learn, in what order, how long? | specified |
 | [job-matching](job-matching.md) | Which of these jobs is worth my time? | specified |
+| [migration-friendly-jobs](migration-friendly-jobs.md) | Which jobs can I actually take, and will the employer help? | specified |
 | [country-preferences](country-preferences.md) | Where should I go? | specified |
 | [immigration-tracking](immigration-tracking.md) | Am I eligible to work there? | specified |
 | [interview-prep](interview-prep.md) | What will they ask, and am I ready? | specified |
