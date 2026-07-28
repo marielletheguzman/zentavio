@@ -1,0 +1,14 @@
+# Workspace membership for the TypeScript half of the monorepo (ADR-0001).
+#
+# `ai/` is deliberately absent — it is Python (ADR-0003) with its own toolchain.
+# `connectors/*/*` is two levels deep because a connector is `<kind>/<id>`,
+# which is also how eslint.config.mjs matches the `connector` element type.
+packages:
+  - 'apps/*'
+  - 'services/*'
+  - 'packages/*'
+  - 'knowledge-engine/*'
+  - 'connectors/core'
+  - 'connectors/*/*'
+  - 'tools/*'
+  - 'tests/*'

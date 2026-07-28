@@ -1,0 +1,20 @@
+{
+  // Root config. Exists so the TypeScript-aware import resolver in eslint.config.mjs has a
+  // project to read; per-workspace configs extend tsconfig.base.json.
+  //
+  // Only root tooling is included — there is no application code yet. `allowJs` with
+  // `checkJs: false` keeps the project non-empty (tsc errors TS18003 on a config with no
+  // inputs) without type-checking the .mjs scripts.
+  //
+  // ADR-0005 follow-up: convert this to project references once workspaces have their own
+  // tsconfigs, so the strongest layer rules are enforced by the compiler as well as by lint.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": false,
+    "types": ["node"]
+  },
+  "include": ["tools/**/*.ts", "tools/**/*.mjs", "*.ts", "*.mts", "*.mjs"],
+  "exclude": ["node_modules", "dist", "**/.next", "ai", ".claude"]
+}

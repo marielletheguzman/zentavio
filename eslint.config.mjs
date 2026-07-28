@@ -1,0 +1,244 @@
+// Zentavio boundary enforcement — ADR-0005.
+//
+// This file is the executable form of the layer model in
+// `.claude/skills/architecture/SKILL.md`. The `element-types` rule below and the layer
+// table in that skill must state the same thing; if they diverge, one of them is a bug.
+//
+//   Connectors (plugins) ─► services/ingestion ─► Knowledge Engine
+//                                                       │
+//   apps/* ─► services/api-gateway ─► services/* ────────┤
+//                                     ai/* (Python) ─────┘
+//                        PostgreSQL · Redis · Qdrant  (substrate, not a layer)
+//
+// Dependencies point inward only:
+//   apps → services → knowledge-engine → packages/types
+//   packages/* import none of apps, services, connectors.
+//
+// NOTE: `ai/` is Python (ADR-0003) and is NOT covered here. See `ruff.toml`.
+
+import tseslint from 'typescript-eslint';
+import boundaries from 'eslint-plugin-boundaries';
+import importX from 'eslint-plugin-import-x';
+
+/**
+ * The Qdrant client lives behind one port (ADR-0004). Applied everywhere except
+ * `knowledge-engine/vector-store`, which is the port.
+ */
+const qdrantOutsidePort = {
+  group: ['@qdrant/*', 'qdrant-client'],
+  message:
+    'The Qdrant client is imported only inside knowledge-engine/vector-store, behind the port — ADR-0004.',
+};
+
+/** Packages that may never be imported anywhere in the TypeScript tree. */
+const bannedRuntimeDeps = [
+  {
+    // ADR-0003: no LLM call outside `ai/`, and `ai/` is Python — so no LLM SDK
+    // belongs in this tree at all. This is what keeps the model replaceable.
+    group: ['ollama', 'openai', '@anthropic-ai/*', 'langchain', '@langchain/*', '@ai-sdk/*', 'ai'],
+    message:
+      'No LLM SDK in the TypeScript tree. All model calls live in ai/ (Python) behind an HTTP contract — ADR-0003.',
+  },
+  {
+    // .claude/context/tech-stack.md: "Deliberately not in the stack".
+    group: [
+      'express', 'koa', 'fastify', 'hapi',
+      'graphql', '@apollo/*', 'type-graphql',
+      'kafkajs', 'bullmq', 'amqplib',
+      'mongoose', 'mongodb',
+      'redux', '@reduxjs/*', 'zustand', 'mobx', 'jotai', 'recoil',
+      'bootstrap', 'bulma', '@mui/*', 'antd', 'chakra-ui', '@chakra-ui/*',
+    ],
+    message:
+      'Not in the Zentavio stack. A new framework, datastore, queue, or UI library needs an ADR first — .claude/context/tech-stack.md.',
+  },
+];
+
+export default tseslint.config(
+  {
+    ignores: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/.next/**',
+      '**/coverage/**',
+      'ai/**', // Python — see ruff.toml
+    ],
+  },
+
+  // ───────────────────────────────────────────────────────────── base
+  ...tseslint.configs.recommended,
+  {
+    files: ['**/*.{ts,tsx,mts,cts}'],
+    plugins: { boundaries, 'import-x': importX },
+    settings: {
+      'import-x/resolver': { typescript: true, node: true },
+      // eslint-plugin-boundaries resolves dependencies through the LEGACY `import/resolver`
+      // key, not `import-x/resolver`. Without this, extensionless TypeScript imports fail to
+      // resolve and every cross-layer import degrades to `boundaries/no-unknown` instead of
+      // the layer-specific rule — the rules still fail the build, but the error stops
+      // explaining which boundary was crossed. Keep both keys.
+      'import/resolver': { typescript: true, node: true },
+
+      // Element types are matched IN ORDER — first match wins. More specific
+      // patterns must come first (connector-core before connector, package-types
+      // before package).
+      'boundaries/elements': [
+        { type: 'app',             pattern: 'apps/*',            mode: 'folder', capture: ['name'] },
+        { type: 'service',         pattern: 'services/*',        mode: 'folder', capture: ['name'] },
+        { type: 'knowledge',       pattern: 'knowledge-engine/*', mode: 'folder', capture: ['name'] },
+        { type: 'connector-core',  pattern: 'connectors/core',   mode: 'folder' },
+        { type: 'connector',       pattern: 'connectors/*/*',    mode: 'folder', capture: ['kind', 'id'] },
+        { type: 'package-types',   pattern: 'packages/types',    mode: 'folder' },
+        { type: 'package',         pattern: 'packages/*',        mode: 'folder', capture: ['name'] },
+        { type: 'tool',            pattern: 'tools/*',           mode: 'folder', capture: ['name'] },
+        { type: 'test',            pattern: 'tests/*',           mode: 'folder', capture: ['name'] },
+      ],
+    },
+
+    rules: {
+      // ── the layer model ───────────────────────────────────────────────────
+      'boundaries/element-types': ['error', {
+        default: 'disallow',
+        message: '${file.type} must not import ${dependency.type}. Dependencies point inward only — ADR-0001, .claude/skills/architecture/SKILL.md.',
+        // NOTE: a `message` on an `allow` entry is never shown — boundaries only uses
+        // custom text from `disallow` entries. So the `allow` entries below are the
+        // wall, and the `disallow` entries that follow exist to make the important
+        // violations explain themselves and cite the ADR they break.
+        rules: [
+          { from: ['app'],            allow: ['service', 'package', 'package-types'] },
+          // `connector-core` only: the registry is the sole way in. ADR-0002.
+          { from: ['service'],        allow: ['knowledge', 'connector-core', 'package', 'package-types'] },
+          { from: ['knowledge'],      allow: ['knowledge', 'package', 'package-types'] },
+          { from: ['connector-core'], allow: ['connector', 'package', 'package-types'] },
+          {
+            from: ['connector'],
+            allow: ['connector-core', 'package-types', ['package', { name: 'config' }], ['package', { name: 'logger' }]],
+          },
+          { from: ['package-types'],  allow: [] },
+          { from: ['package'],        allow: ['package', 'package-types'] },
+          { from: ['tool'],           allow: ['package', 'package-types'] },
+          // Tests may reach anywhere; that is their job.
+          { from: ['test'], allow: ['app', 'service', 'knowledge', 'connector-core', 'connector', 'package', 'package-types'] },
+
+          // ── explaining disallows ──────────────────────────────────────────
+          {
+            from: ['app'],
+            disallow: ['knowledge', 'connector', 'connector-core'],
+            message:
+              'A frontend talks to services/api-gateway over HTTP and shares types. No direct knowledge-engine, connector, ai/, or database access — .claude/skills/frontend/SKILL.md.',
+          },
+          {
+            from: ['service'],
+            disallow: ['connector'],
+            message:
+              'Import the connector registry (connectors/core), never a connector. A service that names a source has broken the plugin boundary — ADR-0002.',
+          },
+          {
+            from: ['service'],
+            disallow: ['service', 'app'],
+            message:
+              'Services communicate over HTTP through the gateway or by a versioned event — never by importing each other. No shared mutable state — .claude/skills/backend-service/SKILL.md.',
+          },
+          {
+            from: ['knowledge'],
+            disallow: ['service', 'app', 'connector'],
+            message:
+              'knowledge-engine/* must run with services/ and apps/ deleted. It holds facts; it never calls the layers that consume them — .claude/skills/knowledge-engine/SKILL.md.',
+          },
+          {
+            from: ['connector'],
+            disallow: ['connector'],
+            message:
+              'No connector may import another connector. Shared source logic means the contract is missing something — ADR-0002.',
+          },
+          {
+            from: ['connector'],
+            disallow: ['service', 'knowledge', 'app'],
+            message:
+              'A connector returns data and persists nothing. It never reaches into a service, the knowledge engine, or an app — .claude/skills/connectors/SKILL.md.',
+          },
+          {
+            from: ['package'],
+            disallow: ['service', 'app', 'connector', 'connector-core', 'knowledge'],
+            message:
+              'packages/* must not import from apps/, services/, connectors/, or knowledge-engine/. A shared library that knows its consumers is not shared — ADR-0001.',
+          },
+          {
+            from: ['package-types'],
+            disallow: ['app', 'service', 'knowledge', 'connector', 'connector-core', 'package'],
+            message:
+              'packages/types is the innermost layer. It declares contracts and imports nothing else in this repository.',
+          },
+        ],
+      }],
+
+      // A TypeScript file matching no element type is unpoliced. ADR-0005 names
+      // this as the most likely way boundary enforcement decays, so it is an error.
+      'boundaries/no-unknown-files': 'error',
+      'boundaries/no-unknown': 'error',
+
+      // ── non-graph rules ───────────────────────────────────────────────────
+      'no-restricted-imports': ['error', { patterns: bannedRuntimeDeps }],
+
+      // Every score, fact, and event shape is a contract. `any` at a boundary is
+      // how contracts rot — see .claude/skills/backend-service/SKILL.md.
+      '@typescript-eslint/no-explicit-any': 'error',
+
+      // ── import hygiene ────────────────────────────────────────────────────
+      'import-x/no-cycle': ['error', { maxDepth: Infinity }],
+      'import-x/no-self-import': 'error',
+      'import-x/no-useless-path-segments': 'error',
+    },
+  },
+
+  // ── packages/config is the only reader of the environment ────────────────
+  // .claude/skills/backend-service/SKILL.md: "No process.env outside packages/config."
+  {
+    files: ['**/*.{ts,tsx,mts,cts}'],
+    ignores: ['packages/config/**'],
+    rules: {
+      'no-restricted-syntax': ['error', {
+        selector: 'MemberExpression[object.name="process"][property.name="env"]',
+        message: 'Read configuration through packages/config. Untyped, undocumented env access is banned — .claude/skills/backend-service/SKILL.md.',
+      }],
+    },
+  },
+
+  // ── the Qdrant client lives behind one port ──────────────────────────────
+  // ADR-0004: this restriction is what makes the "reversal cost is low" claim true.
+  {
+    files: ['**/*.{ts,tsx,mts,cts}'],
+    ignores: ['knowledge-engine/vector-store/**'],
+    rules: {
+      'no-restricted-imports': ['error', { patterns: [...bannedRuntimeDeps, qdrantOutsidePort] }],
+    },
+  },
+
+  // ── the gateway is the frontend's only server ────────────────────────────
+  {
+    files: ['apps/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [
+          ...bannedRuntimeDeps,
+          qdrantOutsidePort,
+          {
+            group: ['@zentavio/db', '@zentavio/db/*', 'pg', 'postgres', 'ioredis', 'redis'],
+            message:
+              'No direct database or cache access from a frontend. Fetch through services/api-gateway — .claude/skills/frontend/SKILL.md.',
+          },
+        ],
+      }],
+    },
+  },
+
+  // ── config files and scripts are exempt from the element model ───────────
+  {
+    files: ['*.{js,mjs,cjs,ts}', 'tools/**/*', '**/*.config.{js,mjs,ts}'],
+    rules: {
+      'boundaries/no-unknown-files': 'off',
+      'boundaries/element-types': 'off',
+      'no-restricted-syntax': 'off',
+    },
+  },
+);

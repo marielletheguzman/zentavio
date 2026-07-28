@@ -1,0 +1,26 @@
+{
+  "name": "zentavio",
+  "private": true,
+  "description": "AI career intelligence platform. Not a job board.",
+  "packageManager": "pnpm@9.12.3",
+  "engines": {
+    "node": ">=20.11.0"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "lint:py": "ruff check ai/",
+    "typecheck": "tsc --noEmit",
+    "lint:all": "eslint . && tsc --noEmit && ruff check ai/ && node tools/scripts/audit-boundary-disables.mjs",
+    "boundaries:audit": "node tools/scripts/audit-boundary-disables.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "eslint": "^9.15.0",
+    "eslint-import-resolver-typescript": "^3.6.3",
+    "eslint-plugin-boundaries": "^5.0.1",
+    "eslint-plugin-import-x": "^4.4.2",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.15.0"
+  }
+}

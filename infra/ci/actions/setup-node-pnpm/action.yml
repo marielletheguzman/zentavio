@@ -1,0 +1,39 @@
+name: Setup Node and pnpm
+description: >
+  Checks out nothing and installs nothing on its own — sets up Node, activates the pnpm version
+  pinned by package.json's packageManager field via corepack, and restores the pnpm store cache.
+  Used by every TypeScript job so the toolchain is defined in one place.
+
+inputs:
+  node-version:
+    description: Node version. Must satisfy the engines field in package.json (>=20.11.0).
+    required: false
+    default: '22'
+  install:
+    description: Whether to run `pnpm install --frozen-lockfile`.
+    required: false
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    # corepack activates the exact pnpm version from package.json's `packageManager`
+    # field, so CI and local runs cannot drift. This is why no third-party pnpm
+    # setup action is needed.
+    - name: Enable corepack
+      shell: bash
+      run: corepack enable
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: pnpm
+
+    - name: Install dependencies
+      if: inputs.install == 'true'
+      shell: bash
+      # --frozen-lockfile fails when pnpm-lock.yaml does not match package.json.
+      # A CI run that silently resolves different versions than a developer's is not
+      # a verification of anything.
+      run: pnpm install --frozen-lockfile

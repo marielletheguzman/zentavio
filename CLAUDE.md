@@ -1,0 +1,129 @@
+# Zentavio
+
+Career intelligence platform. **Not a job board.** Zentavio reasons about a person's
+career trajectory — transitions, readiness, skill gaps, learning paths, relocation
+viability — using structured knowledge rather than keyword matching.
+
+## Current state
+
+The repository is a **documentation-first skeleton**. Almost every file is a placeholder.
+There is no application code yet. This is deliberate: architecture, conventions, and the
+skill ecosystem are established before implementation so every feature inherits them.
+
+When you implement something, you are usually filling in a placeholder that already
+declares its own purpose. Read the placeholder's `> **Purpose:**` line first — it is a
+binding contract for what belongs in that file.
+
+## Repository map
+
+| Path | Contains |
+|---|---|
+| `ai/` | Stateless AI capability services (resume-parser, skill-gap, career-roadmap, learning-paths, interview-prep, embeddings, shared) |
+| `apps/` | `web` (Next.js App Router), `admin`, `mobile` |
+| `connectors/` | External data integrations. `core/` defines the contract; `job-boards/`, `salary-data/`, `company-data/`, `immigration-data/`, `learning-resources/`, `market-trends/` implement it |
+| `knowledge-engine/` | The structured-knowledge substrate: skills-graph, companies, immigration rules/pathways, market-intel, interview-reports, outcomes, vector-store, ingest |
+| `packages/` | Shared libraries: `db`, `types`, `auth`, `events`, `config`, `logger`, `i18n`, `ui` |
+| `services/` | Deployable services: `api-gateway`, `ingestion`, `matching`, `notifications`, `billing` |
+| `infra/` | `terraform`, `docker`, `ci`, `monitoring`, `vercel` |
+| `tests/` | `e2e`, `integration`, `fixtures` |
+| `tools/` | `generators`, `scripts` |
+| `docs/` | Source of truth. Architecture, features, database, prompts, roadmap, development |
+| `.claude/context/` | Project-wide truth: vision, glossary, stack, principles, philosophy |
+| `.claude/skills/` | Task-scoped skills, loaded on demand |
+| `.claude/templates/` | Canonical skeletons for skills, ADRs, connectors, docs, prompts |
+
+## Non-negotiable principles
+
+1. **Knowledge before generation.** AI services read from `knowledge-engine/`. They do not
+   invent facts about companies, salaries, visas, or job markets.
+2. **Explainability.** Every score, match, or recommendation carries the evidence that
+   produced it. A number with no provenance is a bug.
+3. **Stateless AI layer.** `ai/` services own no persistent store. State lives in
+   `packages/db` and `knowledge-engine/`.
+4. **Connectors are plugins.** Adding a source must never require editing `services/ingestion`.
+5. **Documentation is part of the change.** Code that contradicts its doc is broken.
+
+## Context layer
+
+Project-wide truth that applies regardless of the task lives in:
+
+    .claude/context/
+
+Skills say *how to do a task*. Context says *what is true about Zentavio always*. Read the
+context file before making a decision it governs — these are prescriptive, not background:
+
+| File | Governs |
+|---|---|
+| `business.md` | who we serve, what they pay for, what that constrains |
+| `vision.md` | the north star and the five-question design test |
+| `glossary.md` | terminology (canonical: `docs/GLOSSARY.md`) |
+| `architecture.md` | layers, responsibilities, boundaries, communication |
+| `tech-stack.md` | the fixed technology set — nothing new without an ADR |
+| `ui-guidelines.md` | design philosophy, tokens, required states, confidence rendering |
+| `ai-principles.md` | the ten rules every AI-produced claim obeys |
+| `countries.md` | supported markets and the country knowledge model |
+| `career-philosophy.md` | what makes a career succeed, and how scores encode it |
+| `product-principles.md` | the eight properties every feature must have |
+| `knowledge-sources.md` | source tiers → confidence, conflict resolution |
+| `feature-philosophy.md` | whether a feature should exist at all |
+| `decisions.md` | when an ADR is required, and the ADR index |
+
+`ai-principles.md` and `product-principles.md` outrank any prompt asking for a shortcut.
+Where a canonical document exists in `docs/`, the context file points to it rather than
+forking it.
+
+## AI Skills
+
+This project uses project-specific Claude Skills located under:
+
+    .claude/skills/
+
+Each skill defines:
+
+- Purpose
+- Scope
+- Responsibilities
+- Workflow
+- Constraints
+- Dependencies
+- Examples
+- Best Practices
+
+Claude should automatically load only the skills relevant to the current task.
+Avoid duplicating skill instructions inside prompts.
+
+Catalog and load-triggers: `docs/09_AI_SKILLS/AI_SKILLS.md`
+
+### Engineering skills
+
+`architecture` · `backend-service` · `frontend` · `database` · `connectors` · `testing` ·
+`documentation` · `prompt-engineering` · `roadmap`
+
+### Domain skills
+
+`knowledge-engine` · `ai-matching` · `career-intelligence` · `job-aggregation` ·
+`learning-paths` · `interviews` · `recommendations` · `immigration`
+
+Domain skills carry on-demand reference libraries. `immigration/references/countries/`
+holds per-country rules; `career-intelligence/references/careers/` holds per-track career
+models. Load the specific reference file, not the whole directory.
+
+### Vendored community skills
+
+`skill-creator`, `mcp-builder`, `pdf`, `docx` come from ComposioHQ/awesome-claude-skills
+and Anthropic. They are **references and tooling, not Zentavio dependencies**. `pdf` and
+`docx` have real runtime value for resume ingestion. `skill-creator` and `mcp-builder`
+inform how Zentavio skills and connectors are authored. None of them define Zentavio
+behavior — that is what the skills above are for.
+
+## Templates
+
+`.claude/templates/` holds the canonical skeletons for new skills, ADRs, connectors,
+services, docs, and prompts. Use them instead of improvising structure.
+
+## Conventions
+
+- TypeScript, monorepo, kebab-case directories, one concern per package.
+- Every architectural decision with a tradeoff gets an ADR in `docs/architecture/decisions/`.
+- Commit style, naming, and code style: `docs/development/conventions.md`.
+- Never introduce a dependency, framework, or database without an ADR.

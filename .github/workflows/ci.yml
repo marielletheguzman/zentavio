@@ -1,0 +1,97 @@
+name: CI
+
+# Boundary enforcement is only real if it runs on every change (ADR-0005). This
+# workflow is the "non-skippable lint job" that ADR's Compliance section names.
+#
+# Workflow files must live in .github/workflows/ — GitHub does not read them from
+# anywhere else. The reusable pieces live in infra/ci/actions/, which is what
+# `infra/ci` is for. See infra/ci/README.md and docs/development/ci-cd.md.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A superseded run proves nothing. Cancel it and keep the queue short.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+# Least privilege: nothing in this workflow writes to the repository.
+permissions:
+  contents: read
+
+jobs:
+  # ── TypeScript: layers, contracts, banned dependencies ──────────────────────
+  typescript:
+    name: Lint and typecheck (TypeScript)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./infra/ci/actions/setup-node-pnpm
+        with:
+          node-version: '22'
+
+      # eslint.config.mjs is the executable form of the layer model in
+      # .claude/skills/architecture/SKILL.md. This step is what makes ADR-0001's
+      # "boundaries are conventional" accepted cost survivable.
+      - name: ESLint (layer boundaries, banned imports, process.env)
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      # eslint-plugin-boundaries can be silenced with an inline disable comment.
+      # That hole is audited explicitly rather than trusted.
+      - name: Audit suppressed boundary rules
+        run: node tools/scripts/audit-boundary-disables.mjs
+
+  # ── Python: ai/ statelessness ───────────────────────────────────────────────
+  # ESLint cannot see ai/ (ADR-0003 makes it Python), so the rules that keep the
+  # AI layer stateless live in ruff.toml and run as their own job. A separate job
+  # means a separate, legible failure signal.
+  python:
+    name: Lint (Python, ai/)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          # Matches target-version in ruff.toml.
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install Python tooling
+        # Pinned in requirements-dev.txt — a different Ruff version is a different
+        # rule set, which would make the ai/ bans a coincidence rather than a rule.
+        run: pip install -r requirements-dev.txt
+
+      - name: Ruff (statelessness bans, lint)
+        run: ruff check ai/
+
+      - name: Ruff (format check)
+        run: ruff format --check ai/
+
+  # ── One required status check ───────────────────────────────────────────────
+  # Branch protection points at this job alone, so adding a job above does not
+  # require editing branch protection to make it blocking.
+  ci:
+    name: CI
+    if: always()
+    needs: [typescript, python]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify all checks passed
+        run: |
+          echo "typescript: ${{ needs.typescript.result }}"
+          echo "python:     ${{ needs.python.result }}"
+          if [ "${{ needs.typescript.result }}" != "success" ] || [ "${{ needs.python.result }}" != "success" ]; then
+            echo "::error::One or more CI jobs failed. A boundary rule, type, or lint check did not pass."
+            exit 1
+          fi

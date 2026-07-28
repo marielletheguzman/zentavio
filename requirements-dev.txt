@@ -1,0 +1,11 @@
+# Python tooling for the `ai/` half of the monorepo (ADR-0003, ADR-0005).
+#
+# Runtime dependencies for individual AI services live with those services, not here.
+# This file is only what is needed to lint and format the Python tree:
+#
+#   pip install -r requirements-dev.txt
+#   ruff check ai/          # or: pnpm lint:py
+#
+# Pinned so CI and local runs enforce the same rules — a different Ruff version means a
+# different rule set, which means the boundary bans in ruff.toml stop being a guarantee.
+ruff==0.16.0

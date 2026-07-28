@@ -1,0 +1,25 @@
+# Normalize line endings. The repository stores LF; Windows checkouts may use CRLF
+# locally, but nothing commits CRLF — CI runs on Ubuntu and mixed endings turn every
+# touched file into a whole-file diff.
+* text=auto eol=lf
+
+# Shell scripts and anything executed in a container must be LF regardless of platform.
+*.sh   text eol=lf
+*.mjs  text eol=lf
+*.py   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+
+# Lockfiles: generated, LF, and not worth reviewing line by line.
+pnpm-lock.yaml text eol=lf linguist-generated=true
+
+# Binary — never touch, never diff.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary
+*.docx binary
+*.woff  binary
+*.woff2 binary

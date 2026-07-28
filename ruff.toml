@@ -1,0 +1,66 @@
+# Ruff configuration for the Python half of the monorepo — `ai/` only (ADR-0003).
+#
+# ESLint cannot see this tree (ADR-0005), so the rules that keep `ai/` honest live
+# here. The important ones are the banned imports at the bottom: they enforce
+# "the AI layer is stateless and owns no store" as a build failure rather than a
+# review comment.
+
+target-version = "py312"
+line-length = 100
+src = ["ai"]
+
+# Ruff >=0.14 lints and formats Python inside Markdown code blocks. Zentavio's docs are
+# source of truth and their examples are written deliberately — a formatter rewriting a
+# code sample inside a document is a doc change nobody reviewed. Python files only.
+extend-exclude = ["*.md"]
+
+[lint]
+select = [
+  "E", "W",      # pycodestyle
+  "F",           # pyflakes
+  "I",           # isort
+  "N",           # pep8-naming
+  "UP",          # pyupgrade
+  "B",           # bugbear
+  "ASYNC",       # async correctness — every ai/ service is async
+  "S",           # bandit (security)
+  "T20",         # no print()
+  "TID",         # tidy imports (banned-api below)
+  "RET", "SIM",  # returns, simplification
+  "PTH",         # pathlib over os.path
+  "PL",          # pylint subset
+  "RUF",
+]
+
+ignore = [
+  "PLR0913",  # many arguments — scoring functions legitimately take several factors
+  "S101",     # assert — allowed in tests, narrowed below
+]
+
+[lint.flake8-tidy-imports]
+# Relative imports beyond the current module are how layer rules get sidestepped.
+ban-relative-imports = "parents"
+
+# ── ai/ is stateless: it owns no persistent store ────────────────────────────
+# CLAUDE.md principle 3 and ADR-0003. State lives in packages/db and
+# knowledge-engine/. An AI service that opens a database connection has stopped
+# being replaceable and has started being a source of truth.
+[lint.flake8-tidy-imports.banned-api]
+"sqlalchemy".msg          = "ai/ is stateless — it owns no tables. Read facts from knowledge-engine over HTTP. ADR-0003, CLAUDE.md principle 3."
+"psycopg".msg             = "ai/ is stateless — no direct database access. ADR-0003."
+"psycopg2".msg            = "ai/ is stateless — no direct database access. ADR-0003."
+"asyncpg".msg             = "ai/ is stateless — no direct database access. ADR-0003."
+"alembic".msg             = "Migrations live in packages/db, not in an AI service. ADR-0003."
+"redis".msg               = "ai/ owns no cache of record. If a result must persist, it belongs to a service. ADR-0003."
+"qdrant_client".msg       = "The vector store is reached through knowledge-engine/vector-store, never directly. ADR-0004."
+"boto3".msg               = "No direct cloud SDK use in an AI service — it implies state or credentials that ai/ should not hold."
+
+[lint.per-file-ignores]
+"ai/**/tests/**" = ["S101", "PLR2004"]
+"**/conftest.py" = ["S101"]
+
+[lint.isort]
+known-first-party = ["ai"]
+
+[format]
+quote-style = "double"

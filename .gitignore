@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Build output
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Tool caches
+.turbo/
+.eslintcache
+.ruff_cache/
+.pytest_cache/
+coverage/
+*.log
+
+# Environment — configuration is read through packages/config, and secrets never
+# enter the repository (.claude/context/tech-stack.md, docs/architecture/privacy.md)
+.env
+.env.*
+!.env.example
+
+# Editors / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
