@@ -8,6 +8,7 @@
 |---|---|
 | [`vision.md`](vision.md) | any design decision — users, destinations, and the five-question design test |
 | [`mvp.md`](mvp.md) | scoping the first slice, or arguing about what to cut |
+| [`mvp-scope-options.md`](mvp-scope-options.md) | deciding the MVP feature scope and career track — awaiting approval |
 | [`phases.md`](phases.md) | planning what comes next, and its entry/exit criteria |
 | [`milestones.md`](milestones.md) | checking whether something is actually done |
 | [`backlog.md`](backlog.md) | proposing an item, or looking for what was already rejected |
@@ -72,9 +73,13 @@ be made early rather than when the schema is full.
 
 ## Current state
 
-Phase 0 substantially complete: documentation, ADRs 0001–0006, boundary enforcement, CI, the eval harness.
-No application code yet. Outstanding before Phase 1: the MVP career-track choice, `ci` as a required
-status check, and the origin-jurisdiction ADR if regulated professions are wanted early.
+Phase 0 substantially complete: documentation, boundary enforcement, CI, the eval harness. **ADRs
+0001–0006 Accepted; 0007, 0008, 0009, and 0011 Proposed and awaiting review; 0010 reserved for the
+origin-side immigration rule model.** No application code yet.
+
+Outstanding before Phase 1: accept the four Proposed ADRs, approve the MVP scope and career track
+([`mvp-scope-options.md`](mvp-scope-options.md)), and configure `ci` as a required status check. Regulated
+professions additionally need the 0010 decision.
 
 ## Related
 

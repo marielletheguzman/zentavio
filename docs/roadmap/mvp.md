@@ -81,6 +81,8 @@ Cut coverage — fewer tracks, fewer sources, manual ingest — before touching 
 
 ## Open decision
 
+Options, analysis, and a recommendation: [`mvp-scope-options.md`](mvp-scope-options.md).
+
 **Which career track?** Not chosen here — it is a product decision, not an engineering one. The criterion
 I would use: the track with the largest Philippines→Germany demand whose recognition path is *not*
 licence-gated, since licence-gated tracks are blocked by the origin-rule gap above. That points away from

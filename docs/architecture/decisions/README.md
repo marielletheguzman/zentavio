@@ -23,8 +23,14 @@ already ruled out and how the rule is enforced.
 | [0007](0007-test-strategy.md) | Vitest + pytest; unit/integration split | **Proposed** | 2026-07-28 |
 | [0008](0008-observability.md) | OpenTelemetry instrumentation, backend deferred | **Proposed** | 2026-07-28 |
 | [0009](0009-ai-evaluation.md) | Required delta report now, self-hosted runner later | **Proposed** | 2026-07-28 |
+| 0010 | *reserved* — origin-side immigration rule model | not drafted | — |
+| [0011](0011-ci-required-checks.md) | Require the `ci` check on `main` | **Proposed** | 2026-07-28 |
 
-**Proposed ADRs are not binding.** 0007–0009 are drafted for review and carry a recommendation; nothing
+**0010 is reserved, not missing.** It is held for the origin-side immigration rule model, which is drafted
+separately because it changes the schema and gates regulated professions. Numbers are never reused, so the
+slot stays open rather than being filled by the next ADR written.
+
+**Proposed ADRs are not binding.** 0007–0009 and 0011 are drafted for review and carry a recommendation; nothing
 depends on them until they are Accepted. Implementation they would unblock stays blocked
 (`.claude/context/decision-gate.md`).
 
