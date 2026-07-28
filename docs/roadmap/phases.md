@@ -72,7 +72,8 @@ Philippines→Europe flows and are blocked until now.
 **Entry:** the origin-jurisdiction ADR Accepted (`docs/architecture/immigration.md`), because the rule
 model cannot express origin-imposed requirements before that.
 
-**Contents:** `jurisdiction_role` or equivalent; origin-side rules ingested — overseas employment
+**Contents:** the `requirements` generalization from ADR-0010 (`domain`, `imposed_by`, `authority`);
+origin-side rules ingested — overseas employment
 regulation, licence recognition, credential evaluation, document authentication; evaluation gathering both
 sides for one verdict; recognition named as the binding constraint where it is.
 
