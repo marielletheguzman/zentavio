@@ -55,6 +55,7 @@ context file before making a decision it governs — these are prescriptive, not
 | File | Governs |
 |---|---|
 | **`development-instructions.md`** | **execution rules — read before starting any task** |
+| **`decision-gate.md`** | **when to stop and report BLOCKED, and how to verify a claim** |
 | `business.md` | who we serve, what they pay for, what that constrains |
 | `vision.md` | the north star and the five-question design test |
 | `glossary.md` | terminology (canonical: `docs/GLOSSARY.md`) |

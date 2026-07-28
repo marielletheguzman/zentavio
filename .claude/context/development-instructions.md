@@ -48,8 +48,12 @@ document about not referencing missing files should not do it:
 architecture, the current limitations, the related ADRs, and the dependencies. The documentation is the
 source of truth; assume nothing exists unless a document says it does.
 
-**2 — Blockers.** Check whether the change depends on an undecided question. **Do not bypass an unresolved
-architectural decision** — implement around it and say what is blocked, or resolve it with an ADR first.
+**2 — Blockers.** Check whether the change depends on an undecided question. If it does, **stop and report
+`BLOCKED`** — do not implement around it, and do not resolve it by picking something convenient. Full
+protocol, including the report format: [`decision-gate.md`](decision-gate.md).
+
+Work genuinely independent of the blocked decision may continue. Writing an entity document does not need
+the test runner; writing a test does.
 
 Current blockers, and what each one stops:
 
@@ -64,7 +68,8 @@ Current blockers, and what each one stops:
 
 **3 — Build**, doc first where behaviour is being defined, then reconcile the doc with what was built.
 
-**4 — Verify.** `pnpm lint:all`. Report what the output actually showed.
+**4 — Verify.** `pnpm lint:all`. Report what the output actually showed, in the four-part format from
+[`decision-gate.md`](decision-gate.md): completed · verified · **not verified** · blocked.
 
 ## Output requirements
 
