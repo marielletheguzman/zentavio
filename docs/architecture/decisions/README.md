@@ -20,6 +20,13 @@ already ruled out and how the rule is enforced.
 | [0004](0004-vector-store-choice.md) | Qdrant behind a swappable port | Accepted | 2026-07-28 |
 | [0005](0005-boundary-enforcement.md) | Boundary enforcement via ESLint + eslint-plugin-boundaries | Accepted | 2026-07-28 |
 | [0006](0006-python-dependency-toolchain.md) | uv workspace for Python dependencies in `ai/` | Accepted | 2026-07-28 |
+| [0007](0007-test-strategy.md) | Vitest + pytest; unit/integration split | **Proposed** | 2026-07-28 |
+| [0008](0008-observability.md) | OpenTelemetry instrumentation, backend deferred | **Proposed** | 2026-07-28 |
+| [0009](0009-ai-evaluation.md) | Required delta report now, self-hosted runner later | **Proposed** | 2026-07-28 |
+
+**Proposed ADRs are not binding.** 0007–0009 are drafted for review and carry a recommendation; nothing
+depends on them until they are Accepted. Implementation they would unblock stays blocked
+(`.claude/context/decision-gate.md`).
 
 0001–0004 define the boundaries every skill and context file assumes: one repository, sources as
 plugins, a polyglot contract at the `ai/` boundary, and a vector store that is an index rather than
