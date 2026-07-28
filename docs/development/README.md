@@ -46,16 +46,24 @@ environment. So most of these documents describe the contract the first implemen
 one it already follows. Each says so where it applies — if you find one that reads as though something
 exists when it does not, that is a bug worth fixing immediately.
 
-## Open decisions blocking implementation
+## Decisions: settled, and still open
+
+**Settled** — ADRs Accepted 2026-07-28. The decision is binding; **the follow-up work is not done.**
+
+| Decision | Next action |
+|---|---|
+| ADR-0007 Vitest + pytest | install it — no test runner is present |
+| ADR-0008 OpenTelemetry, backend deferred | instrument — nothing is instrumented |
+| ADR-0009 eval delta report as a review artifact | write the `promptVersion` check |
+| ADR-0011 require the `ci` check | observe a green run, then configure branch protection |
+
+**Still open:**
 
 | Decision | Blocks |
 |---|---|
-| Test runner (needs an ADR) | the first test |
-| Observability stack (needs an ADR) | the first instrumented service |
-| Graded evals in CI (needs a model host) | the eval gate being fully blocking |
-| Origin-side immigration rules (needs an ADR) | any verdict for regulated professions |
-| MVP career track (product decision) | Phase 1 |
-| `ci` as a required status check | ADR-0005 being enforced rather than advisory |
+| Origin-side immigration rules (ADR-0010, reserved) | any verdict for regulated professions |
+| MVP scope and career track | Phase 1 — `../roadmap/mvp-scope-options.md` |
+| Observability backend | dashboards and alert routing |
 
 ## Related
 

@@ -60,14 +60,24 @@ present, and a revert is a decision that can be re-made calmly.
 
 A revert commit says what was reverted **and why** — otherwise someone re-lands the same change next week.
 
-## Current gap
+## Required checks — decided, not yet configured
 
-**`ci` is not yet a required status check on `main`**, so a red run does not physically block a merge. The
-rules above hold by convention until that is configured, which makes them exactly as strong as everyone's
-attention — the thing ADR-0005 exists to avoid.
+**ADR-0011 (Accepted)** specifies branch protection on `main`:
 
-Configure it at Settings → Branches → rule for `main` → require the `ci` status check. Tracked as
-outstanding work.
+- require a pull request before merging
+- require the status check named **`ci`**
+- require branches to be up to date
+- no force pushes, no deletions
+- **no administrator exemption**
+- squash merge only
+
+**Not configured yet**, so a red run still does not physically block a merge and the rules above hold by
+convention. ADR-0011 carries a precondition: **one green CI run must be observed first**, because requiring
+a check that has never passed would block all work on an unverified assumption.
+
+Configure at Settings → Branches → rule for `main`. Then verify by opening a pull request with a
+deliberately failing check and confirming the merge is refused — a setting nobody has tested is a claim,
+not a control.
 
 ## Related
 

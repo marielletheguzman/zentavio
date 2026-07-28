@@ -55,16 +55,15 @@ protocol, including the report format: [`decision-gate.md`](decision-gate.md).
 Work genuinely independent of the blocked decision may continue. Writing an entity document does not need
 the test runner; writing a test does.
 
-Current blockers, and what each one stops:
+ADRs 0007, 0008, 0009, and 0011 were Accepted on 2026-07-28, so those four decisions are settled —
+but **none of their follow-up work is done**. Current state and what remains:
+[`decision-gate.md`](decision-gate.md).
 
-| Blocked decision | Blocks | Where |
-|---|---|---|
-| Test runner | the first test | `docs/development/testing.md` |
-| Observability stack | the first instrumented service | `docs/development/observability.md` |
-| Origin-side immigration rules | any verdict for regulated professions | `docs/architecture/immigration.md` |
-| Graded evals in CI | the eval gate being fully blocking | `docs/prompts/evals.md` |
-| MVP career track | Phase 1 | `docs/roadmap/mvp.md` |
-| `ci` as a required check | ADR-0005 being enforced rather than advisory | `docs/development/branching.md` |
+| Still blocked | Blocks |
+|---|---|
+| Origin-side immigration rules (ADR-0010, reserved) | any verdict for regulated professions |
+| MVP scope and career track | Phase 1 |
+| Observability backend | dashboards and alert routing |
 
 **3 — Build**, doc first where behaviour is being defined, then reconcile the doc with what was built.
 
@@ -124,16 +123,16 @@ performance metrics.
 |---|---|
 | personal identifiers · résumé contents · any private user information | `agent_name` · `execution_time` · `request_type` · `success_status` · `correlation_id` |
 
-Detail: [`docs/development/observability.md`](../../docs/development/observability.md). **The stack itself
-is undecided** — see blockers.
+Detail: [`docs/development/observability.md`](../../docs/development/observability.md). **OpenTelemetry is
+the instrumentation layer (ADR-0008); nothing is instrumented yet**, and the backend remains deferred.
 
 ## Testing
 
 `pnpm lint:all` before merging. New features need unit tests, integration tests where applicable, and
 their documentation updated in the same change.
 
-**No test framework is installed yet** and no application tests exist, because there is no application
-code. Choosing the runner is a blocker, not an oversight
+**Vitest and pytest are the chosen runners (ADR-0007), and neither is installed yet** — there are no
+application tests because there is no application code
 ([`docs/development/testing.md`](../../docs/development/testing.md)).
 
 ## Documentation

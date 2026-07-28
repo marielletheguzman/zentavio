@@ -106,12 +106,11 @@ person's immigration status, salary, or contact details, even scrubbed
 - Test the boundary and the absence, not the middle — bugs live where data is missing.
 - A bug fix ships with the test that would have caught it, at the cheapest level that could have.
 
-## Not decided yet
+## Decided, not yet installed
 
-The test runner is unchosen. It is a dependency, so it needs an ADR
-(`.claude/context/tech-stack.md`) — with the constraints that it must run TypeScript without a
-build step, support a real containerized PostgreSQL for integration tests, and stay fast enough for
-watch mode. The Python side will use `pytest` under the uv workspace (ADR-0006).
+**ADR-0007 (Accepted): Vitest for TypeScript, `pytest` for `ai/`**, with `unit` and `integration` as
+separate Vitest projects. Nothing is installed yet — there is no `vitest.workspace.ts`, no `pnpm test`,
+and no test file. The decision is binding; the follow-up work is listed in the ADR.
 
 ## Related
 

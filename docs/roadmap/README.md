@@ -73,13 +73,13 @@ be made early rather than when the schema is full.
 
 ## Current state
 
-Phase 0 substantially complete: documentation, boundary enforcement, CI, the eval harness. **ADRs
-0001–0006 Accepted; 0007, 0008, 0009, and 0011 Proposed and awaiting review; 0010 reserved for the
-origin-side immigration rule model.** No application code yet.
+Phase 0 substantially complete: documentation, boundary enforcement, CI, the eval harness. **ADRs 0001–0009 and 0011 Accepted; 0010 reserved for the origin-side immigration rule model.** No
+application code yet, and none of the newly accepted follow-up work is done — no test runner installed,
+nothing instrumented, branch protection unconfigured.
 
-Outstanding before Phase 1: accept the four Proposed ADRs, approve the MVP scope and career track
-([`mvp-scope-options.md`](mvp-scope-options.md)), and configure `ci` as a required status check. Regulated
-professions additionally need the 0010 decision.
+Outstanding before Phase 1: approve the MVP scope and career track
+([`mvp-scope-options.md`](mvp-scope-options.md)). Regulated professions additionally need the 0010
+decision.
 
 ## Related
 

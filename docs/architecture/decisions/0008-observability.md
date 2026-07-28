@@ -1,6 +1,7 @@
 # ADR 0008: Observability stack
 
-- **Status:** **Proposed** — awaiting acceptance
+- **Status:** Accepted
+- **Accepted:** 2026-07-28
 - **Date:** 2026-07-28
 - **Deciders:** project lead
 - **Affects:** `packages/logger`, every service, `ai/*`, `infra/monitoring`, `infra/ci`
@@ -75,7 +76,7 @@ Deferring means the first two services get instrumented differently and neither 
 
 ## Decision
 
-**Recommended: Option A — OpenTelemetry as the instrumentation layer, with the backend deferred and pinned
+**Option A — OpenTelemetry as the instrumentation layer, with the backend deferred and pinned
 as a separate, later, reversible choice.**
 
 Concretely: `packages/logger` and its Python counterpart wrap the OTel API; auto-instrumentation is

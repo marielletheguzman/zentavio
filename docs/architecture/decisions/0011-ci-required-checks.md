@@ -1,6 +1,7 @@
 # ADR 0011: CI required checks and merge enforcement
 
-- **Status:** **Proposed** — awaiting acceptance
+- **Status:** Accepted
+- **Accepted:** 2026-07-28
 - **Date:** 2026-07-28
 - **Deciders:** project lead
 - **Affects:** GitHub branch protection on `main`, `.github/workflows/ci.yml`, `docs/development/branching.md`
@@ -74,7 +75,7 @@ upon.
 
 ## Decision
 
-**Recommended: Option A now; add review approval (Option C) when a second contributor joins.**
+**Option A now; add review approval (Option C) when a second contributor joins.**
 
 Concretely, on `main`:
 

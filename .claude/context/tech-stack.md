@@ -36,6 +36,9 @@ answered, which is what makes swapping one a config change rather than a refacto
 - **Turborepo** — task graph and caching across the TypeScript workspaces (ADR-0001)
 - **ESLint** flat config + `eslint-plugin-boundaries` — layer enforcement (ADR-0005)
 - **Ruff** — lint and format for `ai/`, plus the `ai/` statelessness bans (ADR-0005)
+- **Vitest** — TypeScript test runner, `unit` and `integration` projects (ADR-0007)
+- **pytest** — Python test runner for `ai/` (ADR-0007)
+- **OpenTelemetry** — instrumentation layer; backend deferred as a separate choice (ADR-0008)
 - **uv** — Python dependencies and environments for `ai/`, as a workspace with one
   committed `uv.lock` (ADR-0006)
 - `ai/` keeps its own Python toolchain inside the same tree; Turborepo does not manage it.

@@ -76,6 +76,11 @@ An ADR is numbered sequentially and never renumbered.
 | [0004](../../docs/architecture/decisions/0004-vector-store-choice.md) | Qdrant behind a swappable port | Accepted |
 | [0005](../../docs/architecture/decisions/0005-boundary-enforcement.md) | ESLint + eslint-plugin-boundaries for boundary enforcement | Accepted |
 | [0006](../../docs/architecture/decisions/0006-python-dependency-toolchain.md) | uv workspace for Python dependencies in `ai/` | Accepted |
+| [0007](../../docs/architecture/decisions/0007-test-strategy.md) | Vitest + pytest; unit/integration split | Accepted |
+| [0008](../../docs/architecture/decisions/0008-observability.md) | OpenTelemetry, backend deferred | Accepted |
+| [0009](../../docs/architecture/decisions/0009-ai-evaluation.md) | Eval delta report required; runner later | Accepted |
+| 0010 | *reserved* — origin-side immigration rule model | not drafted |
+| [0011](../../docs/architecture/decisions/0011-ci-required-checks.md) | Require the `ci` check on `main` | Accepted |
 
 0001–0004 define the boundaries every skill and context file assumes: one repository, sources as
 plugins, a polyglot contract at the `ai/` boundary, and a vector store that is an index rather

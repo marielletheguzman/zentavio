@@ -1,6 +1,7 @@
 # ADR 0009: AI evaluation strategy
 
-- **Status:** **Proposed** — awaiting acceptance
+- **Status:** Accepted
+- **Accepted:** 2026-07-28
 - **Date:** 2026-07-28
 - **Deciders:** project lead
 - **Affects:** `ai/shared/evals`, `docs/prompts/evals.md`, `.github/workflows/ci.yml`, `tests/fixtures/prompts`
@@ -86,7 +87,7 @@ it looks covered.
 
 ## Decision
 
-**Recommended: Option C now, Option A when there is a second contributor or the first paying user — whichever
+**Option C now, Option A when there is a second contributor or the first paying user — whichever
 comes first.**
 
 Concretely:

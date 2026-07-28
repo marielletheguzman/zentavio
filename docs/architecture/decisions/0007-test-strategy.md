@@ -1,6 +1,7 @@
 # ADR 0007: Test strategy and runner
 
-- **Status:** **Proposed** — awaiting acceptance
+- **Status:** Accepted
+- **Accepted:** 2026-07-28
 - **Date:** 2026-07-28
 - **Deciders:** project lead
 - **Affects:** every workspace, `infra/ci`, `package.json`, `tests/`
@@ -75,7 +76,7 @@ the code they were meant to constrain.
 
 ## Decision
 
-**Recommended: Option A — Vitest for the TypeScript half, `pytest` for `ai/`.**
+**Option A — Vitest for the TypeScript half, `pytest` for `ai/`.**
 
 Two projects within one Vitest workspace: `unit` (fast, no external services, run on every save and every
 commit) and `integration` (real containerized PostgreSQL, run in CI and on demand). Test files live beside

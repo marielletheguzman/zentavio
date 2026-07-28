@@ -174,9 +174,10 @@ pull request. That enforces:
 - every fixture set covers all six required kinds
 - every case file is valid, and states why it exists
 
-**Not in CI:** graded runs, because the runner has no model host. Options when the first prompt lands:
-a self-hosted runner with Ollama, or a required manual gate where the author attaches the delta report.
-Choosing between those is a real decision and should be recorded as an ADR rather than defaulted into.
+**Not in CI:** graded runs, because the runner has no model host. **ADR-0009 (Accepted)** settles the
+approach: the author runs graded evals locally against the pinned model and **attaches the delta report to
+the pull request**, which is a required review artifact rather than a mechanised gate. A self-hosted runner
+with Ollama follows when there is a second contributor or the first paying user.
 
 Also still to build: posting the delta report to the pull request, and the check that a changed prompt
 bumped its `promptVersion` — an unchanged version with changed content makes past outputs

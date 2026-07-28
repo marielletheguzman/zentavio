@@ -61,7 +61,7 @@ check, so adding a job to `ci.yml` makes it blocking without touching repository
 |---|---|---|---|
 | `ci` status check | every pull request | yes | **yes** — `.github/workflows/ci.yml` |
 | Prompt eval **coverage** (offline) | every pull request | yes | **yes** — `pnpm eval:offline` in the `python` job |
-| Prompt eval **grading** | any prompt change | yes, by policy | **not in CI** — needs a model host |
+| Prompt eval **grading** | any prompt change | review artifact (ADR-0009) | **not in CI** — run locally, report attached to the PR |
 | ADR present | any new dependency, boundary change, or contract change | review | review only |
 | Docs updated | any change to documented behavior | review | review only |
 
@@ -70,9 +70,10 @@ cannot merge without a fixture directory, and fixtures cannot merge missing any 
 case kinds — including the unknown-handling and injection cases, which are the two that are invisible
 in normal use and harmful when they regress.
 
-The grading half is implemented (`ai/shared/evals/run_evals.py`) but needs a reachable Ollama host,
-which the GitHub-hosted runner does not have. Until that is solved — self-hosted runner, or a required
-manual gate with the delta report attached — graded runs happen locally. With zero prompts in the
+The grading half is implemented (`ai/shared/evals/run_evals.py`) but needs a reachable Ollama host, which
+the GitHub-hosted runner does not have. **ADR-0009 (Accepted)**: the author runs graded evals locally and
+attaches the delta report to the pull request — a required review artifact, not a mechanised gate. A
+self-hosted runner follows when there is a second contributor or the first paying user. With zero prompts in the
 repository the offline step passes trivially: a real check that is currently a no-op, not a claim that
 grading is happening.
 
@@ -105,10 +106,11 @@ Python tooling is separate: `pip install -r requirements-dev.txt` once, then `ru
 
 ## Not yet built
 
-- **Graded prompt evals in CI.** The runner exists and the offline half is wired; grading needs a
-  model host. Decide between a self-hosted runner with Ollama and a required manual gate, and record
-  the choice as an ADR. Also outstanding: posting the delta report to the pull request, and failing a
-  prompt change that did not bump its `promptVersion`.
+- **The `promptVersion` check** — fail a prompt change that did not bump its version. ADR-0009's one
+  mechanisable piece, still unwritten.
+- **A self-hosted runner with Ollama** for graded evals in CI. ADR-0009 defers this until a second
+  contributor or the first paying user; until then the delta report is attached to the pull request.
+- **`test:unit` and `test:integration` jobs** — ADR-0007 is Accepted, but Vitest is not installed.
 - **Test and build jobs** — there is no application code yet. Test levels and what must never be
   mocked: `.claude/skills/testing/SKILL.md`.
 - **Path-filtered tasks** via Turborepo's task graph (ADR-0001 follow-up). Deliberately not applied

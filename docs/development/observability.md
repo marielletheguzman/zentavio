@@ -106,12 +106,14 @@ means the product is quietly lying rather than visibly broken.
 
 **No alert without an owner and a runbook.** An alert nobody acts on trains everyone to ignore the channel.
 
-## Not decided yet
+## Decided, not yet implemented
 
-The stack — collector, backend, dashboards — is unchosen, and it is a dependency, so it needs an ADR
-(`.claude/context/tech-stack.md`). `infra/monitoring` is where it lands. Constraints for that
-decision: it must accept structured JSON logs, support cross-language tracing, and not require shipping
-PII anywhere to be useful.
+**ADR-0008 (Accepted): OpenTelemetry as the instrumentation layer, with the backend deferred** as a
+separate, later, reversible choice. Auto-instrumentation is opt-in per library, never blanket.
+
+Nothing is instrumented yet: no SDK is installed, `packages/logger` does not exist, and there is no
+collector. The backend — and therefore dashboards and alert routing — remains an open follow-up ADR, so
+this decision unblocks instrumentation but not alerting.
 
 ## Related
 

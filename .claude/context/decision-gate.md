@@ -36,21 +36,30 @@ entity document does not require the test runner. Writing a test does.
 
 ## Current blockers
 
-None of these ADRs exist yet. Numbers are assigned when written — the next available is **0007** — so
-these are named by subject, not by a number that would imply a file exists.
+**Decided** (ADRs Accepted 2026-07-28) — the decision is settled; the follow-up work is not done:
+
+| Was blocked on | Decision | Still to do |
+|---|---|---|
+| Test runner | ADR-0007 — Vitest + pytest | install it; nothing is installed |
+| Observability stack | ADR-0008 — OpenTelemetry, backend deferred | instrument; nothing is instrumented |
+| AI evaluation | ADR-0009 — delta report as a review artifact | write the `promptVersion` check |
+| CI required checks | ADR-0011 — require the `ci` check | observe a green run, then configure protection |
+
+**Still blocked:**
 
 | Decision | Blocks | Needs |
 |---|---|---|
-| Test runner | the first automated test | ADR — test strategy |
-| Observability stack | the first instrumented service | ADR — observability |
-| Origin-side immigration rules | any verdict for a regulated profession | ADR — immigration rule model |
-| CI required checks | merge enforcement | ADR — CI policy |
-| Graded AI evals in CI | the full evaluation gate | ADR — needs a model host decision |
-| MVP career track | Phase 1 | product decision, not an ADR |
+| Origin-side immigration rules | any verdict for a regulated profession | ADR-0010 (reserved, not drafted) |
+| MVP scope and career track | Phase 1 | product decision — `docs/roadmap/mvp-scope-options.md` |
+| Observability **backend** | dashboards and alert routing | follow-up ADR (ADR-0008 deferred it deliberately) |
 
 Where each is documented: `docs/development/testing.md` ·
 `docs/development/observability.md` · `docs/architecture/immigration.md` ·
-`docs/development/branching.md` · `docs/prompts/evals.md` · `docs/roadmap/mvp.md`.
+`docs/development/branching.md` · `docs/prompts/evals.md` · `docs/roadmap/mvp-scope-options.md`.
+
+**Accepted is not implemented.** An Accepted ADR authorises work; it does not perform it. Claiming a
+capability exists because its ADR was accepted is the same error as claiming a gate blocks because it is
+documented.
 
 ## Never assume a path
 
@@ -139,4 +148,4 @@ warned? If not, the report is incomplete regardless of how much was built.
 - [`decisions.md`](decisions.md) — when an ADR is required, and the ADR format
 - [`ai-principles.md`](ai-principles.md) — the same discipline applied to product output
 - [`../../docs/development/contributing.md`](../../docs/development/contributing.md) — review expectations
-- [`../../docs/architecture/decisions/`](../../docs/architecture/decisions/) — the six Accepted ADRs
+- [`../../docs/architecture/decisions/`](../../docs/architecture/decisions/) — ten Accepted ADRs; 0010 reserved
