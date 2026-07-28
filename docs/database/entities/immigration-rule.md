@@ -86,10 +86,12 @@ Zentavio's primary users are from the Philippines, and their viability depends o
 requirements — overseas employment regulation, professional-licence recognition, credential evaluation,
 document authentication — as much as on destination rules. This table cannot currently express one.
 
-Likely resolution: a `jurisdiction_role` column (`origin` | `destination` | `bilateral`), so a rule states
-who imposes it and the evaluator can gather both sides for one verdict. That is a schema and evaluation
-change with a real tradeoff, so it needs an ADR before the first migration
-(`docs/architecture/immigration.md`).
+**ADR-0010 (Proposed)** recommends more than a role column: generalizing this table into `requirements`
+with `domain`, `imposed_by`, and `authority`. A `jurisdiction_role` column alone would leave a table named
+`immigration_rules` holding requirements set by a nursing board and by an origin labour authority, and no
+place to record which authority decides — so "who do I contact?" would stay unanswerable.
+
+If accepted, this document is renamed to `requirement.md`.
 
 **Until then, regulated professions must return `unknown`** with recognition named as the missing piece,
 rather than a visa-only verdict that reads as an answer.

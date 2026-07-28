@@ -25,18 +25,20 @@ destination:
 
 Two consequences:
 
-1. **`immigration_rules.jurisdiction` has no way to say "this rule is imposed by the origin".** Either
-   the column needs a companion `jurisdiction_role` (`origin` | `destination` | `bilateral`), or
-   origin-side requirements need a distinct rule kind. Without one of those, Filipino-specific
-   requirements cannot be modelled, let alone evaluated.
+1. **`immigration_rules.jurisdiction` has no way to say "this rule is imposed by the origin",** and no
+   way to record *which authority* decides. Without both, Filipino-specific requirements cannot be
+   modelled, let alone evaluated, and "who do I contact?" is unanswerable.
 2. **The binding constraint is frequently recognition, not the visa.** A destination can be
    visa-accessible while a licence is not transferable without re-assessment. An eligibility verdict that
    reports only the visa would be actively misleading for a nurse, engineer, or teacher — which is worse
    than returning `unknown`.
 
-This is a schema and evaluation decision with a real tradeoff, so it belongs in an ADR rather than being
-patched in silently. Until it is resolved, **regulated professions cannot be given an eligibility
-verdict** — they must return `unknown` with recognition named as the missing piece.
+**ADR-0010 (Proposed)** addresses this by generalizing `immigration_rules` into a `requirements` table with
+`domain`, `imposed_by`, and `authority` — because recognition, credential evaluation, and origin employment
+clearance are decided by different authorities and are not immigration, however similar their structure.
+
+Until that ADR is accepted **and** the rules are ingested, **regulated professions cannot be given an
+eligibility verdict** — they must return `unknown` with recognition named as the missing piece.
 
 ## Rules as data, never as code
 

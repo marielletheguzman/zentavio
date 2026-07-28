@@ -23,12 +23,12 @@ already ruled out and how the rule is enforced.
 | [0007](0007-test-strategy.md) | Vitest + pytest; unit/integration split | Accepted | 2026-07-28 |
 | [0008](0008-observability.md) | OpenTelemetry instrumentation, backend deferred | Accepted | 2026-07-28 |
 | [0009](0009-ai-evaluation.md) | Required delta report now, self-hosted runner later | Accepted | 2026-07-28 |
-| 0010 | *reserved* — origin-side immigration rule model | not drafted | — |
+| [0010](0010-origin-side-requirements.md) | Origin-side requirements and professional recognition | **Proposed** | 2026-07-28 |
 | [0011](0011-ci-required-checks.md) | Require the `ci` check on `main` | Accepted | 2026-07-28 |
 
-**0010 is reserved, not missing.** It is held for the origin-side immigration rule model, which is drafted
-separately because it changes the schema and gates regulated professions. Numbers are never reused, so the
-slot stays open rather than being filled by the next ADR written.
+**0010 is Proposed, not Accepted.** It generalizes `immigration_rules` into `requirements` so that
+origin-imposed requirements and professional recognition can be expressed at all. Regulated professions —
+nursing, engineering, teaching — stay blocked until it is accepted *and* the rules are ingested.
 
 **Accepted is not implemented.** 0007–0009 and 0011 are Accepted and binding, but their follow-up work is
 largely undone: no test runner is installed, nothing is instrumented, the `promptVersion` check is unwritten,
