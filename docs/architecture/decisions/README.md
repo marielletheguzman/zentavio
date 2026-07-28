@@ -23,12 +23,13 @@ already ruled out and how the rule is enforced.
 | [0007](0007-test-strategy.md) | Vitest + pytest; unit/integration split | Accepted | 2026-07-28 |
 | [0008](0008-observability.md) | OpenTelemetry instrumentation, backend deferred | Accepted | 2026-07-28 |
 | [0009](0009-ai-evaluation.md) | Required delta report now, self-hosted runner later | Accepted | 2026-07-28 |
-| [0010](0010-origin-side-requirements.md) | Origin-side requirements and professional recognition | **Proposed** | 2026-07-28 |
+| [0010](0010-origin-side-requirements.md) | Origin-side requirements and professional recognition | Accepted | 2026-07-28 |
 | [0011](0011-ci-required-checks.md) | Require the `ci` check on `main` | Accepted | 2026-07-28 |
 
-**0010 is Proposed, not Accepted.** It generalizes `immigration_rules` into `requirements` so that
-origin-imposed requirements and professional recognition can be expressed at all. Regulated professions —
-nursing, engineering, teaching — stay blocked until it is accepted *and* the rules are ingested.
+**0010 is Accepted, and the rename is done** — `immigration_rules` is now `requirements`, with `domain`,
+`imposed_by`, and `authority`. Regulated professions remain blocked on **data**, not schema: nursing,
+engineering, and teaching return `unknown` until each profession's recognition rules are sourced and
+ingested.
 
 **Accepted is not implemented.** 0007–0009 and 0011 are Accepted and binding, but their follow-up work is
 largely undone: no test runner is installed, nothing is instrumented, the `promptVersion` check is unwritten,

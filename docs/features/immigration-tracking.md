@@ -46,7 +46,7 @@ into a definite answer is the most actionable output the platform produces.
 
 **Tier 1 only.** Government portals, official immigration authorities, official gazettes. Not a law firm's
 blog, not a relocation agency, not a forum, not the model's memory. Enforced in schema:
-`immigration_rules` accepts `source_tier = 1` exactly.
+`requirements` accepts `source_tier = 1` exactly.
 
 **`undetermined` never collapses.** Not into "probably qualify", not into "likely eligible". The
 evaluator's three states survive to the screen.
@@ -111,6 +111,6 @@ code** — if code must change, the design is wrong (`.claude/context/countries.
 
 ## Related
 
-- `docs/architecture/immigration.md`, `docs/database/entities/immigration-rule.md`
+- `docs/architecture/immigration.md`, `docs/database/entities/requirement.md`
 - `country-preferences.md`, `notifications.md`
 - `.claude/skills/immigration/SKILL.md`, `.claude/context/countries.md`

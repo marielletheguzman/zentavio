@@ -382,7 +382,7 @@ event when a depended-on rule changes.
 permits, residence, or citizenship.
 
 **Depends on** — `docs/architecture/immigration.md`,
-`docs/database/entities/immigration-rule.md`, `docs/features/immigration-tracking.md`,
+`docs/database/entities/requirement.md`, `docs/features/immigration-tracking.md`,
 `.claude/context/countries.md`, `references/countries/<code>.md`.
 
 **Example** — per-rule results (`met` / `not_met` / `undetermined`) with `sourceUrl` and

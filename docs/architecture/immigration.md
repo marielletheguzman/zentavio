@@ -6,39 +6,38 @@ Immigration is the highest-stakes knowledge in Zentavio. A wrong threshold or a 
 someone into a failed application, a lost deposit, or a relocation that collapses. The architecture
 makes that structurally hard rather than relying on care.
 
-## Open gap: origin-side rules
+## Six domains, one table
 
-**The model currently assumes one jurisdiction — the destination. That is not sufficient for our primary
-users.**
+**ADR-0010 (Accepted)** generalized `immigration_rules` into `requirements`, because a Filipino
+applicant's viability depends on requirements that are **not** immigration and are decided by other
+authorities:
 
-Zentavio's primary users are professionals and students from the Philippines
-(`docs/roadmap/vision.md`). Their viability depends on requirements imposed at **origin** as well as
-destination:
+| `domain` | Decided by | `imposed_by` |
+|---|---|---|
+| `immigration` | destination immigration authority | destination |
+| `recognition` | destination regulatory body (e.g. a nursing board) | destination |
+| `credential` | destination evaluation body, assessing an origin qualification | destination |
+| `authentication` | origin authorities (apostille chain) | origin |
+| `employment_clearance` | origin labour authority | origin |
+| `language` | destination body, test taken at origin | bilateral |
 
-| Domain | Imposed by |
-|---|---|
-| Overseas employment regulation and clearance | origin state |
-| Professional-licence recognition for regulated professions | origin licensing body, re-assessed at destination |
-| Academic credential evaluation | destination body, assessing an origin qualification |
-| Document authentication / apostille | origin authorities |
-| Language certification acceptance | destination, but obtained at origin |
+Every row records `domain`, `imposed_by`, and the `authority` that decides — so "who do I contact?" is
+answerable, which it was not before.
 
-Two consequences:
+**The binding constraint is frequently recognition, not the visa.** A destination can be visa-accessible
+while a licence is not transferable without re-assessment. So evaluation runs one ordered pass, ordered by
+what blocks what:
 
-1. **`immigration_rules.jurisdiction` has no way to say "this rule is imposed by the origin",** and no
-   way to record *which authority* decides. Without both, Filipino-specific requirements cannot be
-   modelled, let alone evaluated, and "who do I contact?" is unanswerable.
-2. **The binding constraint is frequently recognition, not the visa.** A destination can be
-   visa-accessible while a licence is not transferable without re-assessment. An eligibility verdict that
-   reports only the visa would be actively misleading for a nurse, engineer, or teacher — which is worse
-   than returning `unknown`.
+```text
+authentication → credential → recognition → immigration → employment_clearance → language
+```
 
-**ADR-0010 (Proposed)** addresses this by generalizing `immigration_rules` into a `requirements` table with
-`domain`, `imposed_by`, and `authority` — because recognition, credential evaluation, and origin employment
-clearance are decided by different authorities and are not immigration, however similar their structure.
+An unrecognised qualification makes a visa threshold moot, so recognition is reported **before** the visa.
 
-Until that ADR is accepted **and** the rules are ingested, **regulated professions cannot be given an
-eligibility verdict** — they must return `unknown` with recognition named as the missing piece.
+**Still blocked on data, not schema.** The schema can now express these requirements; none are ingested.
+Until a profession's recognition rules exist and are dated, a **licence-gated profession returns `unknown`**
+with recognition named — never a visa-only verdict that reads as an answer. Sourcing each authority is
+research (ADR-0010's follow-up), and it is the expensive part.
 
 ## Rules as data, never as code
 
@@ -49,13 +48,17 @@ A rule is a **row**, not a branch. There is no `if (country === 'DE')` anywhere 
 The consequence: eligibility is evaluated by walking retrieved rows, so a rule change is an ingest,
 not a deployment.
 
-## Rule model
+## Requirement model
 
 ```text
-ruleId          de.eu-blue-card.salary-threshold.it   -- stable, namespaced, permanent
-pathwayId       de.eu-blue-card
-jurisdiction    ISO country code (subnational where it matters)
-kind            eligibility | threshold | quota | document | timeline | condition | right
+requirementId   de.eu-blue-card.salary-threshold.it   -- stable, namespaced, permanent
+domain          immigration | recognition | credential | authentication | language | employment_clearance
+imposedBy       origin | destination | bilateral
+authority       the body that decides, with its official page
+jurisdiction    ISO country code of the imposing authority (subnational where it matters)
+pathwayId       de.eu-blue-card        -- immigration domain
+profession      registered-nurse       -- recognition and credential domains
+kind            eligibility | threshold | quota | document | timeline | condition | right | assessment
 value           typed; amounts carry currency and period
 appliesTo       occupation lists, qualification levels, age bands — explicit, never implied
 effectiveFrom   date the rule took effect
@@ -162,7 +165,7 @@ misleading in a way that costs people money:
 connectors/immigration-data ──► raw official pages (kept)
             │
             ▼
-knowledge-engine/immigration ──► rules (versioned, dated, tier-1) + pathways
+knowledge-engine/immigration ──► requirements (6 domains, versioned, dated, tier-1) + pathways
             │
             ▼
 ai/career-roadmap ──► eligibility evaluation (deterministic) × employability
@@ -203,7 +206,7 @@ predicted approval.
 ## Related
 
 - `knowledge-engine.md`, `principles.md` (multi-country), `privacy.md`
-- `docs/database/entities/immigration-rule.md`, `docs/features/immigration-tracking.md`,
+- `docs/database/entities/requirement.md`, `docs/features/immigration-tracking.md`,
   `docs/features/country-preferences.md`
 - `.claude/skills/immigration/SKILL.md` and `references/countries/`
 - `.claude/context/countries.md`, `.claude/context/knowledge-sources.md`

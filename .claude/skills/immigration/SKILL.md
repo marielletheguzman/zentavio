@@ -132,7 +132,7 @@ viability, not a footnote — say the level actually needed for that sector.
 ## Workflow
 
 1. Read `docs/architecture/immigration.md`,
-   `docs/database/entities/immigration-rule.md`, and `references/countries/<code>.md`.
+   `docs/database/entities/requirement.md`, and `references/countries/<code>.md`.
 2. Identify the official source and what it is authoritative for.
 3. Model rules individually — one requirement per rule, never a paragraph in one row.
 4. Ingest via `connectors/immigration-data` with full provenance; store the raw page.

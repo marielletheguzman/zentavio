@@ -56,7 +56,7 @@ A Filipino applicant's viability depends on requirements that are **not** destin
 authority with a date. Nothing above asserts a specific requirement — it names the domains that must be
 modelled and sourced.
 
-**Open design gap:** `immigration_rules.jurisdiction` currently assumes the destination. Origin-side
+**Open design gap:** `requirements.jurisdiction` currently assumes the destination. Origin-side
 rules need a jurisdiction *role* (origin vs destination) or a separate rule kind, or Filipino-specific
 requirements cannot be evaluated at all. Recorded in
 `docs/architecture/immigration.md` and tracked; it is a schema decision, not a content gap.
@@ -140,4 +140,4 @@ is authoritative for.
 - `ai-principles.md` — rules 8, 9 (never fabricate salaries or immigration rules)
 - Skills: `immigration` (+ `references/countries/`), `knowledge-engine`, `connectors`
 - `docs/architecture/immigration.md`, `docs/features/country-preferences.md`,
-  `docs/features/immigration-tracking.md`, `docs/database/entities/immigration-rule.md`
+  `docs/features/immigration-tracking.md`, `docs/database/entities/requirement.md`

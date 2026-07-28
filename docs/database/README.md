@@ -60,7 +60,7 @@ Detail in `schema-overview.md`. Confusing the classes is the expensive mistake h
 | [`user.md`](entities/user.md) | person | `users`, profiles, `profile_skills`, consents, preferences, immigration facts |
 | [`job.md`](entities/job.md) | world | `job_postings`, `job_posting_sources`, `job_posting_skills` |
 | [`skill.md`](entities/skill.md) | world | `skills`, aliases, `skill_edges`, `career_skills` |
-| [`immigration-rule.md`](entities/immigration-rule.md) | world | `immigration_rules`, `immigration_pathways` |
+| [`requirement.md`](entities/requirement.md) | world | `requirements`, `immigration_pathways` |
 | [`learning-resource.md`](entities/learning-resource.md) | world | resources, skill coverage, path steps |
 | [`connector-source.md`](entities/connector-source.md) | world | sources, runs, quarantine, raw payloads |
 | [`application.md`](entities/application.md) | person | `applications`, `application_events`, `practice_sessions` |

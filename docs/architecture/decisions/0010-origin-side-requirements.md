@@ -1,6 +1,7 @@
 # ADR 0010: Origin-side requirements and professional recognition
 
-- **Status:** **Proposed** — awaiting acceptance
+- **Status:** Accepted
+- **Accepted:** 2026-07-28
 - **Date:** 2026-07-28
 - **Deciders:** project lead
 - **Affects:** `knowledge-engine/immigration`, `packages/db`, `ai/career-roadmap`, `connectors/immigration-data`, `docs/database/entities/immigration-rule.md`
@@ -101,8 +102,8 @@ data in it, a rename stops being free — which is the specific reason to decide
 
 ## Decision
 
-**Recommended: Option C — one `requirements` table, generalized and renamed, with `domain`,
-`imposed_by`, and `authority`.**
+**Option C — one `requirements` table, generalized and renamed, with `domain`, `imposed_by`, and
+`authority`.**
 
 Two reasons decide it.
 

@@ -39,7 +39,7 @@ deleted on erasure and takes market intelligence with it.
     │ N:M                                                          │
   career_skills                                                    │
                                                                     │
-  immigration_pathways ── immigration_rules (1:N, versioned)        │
+  immigration_pathways ── requirements (1:N, versioned)        │
   salary_bands · market_signals · learning_resources                │
   interview_reports (anonymized at ingest)                          │
                                                                     │
@@ -103,7 +103,7 @@ store (`.claude/context/ai-memory.md`).
 | Table | Holds |
 |---|---|
 | `immigration_pathways` | named route per jurisdiction |
-| `immigration_rules` | one requirement per row, versioned and dated |
+| `requirements` | one requirement per row, versioned and dated |
 | `salary_bands` | compensation by career, seniority, market, with `asOf` |
 | `market_signals` | demand, hiring difficulty, trend, per market |
 | `learning_resources`, `learning_resource_skills` | resources, and which skills each covers |

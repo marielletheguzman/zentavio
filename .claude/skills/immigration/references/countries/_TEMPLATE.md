@@ -89,4 +89,4 @@ Country-specific traps that cost applicants time or money. Each with its source.
 
 - `.claude/context/countries.md` — the full country model
 - `.claude/skills/immigration/SKILL.md` — the rules that govern this data
-- `docs/architecture/immigration.md`, `docs/database/entities/immigration-rule.md`
+- `docs/architecture/immigration.md`, `docs/database/entities/requirement.md`

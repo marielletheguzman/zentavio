@@ -43,7 +43,7 @@ erDiagram
     careers ||--o{ career_skills : "requires"
     careers ||--o{ user_targets : "targeted by"
 
-    immigration_pathways ||--o{ immigration_rules : "composed of"
+    immigration_pathways ||--o{ requirements : "composed of"
 
     learning_resources ||--o{ learning_path_steps : "used by"
     learning_paths ||--o{ learning_path_steps : "ordered as"
@@ -67,7 +67,7 @@ erDiagram
 | `skills` | `skill_edges` | N:M self-referential | typed, one row per (from, to, type) |
 | `careers` | `career_edges` | N:M self-referential | includes `transition_path` with observed frequency |
 | `careers` | `career_skills` | N:M with `skills` | plus optional `market_scope` |
-| `immigration_pathways` | `immigration_rules` | 1:N, versioned | rule chains via `supersedes` |
+| `immigration_pathways` | `requirements` | 1:N, versioned | rule chains via `supersedes` |
 | `users` × `job_postings` | `matches` | N:M, one live row per pair | derived |
 | `users` × `careers` | `readiness_scores`, `skill_gaps`, `learning_paths` | N:M | derived |
 | `applications` | `outcomes` | 1:N | an application produces several outcome events over time |
@@ -84,7 +84,7 @@ almost everything here is either evidence or a fact someone planned against.
 | `profile_skills` → `user_profiles` | **`CASCADE`** | the only cascade: a profile version's skills have no meaning without the version, and re-parsing replaces them wholesale |
 | `skill_edges` → `skills` | `RESTRICT` | deleting a skill referenced by the graph is a data-modeling error to surface, not to absorb |
 | `job_posting_skills` → `skills` | `RESTRICT` | same |
-| `immigration_rules` → `immigration_pathways` | `RESTRICT` | rule history outlives a pathway's current shape |
+| `requirements` → `immigration_pathways` | `RESTRICT` | rule history outlives a pathway's current shape |
 | `outcomes` → `users` | `RESTRICT` | erasure detaches the person and retains the anonymized contribution |
 | everything person-scoped | `RESTRICT` | erasure runs in the order documented in `entities/user.md` |
 

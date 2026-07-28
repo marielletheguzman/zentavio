@@ -91,7 +91,7 @@ So the rule is: **the aggregate survives, the link does not.**
 ### World facts
 
 `job_postings`, `companies`, `skills`, `skill_edges`, `careers`, `career_edges`, `career_skills`,
-`immigration_pathways`, `immigration_rules`, `salary_bands`, `market_signals`, `learning_resources`,
+`immigration_pathways`, `requirements`, `salary_bands`, `market_signals`, `learning_resources`,
 `connector_sources`, `employer_sponsorship_facts` — **indefinite, and versioned rather than
 overwritten**.
 

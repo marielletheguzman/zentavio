@@ -13,7 +13,7 @@ Prompt files live at `ai/career-roadmap/prompts/` (eligibility lives with the ro
 | Never | Where it happens instead |
 |---|---|
 | decide eligibility | deterministic code over retrieved rules (`docs/architecture/immigration.md`) |
-| state a threshold, quota, or timeline from memory | retrieved from `immigration_rules`, tier 1 only |
+| state a threshold, quota, or timeline from memory | retrieved from `requirements`, tier 1 only |
 | infer one country's rule from another's | nowhere — each jurisdiction has its own sourced rows |
 | predict an approval | nowhere |
 | give advice | nowhere |
@@ -112,5 +112,5 @@ of other improvements (`../evals.md`).
 
 - `docs/architecture/immigration.md` — rules as data, deterministic evaluation
 - `.claude/skills/immigration/SKILL.md`, `.claude/context/countries.md`
-- `docs/database/entities/immigration-rule.md`
+- `docs/database/entities/requirement.md`
 - `../conventions.md`, `../evals.md`

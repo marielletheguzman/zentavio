@@ -79,7 +79,7 @@ An ADR is numbered sequentially and never renumbered.
 | [0007](../../docs/architecture/decisions/0007-test-strategy.md) | Vitest + pytest; unit/integration split | Accepted |
 | [0008](../../docs/architecture/decisions/0008-observability.md) | OpenTelemetry, backend deferred | Accepted |
 | [0009](../../docs/architecture/decisions/0009-ai-evaluation.md) | Eval delta report required; runner later | Accepted |
-| [0010](../../docs/architecture/decisions/0010-origin-side-requirements.md) | Origin-side requirements and professional recognition | **Proposed** |
+| [0010](../../docs/architecture/decisions/0010-origin-side-requirements.md) | Origin-side requirements and professional recognition | Accepted |
 | [0011](../../docs/architecture/decisions/0011-ci-required-checks.md) | Require the `ci` check on `main` | Accepted |
 
 0001–0004 define the boundaries every skill and context file assumes: one repository, sources as
