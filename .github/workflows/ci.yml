@@ -78,6 +78,13 @@ jobs:
       - name: Ruff (format check)
         run: ruff format --check ai/
 
+      # Offline eval checks only: fixture integrity, that every prompt has all six
+      # required case kinds, and that no prompt ships without fixtures. Graded runs need
+      # an Ollama host, which this runner does not have — see docs/prompts/evals.md.
+      # Exits 0 while zero prompts exist, so this is a real check that is currently a no-op.
+      - name: Prompt eval fixture checks (offline)
+        run: python ai/shared/evals/run_evals.py --offline
+
   # ── One required status check ───────────────────────────────────────────────
   # Branch protection points at this job alone, so adding a job above does not
   # require editing branch protection to make it blocking.

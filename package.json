@@ -11,6 +11,8 @@
     "lint:fix": "eslint . --fix",
     "lint:py": "ruff check ai/",
     "typecheck": "tsc --noEmit",
+    "eval": "python ai/shared/evals/run_evals.py",
+    "eval:offline": "python ai/shared/evals/run_evals.py --offline",
     "lint:all": "eslint . && tsc --noEmit && ruff check ai/ && node tools/scripts/audit-boundary-disables.mjs",
     "boundaries:audit": "node tools/scripts/audit-boundary-disables.mjs"
   },

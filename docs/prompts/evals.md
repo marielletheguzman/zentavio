@@ -5,10 +5,18 @@
 Evals are a **blocking CI gate**, not a quality report. No prompt change ships without one
 (`docs/development/ci-cd.md`).
 
-> **Status: policy defined, runner not built.** Everything below is binding from the moment the first
-> prompt exists, and none of it is automated yet — the `pnpm eval` commands, the grader, the baseline
-> store, and the CI job are unbuilt, because `ai/` has no code and therefore no prompt to evaluate.
-> Do not read the command examples as available today.
+> **Status — read this before relying on any claim below.**
+>
+> | Part | Built | In CI |
+> |---|---|---|
+> | Runner, fixture loader, grader, baseline store (`ai/shared/evals/`) | **yes** | — |
+> | **Offline checks** — fixture integrity, all six case kinds present, no prompt without fixtures | **yes** | **yes**, every PR |
+> | **Graded runs** — cases executed against a real model | **yes** | **no** — needs an Ollama host the CI runner does not have |
+>
+> So the *coverage* gate is enforced today: a prompt cannot merge without fixtures, and its fixtures
+> cannot merge missing the unknown or injection case. The *grading* gate is implemented but must be
+> run where a model is reachable. With zero prompts in the repository, the CI step passes trivially —
+> a real check that is currently a no-op, not a claim that grading is happening.
 
 They are separate from unit tests: unit tests use canned model responses to check the code around a
 prompt; evals check the prompt against a real model on a fixed dataset.
@@ -55,23 +63,41 @@ tests/fixtures/prompts/<prompt-name>/
 │   ├── injection-instruction-in-resume.json
 │   ├── malformed-truncated-pdf.json
 │   └── out-of-scope-visa-advice.json
-└── expected/
-    └── <same names>.json
+└── baseline.<promptVersion>.json
 ```
 
-Every case file states **why it exists**:
+`<prompt-name>` must match a prompt file at `ai/*/prompts/<prompt-name>-<YYYY-MM-DD>.md`. A mismatch
+in either direction is an offline failure: fixtures with no prompt, or a prompt with no fixtures.
+
+Each case is **self-contained** — expectations live in the case file, not a parallel `expected/`
+directory, so a case and its expectation cannot drift apart. Required fields: `why`, `kind`, `input`,
+`expect`.
 
 ```json
 {
   "why": "Resume lists Kubernetes under Skills only, never in a described role. Must be CLAIMED, not EVIDENCED — the distinction drives readiness weighting.",
+  "kind": "happy",
   "knowledge": { "known_skills": ["kubernetes", "docker"] },
   "input": { "resume_text": "…" },
   "expect": {
-    "skills": [{ "skillId": "kubernetes", "status": "CLAIMED" }],
-    "unmatched": []
+    "skills.0.skillId": "kubernetes",
+    "skills.0.status": "CLAIMED",
+    "unmatched": [],
+    "_grounded_ids": ["skills.0.skillId"]
   }
 }
 ```
+
+`kind` is one of the six required kinds and decides whether the case is a gate. Keys in `expect` are
+dotted paths (`skills.0.status`), compared exactly. Three directives start with `_`:
+
+| Directive | Checks |
+|---|---|
+| `_absent` | listed paths must be null/absent — how the unknown gate is expressed, so a missing computation never arrives as `0` |
+| `_grounded_ids` | listed paths must contain only ids from a closed set supplied in `knowledge` — the grounding gate, no judge required |
+| `_prose` | `must_mention` / `must_not_mention` over a named field — claims, never wording |
+
+An empty `why` is a fixture error, enforced by the loader.
 
 A case without a `why` gets deleted during the first refactor, because nobody knows what breaking it
 would mean.
@@ -117,28 +143,44 @@ the same gate — a cheaper model that fails the unknown cases is not shippable 
 
 ## Running
 
-The intended interface, once the runner exists:
-
 ```bash
-pnpm eval <prompt-name>        # one prompt against its dataset
-pnpm eval --all                # everything, on CI
-pnpm eval <name> --baseline    # record a new baseline for a new promptVersion
+pnpm eval:offline                    # fixture + coverage checks, no model. What CI runs.
+pnpm eval                            # offline checks, then grade every prompt
+pnpm eval -- <prompt-name>           # one prompt
+pnpm eval -- <name> --baseline       # record a baseline for this promptVersion
+pnpm eval -- --require-model         # fail instead of skipping when no model is reachable
 ```
 
-Evals need a live model, so they run against the pinned local Ollama model. They are **not** in the
-default test suite — that suite must stay fast enough to run on every save
+The runner lives at `ai/shared/evals/run_evals.py`; `pnpm eval` is a thin alias so the documented
+interface matches the polyglot reality. **It is Python, not TypeScript** — it loads prompt files from
+`ai/`, calls the same model host `ai/` services will, and therefore belongs on that side of the
+boundary (ADR-0003). Stdlib only, so it runs before the uv workspace exists (ADR-0006).
+
+Exit codes: `0` pass · `1` gate failure or blocked regression · `2` fixture or usage error.
+
+Graded runs need a live model (`OLLAMA_HOST`, default `http://127.0.0.1:11434`; model via
+`ZENTAVIO_EVAL_MODEL`). Without one, every case reports `skip` and the run exits 0 — deliberate, so
+the offline checks remain usable in CI. Use `--require-model` where a skip should be a failure.
+
+Evals are **not** in the default test suite; that suite must stay fast enough to run on every save
 (`.claude/skills/testing/SKILL.md`).
 
 ## CI wiring
 
-**Not yet implemented** — no eval job exists in `.github/workflows/ci.yml`. The design, for when it is
-built: triggered when a change touches `ai/**/prompts/**`, `docs/prompts/**`, or the model routing
-config.
+**Implemented, partially.** `.github/workflows/ci.yml` runs `--offline` in the `python` job on every
+pull request. That enforces:
 
-- Non-skippable once triggered.
-- The delta report is posted to the pull request.
-- The prompt's version must have been bumped: an unchanged `promptVersion` with changed content fails
-  the gate before evals even run, because it makes past outputs unreproducible.
+- every prompt has a fixture directory (an unevaluated prompt cannot merge)
+- every fixture set covers all six required kinds
+- every case file is valid, and states why it exists
+
+**Not in CI:** graded runs, because the runner has no model host. Options when the first prompt lands:
+a self-hosted runner with Ollama, or a required manual gate where the author attaches the delta report.
+Choosing between those is a real decision and should be recorded as an ADR rather than defaulted into.
+
+Also still to build: posting the delta report to the pull request, and the check that a changed prompt
+bumped its `promptVersion` — an unchanged version with changed content makes past outputs
+unreproducible and should fail before grading starts.
 
 ## Adding a prompt
 

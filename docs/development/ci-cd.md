@@ -60,18 +60,24 @@ check, so adding a job to `ci.yml` makes it blocking without touching repository
 | Gate | When | Blocking | Implemented |
 |---|---|---|---|
 | `ci` status check | every pull request | yes | **yes** — `.github/workflows/ci.yml` |
-| Prompt evals | any change to a prompt under `docs/prompts/` or `ai/` | yes, by policy | **no** — see below |
+| Prompt eval **coverage** (offline) | every pull request | yes | **yes** — `pnpm eval:offline` in the `python` job |
+| Prompt eval **grading** | any prompt change | yes, by policy | **not in CI** — needs a model host |
 | ADR present | any new dependency, boundary change, or contract change | review | review only |
 | Docs updated | any change to documented behavior | review | review only |
 
-**The prompt-eval gate is specified but not yet wired.** `docs/prompts/evals.md` defines the policy,
-the required cases, and the regression rules, and the `pnpm eval` commands it describes do not exist
-yet — there is no eval runner, no eval job in `ci.yml`, and no prompt to evaluate, since `ai/` has no
-code. It is listed here because the policy is binding the moment the first prompt is written, not
-because CI currently enforces it. Building the runner is tracked as outstanding work below.
+**Two halves, and only one runs here.** The offline half is enforced on every pull request: a prompt
+cannot merge without a fixture directory, and fixtures cannot merge missing any of the six required
+case kinds — including the unknown-handling and injection cases, which are the two that are invisible
+in normal use and harmful when they regress.
 
-Once wired: a regression on a prompt eval's unknown-handling or injection cases blocks regardless of
-average score improvement. Those cases are what protect users from confident wrong answers.
+The grading half is implemented (`ai/shared/evals/run_evals.py`) but needs a reachable Ollama host,
+which the GitHub-hosted runner does not have. Until that is solved — self-hosted runner, or a required
+manual gate with the delta report attached — graded runs happen locally. With zero prompts in the
+repository the offline step passes trivially: a real check that is currently a no-op, not a claim that
+grading is happening.
+
+Once grading is wired: a regression on the unknown-handling or injection cases blocks regardless of
+average score improvement.
 
 ## Toolchain pinning
 
@@ -99,9 +105,10 @@ Python tooling is separate: `pip install -r requirements-dev.txt` once, then `ru
 
 ## Not yet built
 
-- **The prompt-eval runner and its CI job.** The policy in `docs/prompts/evals.md` is complete; the
-  `pnpm eval` script, the fixture loader, the grader, the baseline store, and the workflow job are
-  all unbuilt. Needed before the first prompt ships, not before the first service.
+- **Graded prompt evals in CI.** The runner exists and the offline half is wired; grading needs a
+  model host. Decide between a self-hosted runner with Ollama and a required manual gate, and record
+  the choice as an ADR. Also outstanding: posting the delta report to the pull request, and failing a
+  prompt change that did not bump its `promptVersion`.
 - **Test and build jobs** — there is no application code yet. Test levels and what must never be
   mocked: `.claude/skills/testing/SKILL.md`.
 - **Path-filtered tasks** via Turborepo's task graph (ADR-0001 follow-up). Deliberately not applied

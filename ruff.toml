@@ -58,6 +58,10 @@ ban-relative-imports = "parents"
 [lint.per-file-ignores]
 "ai/**/tests/**" = ["S101", "PLR2004"]
 "**/conftest.py" = ["S101"]
+# The eval runner is a CLI: its output IS its interface, so print() is correct here.
+# T201 stays banned everywhere else — a service that prints instead of logging loses the
+# correlation id and leaks into stdout (.claude/skills/backend-service/SKILL.md).
+"ai/shared/evals/run_evals.py" = ["T201"]
 
 [lint.isort]
 known-first-party = ["ai"]
