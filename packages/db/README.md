@@ -118,19 +118,22 @@ Foreign keys decide it, not importance:
    exist yet.
 2. `immigration_pathways`, then `requirements` — **done.** Pathways first: `requirements.pathway_id`
    is a foreign key onto `immigration_pathways.pathway_id`.
-3. `skills`, `skill_aliases`, `skill_edges`, `careers`, `career_skills`
-4. `users`, `user_profiles`, `profile_skills`
-5. `companies`, `job_postings` and its bridges
-6. `matches`, `readiness_scores`, `skill_gaps`
-7. `applications`, `outcomes`
+3. `users` — **done.** No foreign keys of its own, so it does not wait for the skill graph.
+4. `skills`, `skill_aliases`, `skill_edges`, `careers`, `career_skills`
+5. `user_consents`, `user_profiles`, `profile_skills`, `user_country_preferences`,
+   `user_immigration_facts`
+6. `companies`, `job_postings` and its bridges
+7. `matches`, `readiness_scores`, `skill_gaps`
+8. `applications`, `outcomes`
 
-**Steps 3 and 4 were previously listed the other way round, and that order cannot be applied.**
-`user_profiles` has `fk_user_profiles__careers → careers(id)` and `profile_skills` has
-`fk_profile_skills__skills → skills(id)`, so the skill and career tables must exist first
+**The rest of the user cluster was previously listed before the skill graph, and that order cannot be
+applied.** `user_profiles` has `fk_user_profiles__careers → careers(id)` and `profile_skills` has
+`fk_profile_skills__skills → skills(id)`, so `skills` and `careers` must exist first
 (`docs/database/entities/user.md`).
 
-Step 4 additionally needs a decision before it can be written: `users.email` is declared `citext`,
-and `.claude/skills/database/SKILL.md` forbids a new PostgreSQL extension without an ADR.
+`users.email` is `text` with a unique index on `lower(email)` — **not `citext`**, and this database
+installs no extension at all (ADR-0013). `tests/integration/db/users-constraints.test.ts` asserts
+`pg_extension` contains only `plpgsql`, so an extension cannot arrive unnoticed in a later migration.
 
 Every file follows `docs/database/migrations.md`: one logical change, forward-only, safe online or
 split into expand/contract steps. The one documented departure — index creation inside the

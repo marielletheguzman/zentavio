@@ -50,6 +50,7 @@ describe('migrations', () => {
       'immigration_pathways',
       'requirements',
       'schema_migrations',
+      'users',
     ]);
   });
 
@@ -64,6 +65,8 @@ describe('migrations', () => {
     expect(names).toContain('uq_req__current');
     expect(names).toContain('uq_req__id_version');
     expect(names).toContain('uq_ip__pathway_id');
+    expect(names).toContain('uq_users__email');
+    expect(names).toContain('uq_users__auth_subject');
 
     for (const index of [
       'idx_req__pathway_current',

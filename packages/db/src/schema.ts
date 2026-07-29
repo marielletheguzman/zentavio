@@ -117,6 +117,30 @@ export interface ImmigrationPathwaysTable {
   updated_at: Generated<Timestamp>;
 }
 
+// ── users (entities/user.md, ADR-0013) ───────────────────────────────────────
+
+export type UserStatusColumn = 'active' | 'suspended' | 'erased';
+
+export interface UsersTable {
+  id: string;
+  /**
+   * `text`, not `citext` (ADR-0013). Stored as entered; `uq_users__email` is a unique index on
+   * `lower(email)`, so **every lookup must filter `lower(email) = lower($1)`**. Comparing this
+   * column directly is a defect: it will miss a differently-cased row.
+   */
+  email: string;
+  email_verified_at: Timestamp | null;
+  auth_provider: string;
+  auth_subject: string | null;
+  locale: Generated<string>;
+  timezone: string | null;
+  status: Generated<UserStatusColumn>;
+  last_seen_at: Timestamp | null;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+  deleted_at: Timestamp | null;
+}
+
 // ── the runner's own bookkeeping ─────────────────────────────────────────────
 
 export interface SchemaMigrationsTable {
@@ -128,6 +152,7 @@ export interface SchemaMigrationsTable {
 export interface Database {
   requirements: RequirementsTable;
   immigration_pathways: ImmigrationPathwaysTable;
+  users: UsersTable;
   schema_migrations: SchemaMigrationsTable;
 }
 

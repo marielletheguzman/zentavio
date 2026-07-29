@@ -20,9 +20,16 @@ nothing said so, and the file is sitting right there looking applied.
 |---|---|
 | `20260729120000-create-immigration-pathways.sql` | `immigration_pathways` + `uq_ip__pathway_id` |
 | `20260729120100-create-requirements.sql` | `requirements`, its foreign keys, seven CHECKs, seven indexes |
+| `20260729120200-create-users.sql` | `users`, `ck_users__status`, `uq_users__email` (on `lower(email)`), `uq_users__auth_subject` |
 
 Pathways come first because `requirements.pathway_id` is a foreign key onto
 `immigration_pathways.pathway_id`, and a foreign key needs its target's unique index to exist.
+`users` has no foreign keys, so its position is arbitrary.
+
+**No `CREATE EXTENSION` anywhere.** `users.email` is `text` with a case-folding unique index rather
+than `citext` (ADR-0013), and `tests/integration/db/users-constraints.test.ts` asserts that
+`pg_extension` contains only `plpgsql` — so an extension cannot be introduced without that test
+failing and the decision being revisited deliberately.
 
 No file uses `IF NOT EXISTS` on a `CREATE TABLE`. Re-application is already a no-op because the
 runner records what it applied; `IF NOT EXISTS` would additionally swallow a table that exists for

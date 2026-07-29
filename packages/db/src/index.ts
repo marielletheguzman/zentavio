@@ -47,4 +47,6 @@ export type {
   RequirementKindColumn,
   RequirementsTable,
   SchemaMigrationsTable,
+  UserStatusColumn,
+  UsersTable,
 } from './schema.js';

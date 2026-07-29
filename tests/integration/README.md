@@ -36,6 +36,7 @@ Two independent things must be wrong before that destroys anything:
 |---|---|
 | `db/migrations.test.ts` | the SQL is valid, applies from empty, is a no-op on a second run, and creates every documented table and index |
 | `db/requirements-constraints.test.ts` | every `CHECK`, unique index, and foreign key **rejects what it should** |
+| `db/users-constraints.test.ts` | ADR-0013's compliance: a differently-cased email is rejected, the lookup uses the index, and **no PostgreSQL extension is installed** |
 
 Constraint tests assert on the **constraint name** in the PostgreSQL error, not merely that
 something threw — a bare "it failed" passes just as happily when the insert failed for a typo in a
