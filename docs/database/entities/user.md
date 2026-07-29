@@ -13,7 +13,7 @@ Account identity only. Deliberately thin: the less that sits here, the smaller t
 ```sql
 CREATE TABLE users (
   id                 uuid        PRIMARY KEY,          -- UUIDv7
-  email              citext      NOT NULL,
+  email              text        NOT NULL,             -- stored as entered; uniqueness folds case (ADR-0013)
   email_verified_at  timestamptz,
   auth_provider      text        NOT NULL,             -- 'password' | 'oidc:<issuer>'
   auth_subject       text,                             -- external identity, when delegated
@@ -28,9 +28,23 @@ CREATE TABLE users (
   CONSTRAINT ck_users__status CHECK (status IN ('active','suspended','erased'))
 );
 
-CREATE UNIQUE INDEX uq_users__email ON users (email) WHERE deleted_at IS NULL;
+CREATE UNIQUE INDEX uq_users__email ON users (lower(email)) WHERE deleted_at IS NULL;
 CREATE UNIQUE INDEX uq_users__auth_subject ON users (auth_provider, auth_subject) WHERE auth_subject IS NOT NULL;
 ```
+
+**`email` is `text`, and the index folds the case — not `citext` (ADR-0013).** `Ada@example.com` and
+`ada@example.com` are one mailbox at every provider anyone uses, so two rows would mean two accounts
+for one human, with password reset and account recovery both ambiguous. That guarantee has to live in
+the database; an application-level check is a convention with a race condition.
+
+It is a functional index rather than a `citext` column because `citext` is an extension, and the
+hosting target is undecided. The cost of this choice is one convention — **every lookup filters
+`lower(email) = lower($1)`** — and its failure mode is the safe one: a forgotten `lower()` means a
+user cannot find their account, which is visible immediately. It can never produce a duplicate,
+because uniqueness is enforced at write regardless of how the query was written.
+
+The column stores the address as entered, so the person can be addressed the way they wrote it.
+Normalizing whitespace and unicode before writing is still the repository's job.
 
 No password column here. Credentials, if stored at all, live in `packages/auth`'s own table with its
 own access controls — a table joined on every request should not contain a hash.
@@ -201,8 +215,13 @@ general profile read.
 Step 5 is the one boundary stated to the user rather than implied: aggregates already computed have no
 path back to the individual and are not withdrawn.
 
+**Open:** step 1 says to clear identifying columns, but `email` is `NOT NULL`. What an erased row's
+email becomes — a per-id sentinel, a nullable column, or something else — is undecided, and ADR-0013
+deliberately did not settle it. It must be settled before erasure is implemented.
+
 ## Invariants
 
+- One live account per email address, compared case-insensitively (ADR-0013).
 - One `is_current` profile per user.
 - An `evidenced` skill has an `evidence_kind`.
 - `verified_at` is set only by in-platform verification, never by a claimed course completion.
