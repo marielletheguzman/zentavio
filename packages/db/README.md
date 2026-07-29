@@ -16,7 +16,7 @@ No ORM and no schema DSL: `docs/database/entities/*.md` is the schema specificat
 | Client (`src/client.ts`) | **built** — connecting and compile-only factories |
 | `requirements` repository | **built**, 21 tests |
 | Migration `.sql` files | **built** for `immigration_pathways` and `requirements` — `migrations/README.md` |
-| Schema-drift test | **not written** — see below |
+| Schema-drift test | **built** — `tests/integration/db/schema-drift.test.ts` |
 | Standalone `migrate` command | **not written** — see below |
 | Repositories for the other tables | not written |
 
@@ -45,11 +45,21 @@ $env:ZENTAVIO_TEST_DATABASE_URL='postgres://zentavio:zentavio_dev@localhost:5432
 pnpm test:integration
 ```
 
-## Two gaps that are still real
+## Drift is checked, not trusted
 
-**The schema-drift test.** `schema.ts` is hand-maintained and can drift from the migrations. Now that
-a database is reachable, comparing it against `information_schema` is possible — it is simply not
-written yet. Until it is, a reviewer is the only thing holding the two together.
+`schema.ts` is hand-maintained, which ADR-0012 named as the one real weakness of choosing a
+hand-written interface over a generated client. `tests/integration/db/schema-drift.test.ts` closes it:
+it **parses** `schema.ts` with TypeScript's own parser and compares the result against
+`information_schema` — table names, column names, nullability, and whether the database supplies a
+default.
+
+It deliberately does **not** compare SQL types. `text` versus `varchar` is not knowable from
+`string`; Kysely's types describe the shape TypeScript sees, not the column's declaration. Drift in
+practice is a column added, removed, renamed, or made nullable, and those fail the test.
+
+Verified by injecting drift and watching it go red, not by watching it pass.
+
+## The remaining gap
 
 **A standalone `migrate` command.** `applyMigrations` is exported and used by the integration suite,
 but there is no CLI. Node cannot resolve this repository's `.js` import specifiers to `.ts` sources,

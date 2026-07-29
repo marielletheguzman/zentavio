@@ -37,6 +37,11 @@ Two independent things must be wrong before that destroys anything:
 | `db/migrations.test.ts` | the SQL is valid, applies from empty, is a no-op on a second run, and creates every documented table and index |
 | `db/requirements-constraints.test.ts` | every `CHECK`, unique index, and foreign key **rejects what it should** |
 | `db/users-constraints.test.ts` | ADR-0013's compliance: a differently-cased email is rejected, the lookup uses the index, and **no PostgreSQL extension is installed** |
+| `db/schema-drift.test.ts` | `packages/db/src/schema.ts` still describes the live schema — ADR-0012's named weakness |
+
+`schema-drift.test.ts` **parses** `schema.ts` with TypeScript's own parser rather than comparing it
+against a hand-kept runtime copy of the table list. A copy would only move the drift: the copy and
+the interface would become the two things out of step.
 
 Constraint tests assert on the **constraint name** in the PostgreSQL error, not merely that
 something threw — a bare "it failed" passes just as happily when the insert failed for a typo in a

@@ -3,10 +3,12 @@
  *
  * **Derived from `docs/database/entities/*.md`, which is the schema specification.** This file is
  * hand-maintained, and ADR-0012 names that as its one real weakness: it can drift from the
- * migrations. The mitigation is a schema-drift integration test comparing this against the live
- * schema — not yet written, because no database is reachable. Until it exists, a reviewer comparing
- * this file against the entity documents is the only thing holding them together, and that is worth
- * knowing rather than assuming.
+ * migrations, and a drifted interface typechecks perfectly and then fails at runtime.
+ *
+ * `tests/integration/db/schema-drift.test.ts` is the mitigation the ADR asked for. It **parses this
+ * file** and compares it against the live schema — table names, column names, nullability, and
+ * whether the database supplies a default. It does not compare SQL types, which are not knowable
+ * from `string`.
  *
  * Only the tables the MVP path needs are declared. A table declared here without a migration would
  * typecheck and then fail at runtime, so absence is deliberate.
