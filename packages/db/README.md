@@ -10,27 +10,23 @@ No ORM and no schema DSL: `docs/database/entities/*.md` is the schema specificat
 | Part | Status |
 |---|---|
 | Migration runner (`src/migrations/runner.ts`) | **built**, 22 unit tests |
+| Migration loader (`src/migrations/files.ts`) | **built** |
+| PostgreSQL executor (`src/migrations/executor.ts`) | **built** |
 | `Database` interface (`src/schema.ts`) | **built** for `requirements`, `immigration_pathways`, `schema_migrations` |
 | Client (`src/client.ts`) | **built** — connecting and compile-only factories |
 | `requirements` repository | **built**, 21 tests |
-| Migration `.sql` files | **not written** — see below |
-| Schema-drift test | **not written** — needs a database |
+| Migration `.sql` files | **built** for `immigration_pathways` and `requirements` — `migrations/README.md` |
+| Schema-drift test | **not written** — see below |
+| Standalone `migrate` command | **not written** — see below |
 | Repositories for the other tables | not written |
 
-## Why the migrations are not written yet
+## The constraints are verified, not asserted
 
-**No PostgreSQL is reachable in the environment where this was built** — Docker is installed but its
-daemon is not running, and there is no `psql`. Migration SQL written here could not be executed, so it
-would be committed unverified.
-
-That matters more for this schema than most, because much of its meaning lives in `CHECK`
-constraints:
+Most of this schema's meaning lives in `CHECK` constraints:
 
 ```sql
-CONSTRAINT ck_matches__score_iff_scored CHECK ((status = 'scored') = (score IS NOT NULL))
-CONSTRAINT ck_req__tier_one             CHECK (source_tier = 1)
-CONSTRAINT ck_ems__min_factors          CHECK (status = 'insufficient_data' OR factors_known >= 3)
-CONSTRAINT ck_req__scope                CHECK (
+CONSTRAINT ck_req__tier_one CHECK (source_tier = 1)
+CONSTRAINT ck_req__scope    CHECK (
   (domain = 'immigration' AND pathway_id IS NOT NULL)
   OR (domain IN ('recognition','credential') AND profession IS NOT NULL)
   OR (domain IN ('authentication','language','employment_clearance'))
@@ -38,12 +34,28 @@ CONSTRAINT ck_req__scope                CHECK (
 ```
 
 A constraint expression that parses but does not *reject what it should* is invisible on review, and
-silently permits exactly the data it exists to prevent. Committing these unexecuted would put the
-schema's most important rules into the repository as untested assertions.
+silently permits exactly the data it exists to prevent. So every one of them is exercised against a
+real PostgreSQL by attempting a violation, asserting on the **constraint name** in the error:
 
-**To unblock:** start Docker Desktop. Then the migrations can be written from the entity documents,
-applied to a real database, and each constraint verified by attempting to violate it — which also
-gives the Vitest `integration` project its first real tests (ADR-0007 follow-up).
+    tests/integration/db/requirements-constraints.test.ts
+
+```powershell
+docker compose -f infra/docker/docker-compose.dev.yml up -d --wait
+$env:ZENTAVIO_TEST_DATABASE_URL='postgres://zentavio:zentavio_dev@localhost:5432/zentavio_test'
+pnpm test:integration
+```
+
+## Two gaps that are still real
+
+**The schema-drift test.** `schema.ts` is hand-maintained and can drift from the migrations. Now that
+a database is reachable, comparing it against `information_schema` is possible — it is simply not
+written yet. Until it is, a reviewer is the only thing holding the two together.
+
+**A standalone `migrate` command.** `applyMigrations` is exported and used by the integration suite,
+but there is no CLI. Node cannot resolve this repository's `.js` import specifiers to `.ts` sources,
+and neither `tsx` nor `vite-node` is in the stack — adding one is a dependency decision that needs an
+ADR (`.claude/context/tech-stack.md`), not a convenience import. Until then, migrations are applied
+programmatically.
 
 ## How the repository is verified without a database
 
@@ -97,20 +109,32 @@ not atomic with its own record; recovery is to re-run, which the idempotence che
 Checksums normalize line endings first, so a Windows checkout does not appear to have edited every
 migration.
 
-## When the migrations are written
+## Migration order
 
-Order, from the entity documents:
+Foreign keys decide it, not importance:
 
-1. `schema_migrations` — the runner's own table
-2. `requirements`, `immigration_pathways` — ADR-0010's centrepiece
-3. `users`, `user_profiles`, `profile_skills`
-4. `skills`, `skill_aliases`, `skill_edges`, `careers`, `career_skills`
+1. ~~`schema_migrations`~~ — **not a migration.** `PostgresMigrationExecutor` creates it with
+   `IF NOT EXISTS` on every run, because a migration cannot record itself in a table that does not
+   exist yet.
+2. `immigration_pathways`, then `requirements` — **done.** Pathways first: `requirements.pathway_id`
+   is a foreign key onto `immigration_pathways.pathway_id`.
+3. `skills`, `skill_aliases`, `skill_edges`, `careers`, `career_skills`
+4. `users`, `user_profiles`, `profile_skills`
 5. `companies`, `job_postings` and its bridges
 6. `matches`, `readiness_scores`, `skill_gaps`
 7. `applications`, `outcomes`
 
+**Steps 3 and 4 were previously listed the other way round, and that order cannot be applied.**
+`user_profiles` has `fk_user_profiles__careers → careers(id)` and `profile_skills` has
+`fk_profile_skills__skills → skills(id)`, so the skill and career tables must exist first
+(`docs/database/entities/user.md`).
+
+Step 4 additionally needs a decision before it can be written: `users.email` is declared `citext`,
+and `.claude/skills/database/SKILL.md` forbids a new PostgreSQL extension without an ADR.
+
 Every file follows `docs/database/migrations.md`: one logical change, forward-only, safe online or
-split into expand/contract steps.
+split into expand/contract steps. The one documented departure — index creation inside the
+table-creation transaction rather than `CONCURRENTLY` — is explained in `migrations/README.md`.
 
 ## Related
 

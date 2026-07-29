@@ -112,8 +112,10 @@ Python tooling is separate: `pip install -r requirements-dev.txt` once, then `ru
 
 - **A self-hosted runner with Ollama** for graded evals in CI. ADR-0009 defers this until a second
   contributor or the first paying user; until then the delta report is attached to the pull request.
-- **A `test:integration` job.** `test:unit` runs in the `typescript` job now; the integration project has
-  no tests and no container helper until `packages/db` and migrations exist.
+- **A `test:integration` job.** `test:unit` runs in the `typescript` job now. The integration project
+  now has real tests (`tests/integration/db/`) and runs locally against
+  `infra/docker/docker-compose.dev.yml`, so what is missing is only the CI half: a PostgreSQL
+  service container and `ZENTAVIO_TEST_DATABASE_URL` in the workflow.
 - **Test and build jobs** — there is no application code yet. Test levels and what must never be
   mocked: `.claude/skills/testing/SKILL.md`.
 - **Path-filtered tasks** via Turborepo's task graph (ADR-0001 follow-up). Deliberately not applied

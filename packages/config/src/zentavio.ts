@@ -69,6 +69,28 @@ export const databaseSchema = {
 } as const satisfies Schema;
 
 /**
+ * The database the Vitest `integration` project owns (ADR-0007).
+ *
+ * Separate from `databaseUrl` rather than reusing it, because the integration helper drops and
+ * recreates the schema before each run. Pointing that at a developer's working database would
+ * destroy it, and a suite that *can* do that eventually does. The helper additionally refuses any
+ * connection string whose database name does not end in `_test`, so two independent things have to
+ * be wrong before data is lost.
+ *
+ * Not part of `zentavioSchema`: no running process reads it, only the test suite.
+ */
+export const testDatabaseSchema = {
+  testDatabaseUrl: {
+    env: 'ZENTAVIO_TEST_DATABASE_URL',
+    type: 'string',
+    minLength: 1,
+    secret: true,
+    description:
+      'PostgreSQL connection string for the integration suite. Its database is dropped and rebuilt, and its name must end in _test',
+  },
+} as const satisfies Schema;
+
+/**
  * The whole schema. One object so `envKeys` can generate the complete `.env.example`, and so a
  * reader cannot forget a section exists.
  */

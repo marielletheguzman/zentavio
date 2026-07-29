@@ -17,13 +17,16 @@ Anything below that you cannot execute is a bug in this document — say so rath
 | **Python** | 3.12 (CI) or 3.13 | the `ai/` half (ADR-0003) |
 | **Ruff** | pinned in `requirements-dev.txt` | lint and format for `ai/` |
 | **pytest** | pinned in `requirements-dev.txt` | tests for `ai/` (ADR-0007) |
+| **Docker** | any recent, daemon running | PostgreSQL for `pnpm test:integration` |
 | **Git** | any recent | — |
 
 Vitest installs with `pnpm install` — no separate step.
 
-Not needed yet, because nothing uses them: Docker, PostgreSQL, Redis, Qdrant, Ollama, uv, Terraform. They
-arrive with the services that need them. **Docker becomes a prerequisite** when the Vitest `integration`
-project gets its first test, which needs `packages/db` to exist first.
+Docker is required only for `pnpm test:integration`. `pnpm lint:all` — which is what CI's TypeScript
+job runs — needs nothing beyond Node and pnpm.
+
+Still not needed, because nothing uses them: Redis, Qdrant, Ollama, uv, Terraform. They arrive with
+the services that need them.
 
 ## Setup
 
@@ -120,10 +123,22 @@ Then delete it: `rm -rf packages/db/src`.
 
 ## What does not exist yet
 
-Named so nobody hunts for them: no dev server, no database, no migrations, no seed data, no Docker
-compose, no **application** tests (the tests that exist cover tooling), no integration tests, no deployed
-environment. Sequence in
-[`../roadmap/phases.md`](../roadmap/phases.md).
+Named so nobody hunts for them: no dev server, no seed data, no HTTP API, no UI, no deployed
+environment, and no `migrate` command (migrations are applied programmatically — see
+`packages/db/README.md`). The schema covers `requirements` and `immigration_pathways` only.
+Sequence in [`../roadmap/phases.md`](../roadmap/phases.md).
+
+## The database
+
+```bash
+docker compose -f infra/docker/docker-compose.dev.yml up -d --wait
+export ZENTAVIO_TEST_DATABASE_URL=postgres://zentavio:zentavio_dev@localhost:5432/zentavio_test
+pnpm test:integration
+```
+
+The integration suite drops and rebuilds its schema on every run, so it refuses any database whose
+name does not end in `_test`. Details in [`../../tests/integration/README.md`](../../tests/integration/README.md)
+and [`../../infra/docker/README.md`](../../infra/docker/README.md).
 
 ## Related
 

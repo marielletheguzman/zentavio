@@ -1,0 +1,38 @@
+# Local development services.
+#
+# PostgreSQL only, for now. Redis and Qdrant are in the stack (`.claude/context/tech-stack.md`)
+# but nothing reads them yet, and a service declared before its first reader is a service nobody
+# verifies — the same rule `packages/config/src/zentavio.ts` applies to environment keys.
+#
+#   docker compose -f infra/docker/docker-compose.dev.yml up -d
+#
+# The credentials here are development-only and deliberately in the file rather than in an env
+# var: this database is reachable from localhost only, holds no real data, and a developer who
+# has to invent a password invents a different one on every machine.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: zentavio-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: zentavio
+      POSTGRES_PASSWORD: zentavio_dev
+      POSTGRES_DB: zentavio
+      # Deterministic collation, so an ORDER BY here matches an ORDER BY in CI.
+      POSTGRES_INITDB_ARGS: '--locale-provider=icu --icu-locale=und-x-icu --encoding=UTF8'
+    ports:
+      - '5432:5432'
+    volumes:
+      - zentavio-pgdata:/var/lib/postgresql/data
+      # Runs once, on an empty data directory only.
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # `docker compose up --wait` blocks on this, so a migration run cannot race the boot.
+      test: ['CMD-SHELL', 'pg_isready -U zentavio -d zentavio']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  zentavio-pgdata:

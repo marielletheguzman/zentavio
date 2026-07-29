@@ -33,10 +33,12 @@ export default defineConfig({
           // Integration tests share a database, so they must not race each other.
           fileParallelism: false,
           testTimeout: 30_000,
-          // NOTE: no tests exist in this project yet, and that is correct rather than an
-          // oversight. It needs `packages/db` and migrations to exist first — see ADR-0007's
-          // follow-up work. A container helper written now would be a helper for a database
-          // that does not exist.
+          // Requires a running PostgreSQL and ZENTAVIO_TEST_DATABASE_URL:
+          //
+          //   docker compose -f infra/docker/docker-compose.dev.yml up -d --wait
+          //
+          // The suite drops and rebuilds its schema on every run, so tests/integration/db/database.ts
+          // refuses any database whose name does not end in `_test`.
         },
       },
     ],

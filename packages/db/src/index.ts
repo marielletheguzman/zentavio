@@ -5,11 +5,16 @@
  * migrations are plain `.sql` files applied by the runner here — no ORM and no schema DSL, because
  * `docs/database/entities/*.md` is the schema specification.
  *
- * **What is not here yet:** the migration `.sql` files, because no PostgreSQL was reachable to
- * execute them and this schema's meaning lives largely in `CHECK` constraints. See the README.
+ * **What is not here yet:** a standalone `migrate` command. Applying migrations is exported from
+ * here and exercised by the integration suite; a CLI needs a decision about how TypeScript is run
+ * outside Vitest. See the README.
  */
 
 export { createCompileOnlyDb, createDb, type DbConnectionOptions } from './client.js';
+
+export { applyMigrations, migrationsDirectory, type ApplyMigrationsOptions } from './migrations/apply.js';
+export { PostgresMigrationExecutor } from './migrations/executor.js';
+export { loadMigrationFiles, migrationIdFromFilename } from './migrations/files.js';
 
 export {
   MigrationError,

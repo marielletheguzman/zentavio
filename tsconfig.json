@@ -14,6 +14,14 @@
     "checkJs": false,
     "types": ["node"]
   },
-  "include": ["tools/**/*.ts", "tools/**/*.mjs", "packages/**/*.ts", "*.ts", "*.mts", "*.mjs"],
+  "include": [
+    "tools/**/*.ts",
+    "tools/**/*.mjs",
+    "packages/**/*.ts",
+    "tests/**/*.ts",
+    "*.ts",
+    "*.mts",
+    "*.mjs"
+  ],
   "exclude": ["node_modules", "dist", "**/.next", "ai", ".claude"]
 }

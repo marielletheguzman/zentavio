@@ -1,0 +1,11 @@
+{
+  "name": "@zentavio/tests-integration",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Integration tests against a real containerized PostgreSQL (ADR-0007).",
+  "type": "module",
+  "dependencies": {
+    "@zentavio/config": "workspace:*",
+    "@zentavio/db": "workspace:*"
+  }
+}

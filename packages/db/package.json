@@ -9,5 +9,9 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "kysely": "^0.29.4",
+    "pg": "^8.22.0"
   }
 }
