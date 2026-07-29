@@ -17,12 +17,15 @@ pull_request / push:main
    │
    ├── typescript ──── pnpm lint          layer boundaries, banned imports, process.env
    │                   pnpm typecheck     strict TypeScript
+   │                   pnpm test:unit     the fast Vitest project
    │                   audit script       suppressed boundary rules
+   │
+   ├── integration ─── pnpm test:integration   real PostgreSQL service container
    │
    ├── python ──────── ruff check ai/     ai/ statelessness bans
    │                   ruff format --check
    │
-   └── ci ─────────── aggregates both — the single required status check
+   └── ci ─────────── aggregates all three — the single required status check
 ```
 
 ### `typescript`
@@ -41,6 +44,21 @@ The audit step exists because `eslint-plugin-boundaries` is advisory — a disab
 it. A boundary disable is an architecture exception and needs an ADR, so it fails the build rather
 than passing quietly.
 
+### `integration`
+
+A `postgres:17-alpine` service container, the same major as
+`infra/docker/docker-compose.dev.yml` — a CI database on a different major would make a green run
+evidence about the wrong server. The job applies every migration to an empty database, which is the
+state a fresh environment starts in and the one most likely to rot unnoticed, then runs the schema
+and constraint tests against it.
+
+`ZENTAVIO_TEST_DATABASE_URL` points at a database whose name ends in `_test`, which
+`tests/integration/db/database.ts` requires before it will drop a schema. The credential is
+disposable and exists only inside the ephemeral service container.
+
+Its own job rather than a step in `typescript`, because a failure here means the **schema** is wrong,
+and that deserves a separate signal from "a lint rule failed".
+
 ### `python`
 
 ESLint cannot see `ai/` — it is Python (ADR-0003). The rules keeping the AI layer stateless live in
@@ -55,8 +73,9 @@ formatter rewriting an example inside a document is an unreviewed doc change.
 
 ### `ci`
 
-An aggregation job that fails if either job above failed. Branch protection requires this one
-check, so adding a job to `ci.yml` makes it blocking without touching repository settings.
+An aggregation job that fails if any job above failed. Branch protection requires this one check, so
+adding a job to `ci.yml` makes it blocking without touching repository settings — which is exactly
+what happened when `integration` was added.
 
 ## Gates
 
@@ -112,10 +131,10 @@ Python tooling is separate: `pip install -r requirements-dev.txt` once, then `ru
 
 - **A self-hosted runner with Ollama** for graded evals in CI. ADR-0009 defers this until a second
   contributor or the first paying user; until then the delta report is attached to the pull request.
-- **A `test:integration` job.** `test:unit` runs in the `typescript` job now. The integration project
-  now has real tests (`tests/integration/db/`) and runs locally against
-  `infra/docker/docker-compose.dev.yml`, so what is missing is only the CI half: a PostgreSQL
-  service container and `ZENTAVIO_TEST_DATABASE_URL` in the workflow.
+- **Digest-pinned service images.** Actions are pinned to commit SHAs; the `postgres:17-alpine`
+  service container and `infra/docker/docker-compose.dev.yml` are still pinned by tag. They must be
+  changed together — a CI database on a different major than the developer's would make a green run
+  evidence about the wrong server.
 - **Test and build jobs** — there is no application code yet. Test levels and what must never be
   mocked: `.claude/skills/testing/SKILL.md`.
 - **Path-filtered tasks** via Turborepo's task graph (ADR-0001 follow-up). Deliberately not applied

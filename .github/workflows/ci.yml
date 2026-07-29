@@ -44,8 +44,9 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      # ADR-0007: the fast project only. Integration tests need a real PostgreSQL and get
-      # their own job once packages/db and migrations exist.
+      # ADR-0007: the fast project only. The integration project has its own job below,
+      # because it needs a real PostgreSQL and a separate job means a separate,
+      # legible failure signal.
       - name: Unit tests
         run: pnpm test:unit
 
@@ -53,6 +54,55 @@ jobs:
       # That hole is audited explicitly rather than trusted.
       - name: Audit suppressed boundary rules
         run: node tools/scripts/audit-boundary-disables.mjs
+
+  # ── Integration: the schema against a real PostgreSQL ───────────────────────
+  # docs/development/testing.md forbids mocking PostgreSQL, because what a CHECK
+  # actually rejects and what a partial unique index actually permits is the whole
+  # point of these tests — and neither is knowable from a fake.
+  #
+  # This job also applies every migration to an empty database on every run, which
+  # is the state a fresh environment starts in and the one most likely to rot
+  # unnoticed.
+  integration:
+    name: Integration tests (PostgreSQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        # Same tag as infra/docker/docker-compose.dev.yml, deliberately: a CI database
+        # on a different major than the developer's would make a green run evidence
+        # about the wrong server. Both should eventually be pinned by digest, and must
+        # be changed together when they are.
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: zentavio
+          POSTGRES_PASSWORD: zentavio_ci
+          # Created directly, unlike local development: this database is disposable and
+          # there is nothing here for the suite to share with.
+          POSTGRES_DB: zentavio_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U zentavio -d zentavio_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: ./infra/ci/actions/setup-node-pnpm
+        with:
+          node-version: '22'
+
+      - name: Integration tests
+        env:
+          # The name ends in _test, which tests/integration/db/database.ts requires before
+          # it will drop a schema. The credential is disposable and lives only in this
+          # ephemeral service container.
+          ZENTAVIO_TEST_DATABASE_URL: postgres://zentavio:zentavio_ci@localhost:5432/zentavio_test
+        run: pnpm test:integration
 
   # ── Python: ai/ statelessness ───────────────────────────────────────────────
   # ESLint cannot see ai/ (ADR-0003 makes it Python), so the rules that keep the
@@ -113,14 +163,17 @@ jobs:
   ci:
     name: CI
     if: always()
-    needs: [typescript, python]
+    needs: [typescript, integration, python]
     runs-on: ubuntu-latest
     steps:
       - name: Verify all checks passed
         run: |
-          echo "typescript: ${{ needs.typescript.result }}"
-          echo "python:     ${{ needs.python.result }}"
-          if [ "${{ needs.typescript.result }}" != "success" ] || [ "${{ needs.python.result }}" != "success" ]; then
-            echo "::error::One or more CI jobs failed. A boundary rule, type, or lint check did not pass."
+          echo "typescript:  ${{ needs.typescript.result }}"
+          echo "integration: ${{ needs.integration.result }}"
+          echo "python:      ${{ needs.python.result }}"
+          if [ "${{ needs.typescript.result }}" != "success" ] \
+            || [ "${{ needs.integration.result }}" != "success" ] \
+            || [ "${{ needs.python.result }}" != "success" ]; then
+            echo "::error::One or more CI jobs failed. A boundary rule, type, schema, or lint check did not pass."
             exit 1
           fi
