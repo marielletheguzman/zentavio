@@ -17,7 +17,27 @@ commitment.
 **Verified by:** a deliberate cross-layer import fails the build with the ADR it breaks, and a red CI run
 cannot merge.
 
-**Outstanding:** `ci` as a required status check, project references, graded evals in CI.
+**Both halves verified, 2026-07-31.**
+
+*A red CI run cannot merge.* A branch with a deliberate type error was refused with
+`HTTP 405: Required status check "CI" is failing.` while a green pull request read `CLEAN`. See ADR-0011's
+Correction section.
+
+*A deliberate cross-layer import fails the build with the ADR it breaks.* Three probes were written, run,
+and deleted:
+
+| Probe | Result |
+|---|---|
+| `packages/types` imports `@zentavio/config` | rejected — "packages/types is the innermost layer…" |
+| `packages/config` imports `services/api-gateway` | rejected — "…A shared library that knows its consumers is not shared — ADR-0001" |
+| `process.env` read inside `packages/db` | rejected — "Read configuration through packages/config…" |
+
+The test found one defect, now fixed: the `package-types` message was the only `disallow` message in
+`eslint.config.mjs` that named no ADR, so that violation failed the build without saying which decision it
+broke — which is the criterion, not merely failing.
+
+**Outstanding:** TypeScript project references, and graded evals in CI (deferred deliberately by ADR-0009,
+so it does not gate Phase 0 exit).
 
 ---
 
