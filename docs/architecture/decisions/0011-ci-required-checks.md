@@ -135,14 +135,15 @@ cloned, forked, or indexed. The alternative was GitHub Pro at roughly $4/month.
 
 - ~~**Observe one green `ci` run.**~~ Done 2026-07-31: run `30413570717` on `02fe14a`, all four jobs green,
   with the integration job genuinely executing against PostgreSQL rather than skipping.
-- ~~Configure branch protection with the settings above.~~ Done 2026-07-31 — except squash-merge-only.
+- ~~Configure branch protection with the settings above.~~ Done 2026-07-31.
 - ~~Verify by attempting a merge with a deliberately failing check.~~ Done 2026-07-31. A branch with a
   deliberate type error was opened as PR #2; the merge was refused with
   `HTTP 405: Required status check "CI" is failing.` while green PR #1 read `CLEAN`, so the gate
   distinguishes red from green rather than blocking everything. Probe branch and PR deleted after.
-- **Still open: configure squash-merge-only.** Merge commits and rebase merges are still allowed. This is a
-  repository setting (Settings → General → Pull Requests), not branch protection, which is why it was not
-  covered by the API call that configured the rest.
+- ~~Configure squash-merge-only.~~ Done 2026-07-31: `allow_merge_commit: false`,
+  `allow_rebase_merge: false`, plus `delete_branch_on_merge: true`. These are **repository** settings, not
+  branch protection, which is why the API call that configured protection did not cover them — worth
+  knowing, because a reader who checks only the protection endpoint will not see them.
 - **Still open: the administrator exemption is not violation-tested.** It is off per the API readback
   (`enforce_admins.enabled: true`), which is what Compliance below asks for, but nobody has confirmed an
   admin merge is actually refused — doing so would land a deliberately broken commit on `main`.
