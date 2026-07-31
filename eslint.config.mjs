@@ -167,7 +167,7 @@ export default tseslint.config(
             from: ['package-types'],
             disallow: ['app', 'service', 'knowledge', 'connector', 'connector-core', 'package'],
             message:
-              'packages/types is the innermost layer. It declares contracts and imports nothing else in this repository.',
+              'packages/types is the innermost layer. It declares contracts and imports nothing else in this repository — ADR-0001.',
           },
         ],
       }],

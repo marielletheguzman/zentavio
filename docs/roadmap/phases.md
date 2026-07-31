@@ -24,8 +24,20 @@ eval harness, the monorepo skeleton.
 review; ADRs 0001–0011 Accepted.
 
 **Status:** substantially complete. ADRs 0001–0011 Accepted; Vitest and pytest installed; the
-`promptVersion` check running. Outstanding: `ci` as a required status check (needs one observed green run),
-TypeScript project references, and graded evals in CI (ADR-0009 defers the runner deliberately).
+`promptVersion` check running.
+
+**CI is green and blocking on `main` since 2026-07-31.** The required check is `CI`, branch protection is
+configured per ADR-0011, and it was verified by attempting to violate it rather than by reading the
+settings page. Configuring it required making the repository public — see ADR-0011's Correction.
+
+**Boundary enforcement was tested by violating it, also 2026-07-31.** Deliberate probes — `packages/types`
+importing a package, `packages/config` importing a service, a raw `process.env` read in `packages/db` —
+were each rejected by ESLint and then deleted. So "every architectural boundary enforced by a tool rather
+than by review" is now an observation rather than an inference from configuration. Details in
+`milestones.md` under M0.
+
+Outstanding: TypeScript project references, and graded evals in CI (ADR-0009 defers the runner
+deliberately, so it does not gate this exit).
 
 ---
 
