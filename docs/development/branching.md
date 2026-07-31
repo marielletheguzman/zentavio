@@ -48,8 +48,9 @@ Small PRs. A 40-file PR is not reviewed; it is approved.
 
 ## Merging
 
-- **CI's `ci` check must be green.** *(Not yet a required status check — see below.)*
-- Squash merge, so `main` gets one commit per logical change and reverts are clean.
+- **CI's `ci` check must be green.** A required status check since 2026-07-31 — see below.
+- Squash merge, so `main` gets one commit per logical change and reverts are clean. *(Enforced by
+  convention only: squash-merge-only is not yet configured in repository settings — see below.)*
 - The commit message follows `conventions.md`, including the body explaining why.
 - Delete the branch after merge.
 
