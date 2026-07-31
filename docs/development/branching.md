@@ -60,24 +60,36 @@ present, and a revert is a decision that can be re-made calmly.
 
 A revert commit says what was reverted **and why** — otherwise someone re-lands the same change next week.
 
-## Required checks — decided, not yet configured
+## Required checks — configured, not yet tested
 
-**ADR-0011 (Accepted)** specifies branch protection on `main`:
+**ADR-0011 (Accepted)** specifies branch protection on `main`. Configured on 2026-07-31, after the
+precondition was met: CI run `30413570717` on `02fe14a` was observed green, with the
+`Integration tests (PostgreSQL)` job actually executing against a live database rather than skipping.
 
-- require a pull request before merging
-- require the status check named **`ci`**
-- require branches to be up to date
-- no force pushes, no deletions
-- **no administrator exemption**
-- squash merge only
+| Setting | ADR-0011 | Actual |
+|---|---|---|
+| pull request before merging | required | required (0 approvals) |
+| status check `ci` | required | required |
+| branches up to date | required | `strict: true` |
+| force pushes | forbidden | forbidden |
+| deletions | forbidden | forbidden |
+| administrator exemption | none | none |
+| squash merge only | required | **not set** — merge commits and rebase merges are still allowed |
 
-**Not configured yet**, so a red run still does not physically block a merge and the rules above hold by
-convention. ADR-0011 carries a precondition: **one green CI run must be observed first**, because requiring
-a check that has never passed would block all work on an unverified assumption.
+Approvals are set to 0 deliberately: ADR-0011 defers required review (Option C) until a second contributor
+joins, so the pull request is a gate for CI, not for review.
 
-Configure at Settings → Branches → rule for `main`. Then verify by opening a pull request with a
-deliberately failing check and confirming the merge is refused — a setting nobody has tested is a claim,
-not a control.
+Configuring this required making the repository **public** — GitHub gates branch protection and rulesets
+behind a paid plan for private repositories, and both API calls returned
+`Upgrade to GitHub Pro or make this repository public to enable this feature. (HTTP 403)`.
+
+**Two gaps remain open:**
+
+1. **Squash-merge-only is not configured.** Set it at Settings → General → Pull Requests.
+2. **The protection has never been tested.** Nobody has opened a pull request with a deliberately failing
+   check and confirmed the merge is refused. Until that has happened, the correct statement is "branch
+   protection is configured", not "merge enforcement is verified" — a setting nobody has tested is a claim,
+   not a control (`.claude/context/decision-gate.md`).
 
 ## Related
 
