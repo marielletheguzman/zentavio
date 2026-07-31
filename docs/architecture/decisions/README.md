@@ -27,16 +27,22 @@ already ruled out and how the rule is enforced.
 | [0011](0011-ci-required-checks.md) | Require the `ci` check on `main` | Accepted | 2026-07-28 |
 | [0012](0012-database-access-layer.md) | `pg` + Kysely, plain SQL migrations, own runner | Accepted | 2026-07-28 |
 | [0013](0013-lower-email-unique-index.md) | Case-insensitive email uniqueness via a `lower(email)` unique index; no `citext` | Accepted | 2026-07-29 |
+| [0014](0014-typescript-runner.md) | How TypeScript entrypoints are executed outside Vitest | **Proposed** | 2026-07-31 |
 
 **0010 is Accepted, and the rename is done** — `immigration_rules` is now `requirements`, with `domain`,
 `imposed_by`, and `authority`. Regulated professions remain blocked on **data**, not schema: nursing,
 engineering, and teaching return `unknown` until each profession's recognition rules are sourced and
 ingested.
 
-**Accepted is not implemented.** 0007–0009 and 0011 are Accepted and binding, but their follow-up work is
-largely undone: no test runner is installed, nothing is instrumented, the `promptVersion` check is unwritten,
-and branch protection is unconfigured. ADR-0011 additionally carries a precondition — one green CI run must
-be observed before protection is switched on.
+**Accepted is not implemented — but less of it than this section used to claim.** As of 2026-07-31: Vitest
+and pytest are installed, the `promptVersion` check runs in CI, and ADR-0011 is fully discharged — branch
+protection is configured on `main` and was verified by attempting to violate it. See ADR-0011's Correction
+section, which also records that the required check is named `CI`, not `ci`, and that configuring it
+required making the repository public.
+
+Still undone: nothing is instrumented (0008), and graded evals do not run in CI (0009 defers the runner
+deliberately). **0014 is Proposed, not decided** — until it is, there is no standalone `migrate` command and
+migrations can only be applied programmatically.
 
 0001–0004 define the boundaries every skill and context file assumes: one repository, sources as
 plugins, a polyglot contract at the `ai/` boundary, and a vector store that is an index rather than
