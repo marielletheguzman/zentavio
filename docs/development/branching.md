@@ -49,8 +49,8 @@ Small PRs. A 40-file PR is not reviewed; it is approved.
 ## Merging
 
 - **CI's `ci` check must be green.** A required status check since 2026-07-31 — see below.
-- Squash merge, so `main` gets one commit per logical change and reverts are clean. *(Enforced by
-  convention only: squash-merge-only is not yet configured in repository settings — see below.)*
+- Squash merge, so `main` gets one commit per logical change and reverts are clean. Merge commits and
+  rebase merges are disabled in repository settings, so this is the only merge method available.
 - The commit message follows `conventions.md`, including the body explaining why.
 - Delete the branch after merge.
 
@@ -75,7 +75,7 @@ precondition was met: CI run `30413570717` on `02fe14a` was observed green, with
 | force pushes | forbidden | forbidden |
 | deletions | forbidden | forbidden |
 | administrator exemption | none | none |
-| squash merge only | required | **not set** — merge commits and rebase merges are still allowed |
+| squash merge only | required | configured — merge commits and rebase merges disabled |
 
 Approvals are set to 0 deliberately: ADR-0011 defers required review (Option C) until a second contributor
 joins, so the pull request is a gate for CI, not for review.
@@ -114,10 +114,15 @@ PUT /repos/marielletheguzman/zentavio/pulls/2/merge
 Simultaneously, green PR #1 reported `CLEAN`. So the gate distinguishes red from green rather than blocking
 everything. The probe branch and PR were deleted afterwards.
 
-**One gap remains open:** squash-merge-only is **not** configured — merge commits and rebase merges are
-still allowed. Set it at Settings → General → Pull Requests. Administrator exemption is off per the API
-readback (`enforce_admins.enabled: true`) but was not violation-tested, because doing so would have landed
-a deliberately broken commit on `main`.
+Squash-merge-only was configured on 2026-07-31 (`allow_merge_commit: false`, `allow_rebase_merge: false`),
+along with `delete_branch_on_merge: true` so the "delete the branch after merge" rule above stops depending
+on anyone remembering. Both are **repository** settings rather than branch protection, which is why the API
+call that configured protection did not cover them — they live under Settings → General → Pull Requests.
+
+**One gap remains open:** the administrator exemption is off per the API readback
+(`enforce_admins.enabled: true`), but has not been violation-tested — confirming it would mean landing a
+deliberately broken commit on `main`. So "admins cannot bypass" is a setting that was read, not a control
+that was tested.
 
 ## Related
 
