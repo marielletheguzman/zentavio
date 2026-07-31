@@ -27,7 +27,7 @@ already ruled out and how the rule is enforced.
 | [0011](0011-ci-required-checks.md) | Require the `ci` check on `main` | Accepted | 2026-07-28 |
 | [0012](0012-database-access-layer.md) | `pg` + Kysely, plain SQL migrations, own runner | Accepted | 2026-07-28 |
 | [0013](0013-lower-email-unique-index.md) | Case-insensitive email uniqueness via a `lower(email)` unique index; no `citext` | Accepted | 2026-07-29 |
-| [0014](0014-typescript-runner.md) | How TypeScript entrypoints are executed outside Vitest | **Proposed** | 2026-07-31 |
+| [0014](0014-typescript-runner.md) | Node native type stripping with `.ts` specifiers; no runner dependency | Accepted | 2026-07-31 |
 
 **0010 is Accepted, and the rename is done** — `immigration_rules` is now `requirements`, with `domain`,
 `imposed_by`, and `authority`. Regulated professions remain blocked on **data**, not schema: nursing,
@@ -41,8 +41,8 @@ section, which also records that the required check is named `CI`, not `ci`, and
 required making the repository public.
 
 Still undone: nothing is instrumented (0008), and graded evals do not run in CI (0009 defers the runner
-deliberately). **0014 is Proposed, not decided** — until it is, there is no standalone `migrate` command and
-migrations can only be applied programmatically.
+deliberately). **0014 is Accepted but not implemented** — until its follow-up work lands, relative imports
+still carry `.js` extensions, the Node floor is still 20.11, and there is no standalone `migrate` command.
 
 0001–0004 define the boundaries every skill and context file assumes: one repository, sources as
 plugins, a polyglot contract at the `ai/` boundary, and a vector store that is an index rather than

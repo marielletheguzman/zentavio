@@ -1,6 +1,7 @@
 # ADR-0014: How TypeScript entrypoints are executed outside Vitest
 
-- **Status:** Proposed
+- **Status:** Accepted
+- **Accepted:** 2026-07-31
 - **Date:** 2026-07-31
 - **Deciders:** project lead
 - **Affects:** `package.json` (`engines`, scripts), `tsconfig.base.json`, `packages/db` (the missing
@@ -122,24 +123,25 @@ each time. `packages/db/README.md` already names this a gap; leaving it named do
 
 ## Decision
 
-**Not yet decided — this ADR is Proposed.** Choosing a runner is a stack change, and
-`.claude/context/tech-stack.md` makes that the project lead's call, not an implementation detail to be
-settled while writing a `migrate` command.
+**Option A — Node's native type stripping, with `.ts` import specifiers.** No runner is added to the stack;
+the repository changes how it writes relative imports instead.
 
-**The recommendation is Option A**, for one reason that outweighs its larger diff: every other option
-either adds a permanent dependency to the operational path (B, C), adds a build artifact and a staleness
-failure mode (D), or leaves migrations reachable only through a test runner (E). Option A's costs are paid
-once, mechanically, and leave the repository with fewer moving parts than it has now.
+Decided 2026-07-31 by the project lead. The reason it beat the alternatives: every other option either adds
+a permanent dependency to the operational path (B, C), adds a build artifact and a stale-output failure
+mode (D), or leaves migrations reachable only through a test runner (E). Option A's costs are paid once,
+mechanically, and leave the repository with fewer moving parts than it has now.
 
-The honest counterargument is that Option B is one line and reversible in an afternoon, while Option A
-touches every file and raises the Node floor. If the priority is reaching M1 quickly rather than keeping
-the stack minimal, Option B is the defensible choice, and this ADR should record that reasoning rather than
-pretend it lost on the merits.
+**The counterargument is recorded rather than buried**, because it was real and it lost on judgement rather
+than on facts: Option B is one dependency and one script, reversible in an afternoon, while Option A touches
+every relative import in the tree and raises the Node floor from 20.11 to 22.18. If reaching M1 quickly had
+outranked keeping the stack minimal, B would have been the defensible choice. It did not.
+
+**This decision leans on ADR-0011.** Type stripping executes a type error without complaint, so `tsc
+--noEmit` in CI is the only thing standing between a bad type and a migration that runs. That is acceptable
+only because the `CI` check is required on `main` and was verified by attempting to violate it. If branch
+protection is ever removed, this decision's safety argument goes with it.
 
 ## Consequences
-
-*Written against the recommendation (Option A). If another option is chosen, this section is rewritten
-before the ADR is Accepted.*
 
 **Accepted costs.**
 
