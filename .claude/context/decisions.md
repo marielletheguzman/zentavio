@@ -83,6 +83,7 @@ An ADR is numbered sequentially and never renumbered.
 | [0011](../../docs/architecture/decisions/0011-ci-required-checks.md) | Require the `ci` check on `main` | Accepted |
 | [0012](../../docs/architecture/decisions/0012-database-access-layer.md) | `pg` + Kysely, plain SQL migrations, own runner | Accepted |
 | [0013](../../docs/architecture/decisions/0013-lower-email-unique-index.md) | Case-insensitive email uniqueness via `lower(email)` unique index; no `citext` | Accepted |
+| [0014](../../docs/architecture/decisions/0014-typescript-runner.md) | Node native type stripping with `.ts` specifiers; no runner dependency | Accepted |
 
 0001–0004 define the boundaries every skill and context file assumes: one repository, sources as
 plugins, a polyglot contract at the `ai/` boundary, and a vector store that is an index rather
