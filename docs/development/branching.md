@@ -48,8 +48,9 @@ Small PRs. A 40-file PR is not reviewed; it is approved.
 
 ## Merging
 
-- **CI's `ci` check must be green.** *(Not yet a required status check — see below.)*
-- Squash merge, so `main` gets one commit per logical change and reverts are clean.
+- **CI's `ci` check must be green.** A required status check since 2026-07-31 — see below.
+- Squash merge, so `main` gets one commit per logical change and reverts are clean. *(Enforced by
+  convention only: squash-merge-only is not yet configured in repository settings — see below.)*
 - The commit message follows `conventions.md`, including the body explaining why.
 - Delete the branch after merge.
 
@@ -60,24 +61,63 @@ present, and a revert is a decision that can be re-made calmly.
 
 A revert commit says what was reverted **and why** — otherwise someone re-lands the same change next week.
 
-## Required checks — decided, not yet configured
+## Required checks — configured and verified
 
-**ADR-0011 (Accepted)** specifies branch protection on `main`:
+**ADR-0011 (Accepted)** specifies branch protection on `main`. Configured on 2026-07-31, after the
+precondition was met: CI run `30413570717` on `02fe14a` was observed green, with the
+`Integration tests (PostgreSQL)` job actually executing against a live database rather than skipping.
 
-- require a pull request before merging
-- require the status check named **`ci`**
-- require branches to be up to date
-- no force pushes, no deletions
-- **no administrator exemption**
-- squash merge only
+| Setting | ADR-0011 | Actual |
+|---|---|---|
+| pull request before merging | required | required (0 approvals) |
+| status check | `ci` | **`CI`** — see below |
+| branches up to date | required | `strict: true` |
+| force pushes | forbidden | forbidden |
+| deletions | forbidden | forbidden |
+| administrator exemption | none | none |
+| squash merge only | required | **not set** — merge commits and rebase merges are still allowed |
 
-**Not configured yet**, so a red run still does not physically block a merge and the rules above hold by
-convention. ADR-0011 carries a precondition: **one green CI run must be observed first**, because requiring
-a check that has never passed would block all work on an unverified assumption.
+Approvals are set to 0 deliberately: ADR-0011 defers required review (Option C) until a second contributor
+joins, so the pull request is a gate for CI, not for review.
 
-Configure at Settings → Branches → rule for `main`. Then verify by opening a pull request with a
-deliberately failing check and confirming the merge is refused — a setting nobody has tested is a claim,
-not a control.
+Configuring this required making the repository **public** — GitHub gates branch protection and rulesets
+behind a paid plan for private repositories, and both API calls returned
+`Upgrade to GitHub Pro or make this repository public to enable this feature. (HTTP 403)`.
+
+### The required check is named `CI`, not `ci`
+
+ADR-0011 states the required check is named `ci`, matching the aggregating job. **That is wrong, and it was
+configured that way first.** GitHub matches a required check against the check-run *name* — the job's
+`name:` field — not its YAML key. `.github/workflows/ci.yml` declares `ci:` with `name: CI`, so the check
+GitHub reports is `CI`.
+
+Requiring `ci` therefore required a check that never reports. The symptom is severe and misleading: a
+**fully green** pull request sits at `mergeStateStatus: BLOCKED` forever, with every visible check passing
+and nothing naming the cause. Observed on PR #1 before the fix.
+
+If the job's `name:` in `ci.yml` is ever changed, branch protection must be updated in the same change or
+`main` silently becomes unmergeable.
+
+### Verified by attempting to violate it
+
+Done on 2026-07-31, per ADR-0011's compliance requirement. A branch with a deliberate type error was pushed
+and opened as PR #2:
+
+```text
+gh pr merge 2 --squash
+X Pull request #2 is not mergeable: the base branch policy prohibits the merge.
+
+PUT /repos/marielletheguzman/zentavio/pulls/2/merge
+{"message":"Required status check \"CI\" is failing.", "status":"405"}
+```
+
+Simultaneously, green PR #1 reported `CLEAN`. So the gate distinguishes red from green rather than blocking
+everything. The probe branch and PR were deleted afterwards.
+
+**One gap remains open:** squash-merge-only is **not** configured — merge commits and rebase merges are
+still allowed. Set it at Settings → General → Pull Requests. Administrator exemption is off per the API
+readback (`enforce_admins.enabled: true`) but was not violation-tested, because doing so would have landed
+a deliberately broken commit on `main`.
 
 ## Related
 

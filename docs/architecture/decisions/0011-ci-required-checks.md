@@ -90,6 +90,33 @@ Concretely, on `main`:
 never passed would block all work on an unverified assumption, which is the same class of error as
 documenting a gate that does not exist. Verify first, then enforce.
 
+## Correction — 2026-07-31
+
+The decision above is unchanged. Two factual claims in it were wrong, and are corrected here rather than in
+place, so that what was believed and what turned out to be true both stay readable.
+
+**1. The required check is named `CI`, not `ci`.** The Compliance section below asserted the required check
+"is named `ci` and matches the aggregating job". It does not. GitHub matches a required check against the
+check-run *name* — a job's `name:` field — not its YAML key. `.github/workflows/ci.yml` declares the job
+`ci:` with `name: CI`, so the check GitHub reports is `CI`.
+
+This was configured as `ci` first, exactly as written here, and the failure mode is worse than a check that
+does not block: a required check that never reports is permanently pending, so a **fully green** pull
+request sits at `mergeStateStatus: BLOCKED` forever with every visible check passing and nothing naming the
+cause. Observed on PR #1, corrected the same day.
+
+The consequence is a coupling this ADR did not anticipate: **changing the job's `name:` in `ci.yml` silently
+makes `main` unmergeable** unless branch protection is updated in the same change. That partly undercuts the
+"adding a future job needs no settings change" advantage claimed for Option A — true for adding jobs, false
+for renaming the aggregating one.
+
+**2. Configuring branch protection required making the repository public.** Not foreseen here at all. GitHub
+gates both classic branch protection and rulesets behind a paid plan for private repositories; both API
+calls returned `Upgrade to GitHub Pro or make this repository public to enable this feature. (HTTP 403)`.
+`marielletheguzman/zentavio` was made public on 2026-07-31 to enable this. That is a consequence of this ADR
+that this ADR never priced, and it is not reversible in practice — a public repository can already have been
+cloned, forked, or indexed. The alternative was GitHub Pro at roughly $4/month.
+
 ## Consequences
 
 **Accepted costs.**
@@ -106,11 +133,21 @@ documenting a gate that does not exist. Verify first, then enforce.
 
 **Follow-up work.**
 
-- **Observe one green `ci` run.** Blocked on `gh` authentication or a manual look at the Actions tab.
-- Configure branch protection with the settings above.
-- Verify by attempting a merge with a deliberately failing check, and confirming it is refused — a setting
-  that has not been tested is a claim, not a control.
-- Update `docs/development/branching.md` to remove the "current gap" section once true.
+- ~~**Observe one green `ci` run.**~~ Done 2026-07-31: run `30413570717` on `02fe14a`, all four jobs green,
+  with the integration job genuinely executing against PostgreSQL rather than skipping.
+- ~~Configure branch protection with the settings above.~~ Done 2026-07-31 — except squash-merge-only.
+- ~~Verify by attempting a merge with a deliberately failing check.~~ Done 2026-07-31. A branch with a
+  deliberate type error was opened as PR #2; the merge was refused with
+  `HTTP 405: Required status check "CI" is failing.` while green PR #1 read `CLEAN`, so the gate
+  distinguishes red from green rather than blocking everything. Probe branch and PR deleted after.
+- **Still open: configure squash-merge-only.** Merge commits and rebase merges are still allowed. This is a
+  repository setting (Settings → General → Pull Requests), not branch protection, which is why it was not
+  covered by the API call that configured the rest.
+- **Still open: the administrator exemption is not violation-tested.** It is off per the API readback
+  (`enforce_admins.enabled: true`), which is what Compliance below asks for, but nobody has confirmed an
+  admin merge is actually refused — doing so would land a deliberately broken commit on `main`.
+- ~~Update `docs/development/branching.md` to remove the "current gap" section once true.~~ Done 2026-07-31;
+  the section now records configured-and-verified state plus the remaining gaps.
 - Add a `CODEOWNERS` file and enable required review when a second contributor joins.
 
 **Reversal cost.** Trivial — a settings change. Which is also why it is easy to leave undone, and why it is
@@ -120,8 +157,11 @@ an ADR rather than a task: the decision is worth recording even though the actio
 
 - **Verified by attempting to violate it:** open a pull request with a deliberately failing check and
   confirm the merge button is disabled. Until that has been done, the correct statement is "branch
-  protection is configured", not "merge enforcement is verified".
-- The required check is named `ci` and matches the aggregating job in `.github/workflows/ci.yml`.
+  protection is configured", not "merge enforcement is verified". **Done 2026-07-31** — merge refused with
+  `HTTP 405`, see the Correction above.
+- ~~The required check is named `ci` and matches the aggregating job in `.github/workflows/ci.yml`.~~
+  **False — the required check is named `CI`.** See the Correction above. The name to check against is the
+  job's `name:` field, not its YAML key.
 - `docs/development/branching.md` states the configured settings, so intended and actual can be compared.
 - Administrator exemption stays off — checkable in settings.
 - No claim of merge enforcement appears anywhere until the violation test has been run
