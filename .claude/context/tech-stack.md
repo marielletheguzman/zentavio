@@ -29,6 +29,11 @@
 
 ### Data
 - **PostgreSQL** — system of record. Schema and migrations in `packages/db`.
+- **Supabase** — the managed PostgreSQL host, **and nothing else** (ADR-0015). Not its Auth, Storage,
+  Realtime, or PostgREST, and not its migration CLI — each would need its own ADR. Nothing imports a
+  Supabase SDK; the database is a connection string read through `packages/config`, which is what keeps
+  a move to another provider a `pg_dump` rather than a rewrite. EU region, because résumés and
+  immigration status are person data.
 - **`pg`** — the driver; **Kysely** — typed queries. Plain `.sql` migrations, applied by our own
   runner so `migrations.md`'s CONCURRENTLY and NOT VALID rules stay expressible (ADR-0012).
   **No ORM and no schema DSL:** the entity documents are the schema.
