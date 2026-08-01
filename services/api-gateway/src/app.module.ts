@@ -13,12 +13,14 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import type { Kysely } from 'kysely';
 import { createDb, type Database } from '@zentavio/db';
-import { databaseSchema, load, parserSchema, devAuthSchema } from '@zentavio/config';
+import { databaseSchema, devAuthSchema, load, oidcSchema, parserSchema } from '@zentavio/config';
 import {
   DenyAllSubjectResolver,
   InsecureDevSubjectResolver,
+  OidcVerifier,
   type SubjectResolver,
 } from '@zentavio/auth';
+import { OidcSubjectResolver } from './auth/oidc-subject.resolver.ts';
 import { SubjectGuard } from './auth/subject.guard.ts';
 import { HealthController } from './health/health.controller.ts';
 import { ParserClient } from './resume/parser-client.ts';
@@ -47,17 +49,31 @@ import { DATABASE, PARSER_CLIENT, SUBJECT_RESOLVER } from './tokens.ts';
     },
     {
       provide: SUBJECT_RESOLVER,
-      useFactory: (): SubjectResolver => {
-        // Deny-by-default: the insecure resolver is only constructed when a flag that says exactly
-        // what it is has been set, and it refuses in production regardless (ADR-0017).
-        const { insecureDevAuth } = load(devAuthSchema);
-        return insecureDevAuth
-          ? new InsecureDevSubjectResolver({
-              enabled: true,
-              isProduction: load(devAuthSchema).nodeEnv === 'production',
-            })
-          : new DenyAllSubjectResolver();
+      useFactory: (db: Kysely<Database>): SubjectResolver => {
+        const { oidcIssuer, oidcAudience } = load(oidcSchema);
+        const { insecureDevAuth, nodeEnv } = load(devAuthSchema);
+
+        // Real authentication wins whenever it is configured. Ordering matters: if the dev flag
+        // were checked first, leaving it set in a properly-configured environment would silently
+        // downgrade the whole service.
+        if (oidcIssuer !== '' && oidcAudience !== '') {
+          return new OidcSubjectResolver(
+            new OidcVerifier({ issuer: oidcIssuer, audience: oidcAudience }),
+            db,
+          );
+        }
+
+        if (insecureDevAuth) {
+          return new InsecureDevSubjectResolver({
+            enabled: true,
+            isProduction: nodeEnv === 'production',
+          });
+        }
+
+        // Nothing configured: a locked door, not an open one.
+        return new DenyAllSubjectResolver();
       },
+      inject: [DATABASE],
     },
     {
       // Global, not per-route: opting a route IN to protection is a list someone forgets, and the

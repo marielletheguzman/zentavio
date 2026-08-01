@@ -15,3 +15,11 @@ export {
   type Subject,
   type SubjectResolver,
 } from './subject.ts';
+
+export {
+  OidcVerifier,
+  TokenVerificationError,
+  bearerToken,
+  type OidcConfig,
+  type VerifiedIdentity,
+} from './oidc.ts';

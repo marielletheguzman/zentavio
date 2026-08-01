@@ -220,6 +220,8 @@ describe('the Zentavio schema', () => {
       // reason as the database url — a plausible-but-wrong default fails silently against the
       // wrong host.
       'ZENTAVIO_INSECURE_DEV_AUTH',
+      'ZENTAVIO_OIDC_AUDIENCE',
+      'ZENTAVIO_OIDC_ISSUER',
       'ZENTAVIO_RESUME_PARSER_URL',
     ]);
   });

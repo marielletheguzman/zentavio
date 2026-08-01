@@ -106,7 +106,30 @@ export const parserSchema = {
 } as const satisfies Schema;
 
 /**
- * The escape hatch that lets M1a be demonstrated while ADR-0017 is open.
+ * The identity provider (ADR-0017).
+ *
+ * **Deliberately not naming a vendor.** OIDC is a standard, so Clerk, WorkOS, Auth0, or a
+ * self-hosted Keycloak differ only in these values. Both are optional: when unset, the gateway
+ * falls back to deny-by-default rather than starting without authentication.
+ */
+export const oidcSchema = {
+  oidcIssuer: {
+    env: 'ZENTAVIO_OIDC_ISSUER',
+    type: 'string',
+    default: '',
+    description: 'OIDC issuer URL, exactly as the provider states it. Empty disables OIDC',
+  },
+  oidcAudience: {
+    env: 'ZENTAVIO_OIDC_AUDIENCE',
+    type: 'string',
+    default: '',
+    description:
+      'This application client id. A token minted for another audience of the same provider is refused',
+  },
+} as const satisfies Schema;
+
+/**
+ * The escape hatch that lets M1a be demonstrated while ADR-0017's provider is being provisioned.
  *
  * **Named to be alarming on purpose.** `ZENTAVIO_INSECURE_DEV_AUTH` appears in a deployment
  * checklist, a shell history, and a log — and at every one of those it should read as a mistake.
@@ -137,6 +160,7 @@ export const zentavioSchema = {
   ...databaseSchema,
   ...parserSchema,
   ...devAuthSchema,
+  ...oidcSchema,
 } as const satisfies Schema;
 
 export type ZentavioConfig = {

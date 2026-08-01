@@ -1,6 +1,7 @@
 # ADR-0017: How a person proves who they are
 
-- **Status:** Proposed
+- **Status:** Accepted
+- **Accepted:** 2026-08-01
 - **Date:** 2026-08-01
 - **Deciders:** project lead
 - **Affects:** `packages/auth`, `services/api-gateway`, `apps/web`, `docs/architecture/security.md`,
@@ -98,17 +99,33 @@ milestone requiring one cannot be met. This option stops being free the moment a
 
 ## Decision
 
-**Not yet decided — this ADR is Proposed.** Authentication is a dependency, and in Option B's case a
-reversal of a clause another Accepted ADR is built on.
+**Option C — a hosted OIDC provider.** Decided 2026-08-01 by the project lead.
 
-**The recommendation is Option C**, a hosted OIDC provider, for three specific reasons: `security.md`
+Chosen for three specific reasons: `security.md`
 already states a preference for delegating over storing; the `users` table was **already designed for
 it**; and it keeps ADR-0015's "and nothing else" intact, so the database stays a `pg_dump` away from
 any other host.
 
-Option B is the fastest and would be defensible — but it should be chosen **as a decision**, with
-ADR-0015 amended in the same change to record that its reversal-cost paragraph no longer holds. Not
-absorbed quietly.
+Option B was the fastest and would have been defensible, but it would have reopened ADR-0015's "and
+nothing else" clause — and that clause is the reason the database is still a `pg_dump` away from any
+other host. It was rejected on that ground, not on capability.
+
+**The vendor is deliberately not named here, and that is the substance of the decision rather than a
+gap in it.** OIDC is a standard: the issuer, audience, and JWKS endpoint are *configuration*. So the
+implementation verifies tokens generically — discovery, JWKS, signature, issuer, audience, expiry —
+and Clerk, WorkOS, Auth0, or a self-hosted Keycloak are a change to three environment variables
+rather than a change to code. Naming one in an ADR would convert a config value into a decision
+needing another ADR to undo.
+
+**One dependency is adopted with this decision: `jose`** for JWT and JWKS verification. Named here
+rather than smuggled in during implementation (`.claude/context/tech-stack.md`). It is the standard
+JOSE implementation for JavaScript, has no dependencies of its own, and the alternative —
+hand-rolling signature verification — is the single worst place in this system to be creative.
+
+**Users are provisioned just-in-time.** The first time a valid token arrives with an unseen `sub`, a
+`users` row is created with `auth_provider = 'oidc:<issuer>'` and `auth_subject = <sub>`. The
+alternative is an invite flow nobody asked for, and the schema's unique index on
+`(auth_provider, auth_subject)` already makes the operation safe under a race.
 
 ## Consequences
 
