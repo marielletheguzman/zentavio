@@ -1,6 +1,7 @@
 # ADR-0016: Libraries for extracting text from uploaded résumés
 
-- **Status:** Proposed
+- **Status:** Accepted
+- **Accepted:** 2026-08-01
 - **Date:** 2026-08-01
 - **Deciders:** project lead
 - **Affects:** `ai/resume-parser`, `ai/pyproject.toml`, `.claude/context/tech-stack.md`
@@ -81,25 +82,23 @@ person we are building for.
 
 ## Decision
 
-**Not yet decided — this ADR is Proposed.** Adding a library is a stack change
-(`.claude/context/tech-stack.md`), and Option C's licence in particular is a commercial decision
-rather than a technical one.
+**Option A — `pypdf` + `python-docx`.** Decided 2026-08-01 by the project lead.
 
-**The recommendation is Option A**, with the reasoning stated rather than assumed: pure Python keeps
+The reasoning, stated rather than assumed: pure Python keeps
 the container and the build simple, the scope of each library is narrow, and extraction quality is
 recoverable — a weak extraction that we *detect* becomes a `partial` or `unknown` result, which the
 product is already designed to show honestly. Option B is the upgrade path if `partial` turns out to
 be the common outcome rather than an occasional one, and it is an upgrade behind the same port rather
-than a rewrite. Option C is excluded not on merit but on AGPL, which should be an explicit commercial
-choice.
+than a rewrite. **Option C was excluded on licence, not on merit.** PyMuPDF is the best extractor here and would have
+won on quality alone; AGPL for a product intended to be sold is a commercial decision, and it was made
+deliberately rather than absorbed by an implementation detail. If a commercial licence is ever bought,
+this ADR is the thing to revisit — the port makes that a one-file change.
 
 **Regardless of which option is chosen, extraction sits behind a port.** `ai/resume-parser` defines a
 `TextExtractor` protocol; the library is one implementation. That is what makes A→B an afternoon, and
 it is why the rest of the parser can be built and tested before this ADR is Accepted.
 
 ## Consequences
-
-*Written against the recommendation (Option A). Rewritten if another option is chosen.*
 
 **Accepted costs.**
 

@@ -42,6 +42,9 @@
 
 ### AI
 - **Ollama** — local model runtime; the only thing that talks to a model
+- **pypdf**, **python-docx** — résumé text extraction in `ai/resume-parser` only, behind the
+  `TextExtractor` port (ADR-0016). Nothing outside `src/extract.py` may import them. PyMuPDF was
+  excluded on **AGPL**, not on quality — revisit only as an explicit commercial decision.
 - **Qwen**, **Gemma** — the model families in use
 - **Embeddings** — via `ai/embeddings`, written to Qdrant
 

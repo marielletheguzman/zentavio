@@ -185,10 +185,17 @@ def extract_skills(extracted: ExtractedText, registry: SkillRegistry) -> tuple[S
             # honest reading: the phrase appeared, and nothing says how.
             status, evidence_kind = "claimed", None
 
-        # A degraded section's text may be interleaved from two columns, so a "sentence" there
-        # is not reliably one sentence. The finding still stands — the phrase really is in the
-        # document — but its confidence must say the reading was poor.
-        degraded = section.heading in extracted.degraded_sections
+        # Degradation is a property of the DOCUMENT, not of a section, and treating it otherwise
+        # was a real bug: the extractor names what it read badly in its own vocabulary ("a table",
+        # "page 2"), which never matches a résumé's section headings. Every finding silently kept
+        # high confidence.
+        #
+        # Document-level is also the honest reading. If a table was flattened or a page came out
+        # empty, we do not know which lines were affected — interleaved column text can land
+        # anywhere. Lowering everything is conservative in the direction that costs the user
+        # nothing: a low-confidence claim they can confirm, rather than a confident one they have
+        # no reason to check.
+        degraded = bool(extracted.degraded_sections)
         confidence = "low" if degraded else ("high" if status == "evidenced" else "medium")
 
         for line in section.lines:
