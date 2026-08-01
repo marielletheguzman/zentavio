@@ -88,6 +88,21 @@ already shipped; outcome recording is wired here, before anything reads it.
 **Cuttable:** DOCX (PDF alone is a real answer), role/employer extraction beyond titles, any styling.
 **Not cuttable:** source spans, the evidenced/claimed distinction, the correction path, retention.
 
+**Authentication is out of M1a** (decided 2026-08-01). `packages/auth` is a placeholder, and M1a runs
+against a **seeded test user** rather than a real sign-in. Real authentication becomes its own slice
+before anything is exposed to an actual person — a profile surface without auth is one URL away from
+being everybody's profile. Until that slice lands, M1a is demoable but not deployable, and
+`docs/database/entities/user.md`'s `users` row for the test subject is fixture data, not an account.
+
+**Two schema dependencies were found while planning M1a**, and they change the M1a/M1b boundary:
+
+- `profile_skills.skill_id` references `skills(id)`, and the parser resolves phrases against a
+  **closed set** of slugs. So the skill entity splits **by table, not by milestone**: M1a takes
+  `skills` and `skill_aliases` (the closed set and its resolution), M1b takes `skill_edges` and
+  `career_skills` (the graph and the target). M1a stays self-contained.
+- `careers` was referenced by `user.md`, `skill.md`, and `outcome.md` and **defined by none**.
+  Written as `docs/database/entities/career.md` before any migration touched it.
+
 ---
 
 #### M1b — "How far am I from cloud / platform engineering?"
