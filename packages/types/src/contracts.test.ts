@@ -19,7 +19,7 @@ import {
   type EvaluatedRequirement,
   type Explained,
   type GapItem,
-} from './index.js';
+} from './index.ts';
 
 // These tests assert the product invariants, not the type system. A type cannot enforce that
 // evidence weights sum to a score, or that `undetermined` never rounds to `met`.

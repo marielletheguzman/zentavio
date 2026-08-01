@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createCompileOnlyDb } from '../client.js';
+import { createCompileOnlyDb } from '../client.ts';
 import {
   RequirementInvariantError,
   insertRequirement,
@@ -8,7 +8,7 @@ import {
   supersedeRequirement,
   validateRequirement,
   type NewRequirement,
-} from './requirements.js';
+} from './requirements.ts';
 
 // Two kinds of assertion here, and neither replaces an integration test:
 //   - the guards reject what they should, before a round trip

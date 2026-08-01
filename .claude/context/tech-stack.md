@@ -6,6 +6,15 @@
 
 ## The stack
 
+### Runtime
+- **Node.js `>=22.18.0`** — the floor is not arbitrary. ADR-0014 runs TypeScript entrypoints on Node's
+  native type stripping, which arrives in 22.18, so **no TypeScript runner is in the stack** — no `tsx`,
+  no `vite-node`, no build step for scripts.
+- Consequence: **relative imports name the file on disk** (`./thing.ts`, never `./thing.js`), and the
+  codebase is restricted to erasable syntax — no `enum`, no `namespace`, no constructor parameter
+  properties. Both are enforced (`eslint.config.mjs`, `erasableSyntaxOnly` in `tsconfig.base.json`).
+- Type stripping does not type-check. `tsc --noEmit` under the required `CI` check is the other half.
+
 ### Frontend
 - **Next.js** (App Router) — `apps/web`, `apps/admin`
 - **React** + **TypeScript** (strict)

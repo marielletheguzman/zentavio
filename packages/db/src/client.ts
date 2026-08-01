@@ -16,7 +16,7 @@ import {
   PostgresQueryCompiler,
 } from 'kysely';
 import { Pool, types as pgTypes } from 'pg';
-import type { Database } from './schema.js';
+import type { Database } from './schema.ts';
 
 /** PostgreSQL OID for `date`. */
 const PG_TYPE_DATE = 1082;

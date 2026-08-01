@@ -4,7 +4,7 @@
   "description": "AI career intelligence platform. Not a job board.",
   "packageManager": "pnpm@9.12.3",
   "engines": {
-    "node": ">=20.11.0"
+    "node": ">=22.18.0"
   },
   "scripts": {
     "boundaries:audit": "node tools/scripts/audit-boundary-disables.mjs",

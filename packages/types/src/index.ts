@@ -31,7 +31,7 @@ export {
   type Explained,
   type NamedConstraint,
   type Unknown,
-} from './explained.js';
+} from './explained.ts';
 
 export {
   EVIDENCE_SOURCES,
@@ -45,7 +45,7 @@ export {
   type SkillEdge,
   type SkillEdgeType,
   type SkillStatus,
-} from './skill.js';
+} from './skill.ts';
 
 export {
   DOMAIN_EVALUATION_ORDER,
@@ -60,7 +60,7 @@ export {
   type ImposedBy,
   type RequirementDomain,
   type RequirementResult,
-} from './requirement.js';
+} from './requirement.ts';
 
 export {
   MIN_KNOWN_FACTORS,
@@ -74,4 +74,4 @@ export {
   type SponsorshipFact,
   type SponsorshipSourceKind,
   type SponsorshipStatus,
-} from './sponsorship.js';
+} from './sponsorship.ts';

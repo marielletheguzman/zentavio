@@ -12,7 +12,7 @@
 
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { MigrationError, type MigrationFile } from './runner.js';
+import { MigrationError, type MigrationFile } from './runner.ts';
 
 /**
  * `<YYYYMMDDHHMMSS>-<kebab-description>.sql` (docs/database/migrations.md).

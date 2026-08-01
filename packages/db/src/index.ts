@@ -10,11 +10,11 @@
  * outside Vitest. See the README.
  */
 
-export { createCompileOnlyDb, createDb, type DbConnectionOptions } from './client.js';
+export { createCompileOnlyDb, createDb, type DbConnectionOptions } from './client.ts';
 
-export { applyMigrations, migrationsDirectory, type ApplyMigrationsOptions } from './migrations/apply.js';
-export { PostgresMigrationExecutor } from './migrations/executor.js';
-export { loadMigrationFiles, migrationIdFromFilename } from './migrations/files.js';
+export { applyMigrations, migrationsDirectory, type ApplyMigrationsOptions } from './migrations/apply.ts';
+export { PostgresMigrationExecutor } from './migrations/executor.ts';
+export { loadMigrationFiles, migrationIdFromFilename } from './migrations/files.ts';
 
 export {
   MigrationError,
@@ -26,7 +26,7 @@ export {
   type MigrationExecutor,
   type MigrationFile,
   type PlanEntry,
-} from './migrations/runner.js';
+} from './migrations/runner.ts';
 
 export {
   RequirementInvariantError,
@@ -36,7 +36,7 @@ export {
   supersedeRequirement,
   validateRequirement,
   type NewRequirement,
-} from './repositories/requirements.js';
+} from './repositories/requirements.ts';
 
 export type {
   Database,
@@ -49,4 +49,4 @@ export type {
   SchemaMigrationsTable,
   UserStatusColumn,
   UsersTable,
-} from './schema.js';
+} from './schema.ts';

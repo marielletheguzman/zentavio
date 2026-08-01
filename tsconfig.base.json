@@ -10,6 +10,18 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
 
+    // ADR-0014. Relative imports name the file that exists on disk — './client.ts', not
+    // './client.js' — so `node packages/db/src/migrate.ts` resolves without a loader.
+    // Node's type stripping erases annotations; it never rewrites specifiers.
+    "allowImportingTsExtensions": true,
+    // Only matters if this project ever emits. Kept so that turning emit on later cannot
+    // silently ship '.ts' specifiers into JavaScript output.
+    "rewriteRelativeImportExtensions": true,
+    // Type stripping cannot execute syntax that has runtime meaning: enum, namespace, and
+    // constructor parameter properties. This makes that a compile error rather than a rule
+    // someone has to remember — ADR-0014.
+    "erasableSyntaxOnly": true,
+
     // Strict is not negotiable. Every score, fact, and event shape is a contract,
     // and `any` at a boundary is how a contract rots.
     "strict": true,

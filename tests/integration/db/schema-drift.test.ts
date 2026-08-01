@@ -22,7 +22,7 @@ import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Pool } from 'pg';
-import { migratedTestPool } from './database.js';
+import { migratedTestPool } from './database.ts';
 
 const SCHEMA_PATH = fileURLToPath(new URL('../../../packages/db/src/schema.ts', import.meta.url));
 

@@ -6,7 +6,7 @@ description: >
 
 inputs:
   node-version:
-    description: Node version. Must satisfy the engines field in package.json (>=20.11.0).
+    description: Node version. Must satisfy the engines field in package.json (>=22.18.0 — ADR-0014 needs native type stripping).
     required: false
     default: '22'
   install:

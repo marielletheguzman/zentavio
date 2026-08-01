@@ -11,7 +11,7 @@
  * misconfigured deployment with four missing variables should say so once.
  */
 
-import { parseValue, type ConfigValue, type Resolved, type Schema, type ValidationIssue } from './schema.js';
+import { parseValue, type ConfigValue, type Resolved, type Schema, type ValidationIssue } from './schema.ts';
 
 export class ConfigError extends Error {
   readonly issues: readonly ValidationIssue[];
