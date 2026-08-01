@@ -16,6 +16,10 @@ version = "0.0.0"
 description = "Extract skills, roles, and experience from a résumé, with the source span for every claim."
 requires-python = ">=3.12"
 dependencies = [
+  # The ASGI server. FastAPI is a framework, not a process — without this the service
+  # cannot start anywhere, which went unnoticed because every test drives it in-process
+  # through TestClient.
+  "uvicorn==0.38.0",
   "fastapi==0.121.2",
   "pydantic==2.12.4",
   "pypdf==6.1.3",
