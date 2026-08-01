@@ -164,7 +164,10 @@ protection is ever removed, this decision's safety argument goes with it.
   and `erasableSyntaxOnly` in `tsconfig.base.json`.
 - Raise `engines.node`, and pin the same major in `.github/workflows/ci.yml` (currently `node-version: '22'`)
   and `infra/ci/actions/setup-node-pnpm`.
-- Write the actual `migrate` command in `packages/db`, with a dry-run mode — the point of the exercise.
+- ~~Write the actual `migrate` command in `packages/db`, with a dry-run mode.~~ Done 2026-08-01:
+  `packages/db/src/migrate.ts`, run as `pnpm migrate` / `pnpm migrate:dry-run`. Writing it surfaced a
+  missing dependency — `@zentavio/db` used `@zentavio/config` without declaring it, and only resolved
+  because `tests/integration` declared both. Now declared.
 - Update `packages/db/README.md`, which currently documents this gap, and `.claude/context/tech-stack.md`,
   which names no runner.
 - Add an ESLint rule or a check that rejects a relative import ending in `.js`, so the convention does not

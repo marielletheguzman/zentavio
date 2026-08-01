@@ -61,17 +61,36 @@ Verified by injecting drift and watching it go red, not by watching it pass.
 
 ## The remaining gap
 
-**A standalone `migrate` command.** `applyMigrations` is exported and used by the integration suite,
-but there is still no CLI. The blocker is gone: **ADR-0014 is Accepted and implemented**, so relative
-imports name `.ts` files and Node runs a TypeScript entrypoint with no loader and no new dependency.
+**Closed.** `migrate.ts` is the CLI, and it runs on plain Node — no loader, no build step, no new
+dependency (ADR-0014).
 
 ```text
-$ node --input-type=module -e "const m = await import('./packages/db/src/index.ts'); console.log(typeof m.applyMigrations)"
-function
+$ pnpm migrate:dry-run
+Planning localhost:5432/zentavio
+schema_migrations does not exist yet — treating every migration as pending.
+3 pending:
+  20260729120000-create-immigration-pathways
+  20260729120100-create-requirements
+  20260729120200-create-users
+Nothing was applied. Re-run without --dry-run to apply.
+
+$ pnpm migrate
+Applied 3:
+  ...
 ```
 
-What remains is writing the command itself, with a dry-run mode. Until then, migrations are applied
-programmatically.
+Three properties worth knowing:
+
+- **`--dry-run` writes nothing at all**, including the `schema_migrations` bookkeeping table. On a
+  fresh database it says so and treats every migration as pending. A dry run that creates a table is
+  not a dry run.
+- **A dry run reports refusals too.** It calls the same `plan()` as a real run, so an out-of-order,
+  edited, or missing migration is caught before anything is applied.
+- **Exit codes are a contract:** `0` applied or up to date · `1` refused or failed · `2` usage error.
+  A script that retries on failure must not retry on a typo.
+
+The connection target is printed host-and-database only. A connection string carries a password, and
+a URL in a CI log is a credential that outlives the run.
 
 ## How the repository is verified without a database
 
