@@ -61,6 +61,15 @@ importers:
 
   packages/types: {}
 
+  services/api-gateway:
+    dependencies:
+      '@zentavio/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@zentavio/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+
   tests/integration:
     dependencies:
       '@zentavio/config':
