@@ -1,0 +1,25 @@
+# Shared code for the AI capability services (ADR-0006 workspace member).
+#
+# Today this is the eval harness (ADR-0009). It will also hold the FastAPI base, the
+# packages/types-generated Pydantic models, and the logging and error envelope every service under
+# ai/ shares — the things ADR-0006 named as the reason a workspace was needed at all.
+#
+# **No runtime dependencies, and that is a real property rather than an omission.** The eval runner
+# talks to Ollama over stdlib urllib and reads fixtures with stdlib json. Nothing here needs a
+# third-party package, so nothing is declared. The first service that genuinely needs one declares
+# it in its own pyproject, not here — a shared package that accumulates every service's
+# dependencies is the bloated single environment ADR-0006 rejected.
+
+[project]
+name = "zentavio-ai-shared"
+version = "0.0.0"
+description = "Shared base for Zentavio's stateless AI capability services: eval harness today, service base next."
+requires-python = ">=3.12"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["evals"]

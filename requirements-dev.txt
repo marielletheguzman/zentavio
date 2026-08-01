@@ -9,5 +9,12 @@
 #
 # Pinned so CI and local runs enforce the same rules — a different Ruff version means a
 # different rule set, which means the boundary bans in ruff.toml stop being a guarantee.
+#
+# SUPERSEDED BUT NOT YET DELETED (ADR-0006). The uv workspace at `ai/pyproject.toml` now declares
+# these same pins in its `dev` group, and `uv.lock` is committed. This file survives only because
+# `.github/workflows/ci.yml` still runs `pip install -r requirements-dev.txt`; deleting it before
+# that workflow switches to `uv sync --frozen` would break every CI run.
+#
+# **These versions are duplicated and must be changed in both places until then.**
 ruff==0.16.0
 pytest==9.1.1
