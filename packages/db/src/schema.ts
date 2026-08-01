@@ -143,6 +143,117 @@ export interface UsersTable {
   deleted_at: Timestamp | null;
 }
 
+// ── careers (entities/career.md) ─────────────────────────────────────────────
+
+export type CareerFamilyColumn =
+  | 'software-it'
+  | 'healthcare'
+  | 'engineering'
+  | 'education'
+  | 'trades'
+  | 'other';
+
+export type FactBasisColumn = 'official-taxonomy' | 'posting-derived' | 'curated';
+
+export interface CareersTable {
+  id: string;
+  /** Permanent. Prompts supply these as a closed set; renaming one breaks extraction silently. */
+  slug: string;
+  name: string;
+  family: CareerFamilyColumn;
+  description: string | null;
+  /** Matches `requirements.profession`. NULL means not licence-gated. */
+  profession: string | null;
+  licence_gated: Generated<boolean>;
+  source_tier: number;
+  source_url: string | null;
+  basis: FactBasisColumn;
+  retrieved_at: Timestamp | null;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+  deleted_at: Timestamp | null;
+}
+
+// ── skills (entities/skill.md) ───────────────────────────────────────────────
+
+export type SkillKindColumn = 'technology' | 'tool' | 'practice' | 'domain' | 'language' | 'soft';
+
+export interface SkillsTable {
+  id: string;
+  slug: string;
+  name: string;
+  /** `language` is human languages — programming languages are `technology`. */
+  kind: SkillKindColumn;
+  description: string | null;
+  source_tier: number;
+  source_url: string | null;
+  basis: FactBasisColumn;
+  retrieved_at: Timestamp | null;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+  deleted_at: Timestamp | null;
+}
+
+export interface SkillAliasesTable {
+  id: string;
+  skill_id: string;
+  alias: string;
+  /**
+   * Casefolded, punctuation stripped, and **unique across the whole table** — one alias resolves to
+   * exactly one skill. Resolution goes through this column, never string equality on `skills.name`.
+   */
+  normalized: string;
+  source_tier: number;
+  created_at: Generated<Timestamp>;
+}
+
+// ── parsed profiles (entities/user.md) ───────────────────────────────────────
+
+export type ParsedFromColumn = 'resume-upload' | 'manual' | 'import';
+
+export interface UserProfilesTable {
+  id: string;
+  user_id: string;
+  version: number;
+  is_current: Generated<boolean>;
+  headline: string | null;
+  /** A signal, never a seniority determinant (`.claude/context/career-philosophy.md`). */
+  years_experience: Numeric | null;
+  current_career_id: string | null;
+  seniority: string | null;
+  languages: Generated<unknown>;
+  parsed_from: ParsedFromColumn | null;
+  parser_version: string | null;
+  parsed_at: Timestamp | null;
+  /** 0..1, drives confidence downstream. */
+  completeness: Numeric | null;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+  deleted_at: Timestamp | null;
+}
+
+export type ProfileSkillStatusColumn = 'evidenced' | 'claimed';
+export type EvidenceKindColumn = 'role' | 'project' | 'certification' | 'assessment' | 'artifact';
+export type ConfidenceColumn = 'high' | 'medium' | 'low';
+
+export interface ProfileSkillsTable {
+  id: string;
+  user_profile_id: string;
+  skill_id: string;
+  status: ProfileSkillStatusColumn;
+  /** Required when `status` is `evidenced` — enforced by `ck_profile_skills__evidence`. */
+  evidence_kind: EvidenceKindColumn | null;
+  /** The verbatim sentence the claim came from. What makes the profile correctable. */
+  source_span: string | null;
+  confidence: ConfidenceColumn;
+  /** A user correction outweighs an inference. */
+  self_reported: Generated<boolean>;
+  /** Set only by in-platform verification — never by the parser, never by the user saying so. */
+  verified_at: Timestamp | null;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+}
+
 // ── the runner's own bookkeeping ─────────────────────────────────────────────
 
 export interface SchemaMigrationsTable {
@@ -155,6 +266,11 @@ export interface Database {
   requirements: RequirementsTable;
   immigration_pathways: ImmigrationPathwaysTable;
   users: UsersTable;
+  careers: CareersTable;
+  skills: SkillsTable;
+  skill_aliases: SkillAliasesTable;
+  user_profiles: UserProfilesTable;
+  profile_skills: ProfileSkillsTable;
   schema_migrations: SchemaMigrationsTable;
 }
 

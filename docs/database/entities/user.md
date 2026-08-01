@@ -104,7 +104,9 @@ CREATE TABLE user_profiles (
 
   CONSTRAINT fk_user_profiles__users    FOREIGN KEY (user_id)           REFERENCES users(id)    ON DELETE RESTRICT,
   CONSTRAINT fk_user_profiles__careers  FOREIGN KEY (current_career_id) REFERENCES careers(id)  ON DELETE RESTRICT,
-  CONSTRAINT ck_user_profiles__completeness CHECK (completeness IS NULL OR (completeness >= 0 AND completeness <= 1))
+  CONSTRAINT ck_user_profiles__completeness CHECK (completeness IS NULL OR (completeness >= 0 AND completeness <= 1)),
+  CONSTRAINT ck_user_profiles__version CHECK (version >= 1),
+  CONSTRAINT ck_user_profiles__parsed_from CHECK (parsed_from IS NULL OR parsed_from IN ('resume-upload','manual','import'))
 );
 
 CREATE UNIQUE INDEX uq_user_profiles__current ON user_profiles (user_id) WHERE is_current AND deleted_at IS NULL;
@@ -139,14 +141,27 @@ CREATE TABLE profile_skills (
   CONSTRAINT fk_profile_skills__profiles FOREIGN KEY (user_profile_id) REFERENCES user_profiles(id) ON DELETE CASCADE,
   CONSTRAINT fk_profile_skills__skills   FOREIGN KEY (skill_id)        REFERENCES skills(id)        ON DELETE RESTRICT,
   CONSTRAINT ck_profile_skills__status CHECK (status IN ('evidenced','claimed')),
-  CONSTRAINT ck_profile_skills__evidence CHECK (status = 'claimed' OR evidence_kind IS NOT NULL)
+  CONSTRAINT ck_profile_skills__confidence CHECK (confidence IN ('high','medium','low')),
+  CONSTRAINT ck_profile_skills__evidence_kind CHECK (
+    evidence_kind IS NULL OR evidence_kind IN ('role','project','certification','assessment','artifact')
+  ),
+  CONSTRAINT ck_profile_skills__evidence CHECK (status = 'claimed' OR evidence_kind IS NOT NULL),
+  CONSTRAINT ck_profile_skills__verified_is_evidenced CHECK (verified_at IS NULL OR status = 'evidenced')
 );
 
 CREATE UNIQUE INDEX uq_profile_skills__profile_skill ON profile_skills (user_profile_id, skill_id);
+CREATE INDEX idx_profile_skills__skill ON profile_skills (skill_id);
 ```
 
 `ck_profile_skills__evidence` is the rule in schema form: **an evidenced skill must say what evidences
 it.** A row claiming `evidenced` with no `evidence_kind` cannot be written.
+
+`ck_profile_skills__verified_is_evidenced` closes the matching hole from the other side: verification
+is in-platform only, and in-platform verification *produces* evidence. A `verified_at` on a merely
+`claimed` row would mean the platform checked something it never recorded.
+
+The `uq` on `(user_profile_id, skill_id)` is why a résumé mentioning Kubernetes four times is one
+claim with the strongest evidence rather than four rows that quadruple its weight.
 
 `ON DELETE CASCADE` here is deliberate and the only cascade in the cluster — a profile version's skills
 have no meaning without the version, and re-parsing replaces them wholesale.

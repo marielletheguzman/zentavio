@@ -111,6 +111,12 @@ Direction matters. `from → to` is the direction of the move, so the reverse is
 own evidence — transitions are rarely symmetric, and treating them as such would suggest routes nobody
 takes.
 
+## Migration state
+
+`careers` is migrated (`20260801100000-create-careers.sql`). **`career_edges` is not** — M1a needs a
+track to exist but never traverses between tracks, and a table created before its first reader is a
+table whose shape nobody has verified. It arrives with M1b, which is what reads it.
+
 ## Invariants
 
 - Every career carries `source_tier` and `basis`. No unsourced track.
