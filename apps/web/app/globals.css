@@ -1,0 +1,53 @@
+/*
+ * Minimal styling, deliberately.
+ *
+ * Polish is the roadmap's third legitimate cut (`.claude/skills/roadmap/SKILL.md`), and Tailwind
+ * plus the packages/ui token layer is its own piece of work. What is NOT cut is anything the
+ * ui-guidelines call correctness: low confidence looks visibly different rather than dimmer, and
+ * nothing is conveyed by colour alone — every distinction here is also carried in words.
+ */
+
+:root { color-scheme: light dark; }
+
+body {
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+  margin: 0 auto;
+  max-width: 48rem;
+  padding: 2rem 1rem;
+}
+
+.skip-link { position: absolute; left: -9999px; }
+.skip-link:focus { position: static; }
+
+:focus-visible { outline: 3px solid currentColor; outline-offset: 2px; }
+
+.skills { list-style: none; padding: 0; }
+
+.skill {
+  border: 1px solid;
+  border-radius: 0.375rem;
+  margin-bottom: 0.5rem;
+  padding: 0.75rem;
+}
+
+/* Not a lighter tint of the same badge — a different shape, plus the words "Low confidence". */
+.skill-low { border-style: dashed; border-left-width: 4px; }
+
+.skill-name { font-weight: 600; margin-right: 0.5rem; }
+.skill-status, .skill-confidence { font-size: 0.875rem; margin-right: 0.5rem; }
+
+.unknown { border: 2px solid; border-radius: 0.375rem; padding: 1rem; }
+.caveat { font-style: italic; }
+
+blockquote { border-left: 3px solid; margin: 0.5rem 0 0; padding-left: 0.75rem; }
+
+/* Matches the final layout so nothing shifts when results arrive. */
+.skeleton { list-style: none; padding: 0; }
+.skeleton-row {
+  background: currentColor;
+  border-radius: 0.375rem;
+  height: 4.5rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.12;
+}

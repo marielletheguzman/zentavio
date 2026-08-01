@@ -1,0 +1,22 @@
+{
+  "name": "@zentavio/web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The public web surface (Next.js App Router).",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@zentavio/types": "workspace:*",
+    "next": "15.5.4",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.1"
+  }
+}
