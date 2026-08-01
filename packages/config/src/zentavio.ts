@@ -106,6 +106,29 @@ export const parserSchema = {
 } as const satisfies Schema;
 
 /**
+ * The escape hatch that lets M1a be demonstrated while ADR-0017 is open.
+ *
+ * **Named to be alarming on purpose.** `ZENTAVIO_INSECURE_DEV_AUTH` appears in a deployment
+ * checklist, a shell history, and a log — and at every one of those it should read as a mistake.
+ * Defaults to `false`, and `InsecureDevSubjectResolver` refuses in production regardless.
+ */
+export const devAuthSchema = {
+  insecureDevAuth: {
+    env: 'ZENTAVIO_INSECURE_DEV_AUTH',
+    type: 'boolean',
+    default: false,
+    description:
+      'Trust an x-zentavio-dev-user header instead of authenticating. Development only; ignored in production',
+  },
+  nodeEnv: {
+    env: 'NODE_ENV',
+    type: 'string',
+    default: 'development',
+    description: 'Runtime environment. Production disables the insecure dev resolver outright',
+  },
+} as const satisfies Schema;
+
+/**
  * The whole schema. One object so `envKeys` can generate the complete `.env.example`, and so a
  * reader cannot forget a section exists.
  */
@@ -113,6 +136,7 @@ export const zentavioSchema = {
   ...evalSchema,
   ...databaseSchema,
   ...parserSchema,
+  ...devAuthSchema,
 } as const satisfies Schema;
 
 export type ZentavioConfig = {

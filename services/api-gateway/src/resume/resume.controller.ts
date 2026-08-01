@@ -20,6 +20,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import type { Subject } from '@zentavio/auth';
+import { CurrentSubject } from '../auth/current-subject.decorator.ts';
 import { CorrectSkillDto } from './dto/correct-skill.dto.ts';
 import { ACCEPTED_CONTENT_TYPES, MAX_UPLOAD_BYTES, UploadResumeDto } from './dto/upload-resume.dto.ts';
 import { ResumeService } from './resume.service.ts';
@@ -55,6 +57,7 @@ export class ResumeController {
     }),
   )
   async upload(
+    @CurrentSubject() subject: Subject,
     @UploadedFile() file: UploadedResumeFile | undefined,
     @Body() dto: UploadResumeDto,
   ): Promise<unknown> {
@@ -68,7 +71,8 @@ export class ResumeController {
     }
 
     const outcome = await this.#service.upload({
-      userId: dto.userId,
+      // From the credential, never the body.
+      userId: subject.userId,
       careerId: dto.careerId,
       content: file.buffer,
       contentType,
@@ -111,9 +115,12 @@ export class ResumeController {
    */
   @Post('corrections')
   @HttpCode(HttpStatus.OK)
-  async correct(@Body() dto: CorrectSkillDto): Promise<unknown> {
+  async correct(
+    @CurrentSubject() subject: Subject,
+    @Body() dto: CorrectSkillDto,
+  ): Promise<unknown> {
     const outcome = await this.#service.correct({
-      userId: dto.userId,
+      userId: subject.userId,
       slug: dto.slug,
       status: dto.status,
       ...(dto.evidenceKind ? { evidenceKind: dto.evidenceKind } : {}),

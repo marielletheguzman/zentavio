@@ -10,14 +10,21 @@
  */
 
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import type { Kysely } from 'kysely';
 import { createDb, type Database } from '@zentavio/db';
-import { databaseSchema, load, parserSchema } from '@zentavio/config';
+import { databaseSchema, load, parserSchema, devAuthSchema } from '@zentavio/config';
+import {
+  DenyAllSubjectResolver,
+  InsecureDevSubjectResolver,
+  type SubjectResolver,
+} from '@zentavio/auth';
+import { SubjectGuard } from './auth/subject.guard.ts';
 import { HealthController } from './health/health.controller.ts';
 import { ParserClient } from './resume/parser-client.ts';
 import { ResumeController } from './resume/resume.controller.ts';
 import { ResumeService } from './resume/resume.service.ts';
-import { DATABASE, PARSER_CLIENT } from './tokens.ts';
+import { DATABASE, PARSER_CLIENT, SUBJECT_RESOLVER } from './tokens.ts';
 
 @Module({
   controllers: [ResumeController, HealthController],
@@ -37,6 +44,27 @@ import { DATABASE, PARSER_CLIENT } from './tokens.ts';
       provide: PARSER_CLIENT,
       useFactory: (): ParserClient =>
         new ParserClient({ baseUrl: load(parserSchema).resumeParserUrl }),
+    },
+    {
+      provide: SUBJECT_RESOLVER,
+      useFactory: (): SubjectResolver => {
+        // Deny-by-default: the insecure resolver is only constructed when a flag that says exactly
+        // what it is has been set, and it refuses in production regardless (ADR-0017).
+        const { insecureDevAuth } = load(devAuthSchema);
+        return insecureDevAuth
+          ? new InsecureDevSubjectResolver({
+              enabled: true,
+              isProduction: load(devAuthSchema).nodeEnv === 'production',
+            })
+          : new DenyAllSubjectResolver();
+      },
+    },
+    {
+      // Global, not per-route: opting a route IN to protection is a list someone forgets, and the
+      // route they forget is the one that leaks.
+      provide: APP_GUARD,
+      useFactory: (resolver: SubjectResolver): SubjectGuard => new SubjectGuard(resolver),
+      inject: [SUBJECT_RESOLVER],
     },
     {
       provide: ResumeService,

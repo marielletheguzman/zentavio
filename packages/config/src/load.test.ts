@@ -210,6 +210,7 @@ describe('the Zentavio schema', () => {
 
   it('exposes every key for generating .env.example', () => {
     expect(envKeys(zentavioSchema)).toEqual([
+      'NODE_ENV',
       'OLLAMA_HOST',
       'ZENTAVIO_DATABASE_CONNECTION_TIMEOUT_MS',
       'ZENTAVIO_DATABASE_MAX_CONNECTIONS',
@@ -218,6 +219,7 @@ describe('the Zentavio schema', () => {
       // ADR-0003: where services/api-gateway reaches ai/resume-parser. No default, for the same
       // reason as the database url — a plausible-but-wrong default fails silently against the
       // wrong host.
+      'ZENTAVIO_INSECURE_DEV_AUTH',
       'ZENTAVIO_RESUME_PARSER_URL',
     ]);
   });

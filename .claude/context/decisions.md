@@ -86,6 +86,7 @@ An ADR is numbered sequentially and never renumbered.
 | [0014](../../docs/architecture/decisions/0014-typescript-runner.md) | Node native type stripping with `.ts` specifiers; no runner dependency | Accepted |
 | [0015](../../docs/architecture/decisions/0015-hosted-postgresql.md) | Supabase as the managed PostgreSQL provider — and as nothing else | Accepted |
 | [0016](../../docs/architecture/decisions/0016-document-text-extraction.md) | `pypdf` + `python-docx` for résumé text extraction, behind a port | Accepted |
+| [0017](../../docs/architecture/decisions/0017-authentication.md) | How a person proves who they are | **Proposed** |
 
 0001–0004 define the boundaries every skill and context file assumes: one repository, sources as
 plugins, a polyglot contract at the `ai/` boundary, and a vector store that is an index rather

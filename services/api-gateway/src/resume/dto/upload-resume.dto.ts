@@ -31,14 +31,12 @@ export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 export class UploadResumeDto {
   /**
-   * Whose profile this becomes.
+   * **There is deliberately no `userId` here.**
    *
-   * Explicit until authentication exists (decided 2026-08-01: M1a runs against a seeded test user).
-   * **This is exactly why M1a is not deployable** — a caller can name any user. When auth lands,
-   * this field is removed and the subject comes from the token, never from the body.
+   * It used to be a field, and it was an authorization hole: any caller could name any user and
+   * upload into their profile. The subject now comes from `@CurrentSubject()`, established by the
+   * guard from a credential the caller cannot choose (ADR-0017).
    */
-  @IsUUID()
-  userId!: string;
 
   /** Optional override for the track this profile targets. */
   @IsOptional()

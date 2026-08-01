@@ -28,6 +28,7 @@ export type {
 } from './schema.ts';
 export {
   databaseSchema,
+  devAuthSchema,
   evalSchema,
   parserSchema,
   testDatabaseSchema,

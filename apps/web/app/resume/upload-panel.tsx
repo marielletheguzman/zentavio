@@ -24,7 +24,24 @@ import {
 
 const ACCEPTED = '.pdf,.docx,text/plain';
 
-export function UploadPanel({ gatewayUrl, userId }: { gatewayUrl: string; userId: string }) {
+/**
+ * The development credential header.
+ *
+ * A real session will be an httpOnly cookie the browser sends on its own, and this function
+ * disappears — `security.md` requires tokens opaque to the frontend and never in `localStorage` or a
+ * URL, so there will be nothing here to replace it with.
+ */
+function devAuthHeader(devUserId: string): Record<string, string> {
+  return { 'x-zentavio-dev-user': devUserId };
+}
+
+/**
+ * `devUserId` is the **insecure development credential** (ADR-0017), sent as a header rather than in
+ * the body — the body is where it used to live, and where it was an authorization hole. The gateway
+ * refuses it outright in production, so this is a stand-in that cannot become the real thing by
+ * being forgotten.
+ */
+export function UploadPanel({ gatewayUrl, devUserId }: { gatewayUrl: string; devUserId: string }) {
   const [state, setState] = useState<ViewState>({ kind: 'empty' });
   /** Announced separately from the result, so a correction is confirmed without redrawing the list. */
   const [correctionNote, setCorrectionNote] = useState<string | null>(null);
@@ -42,10 +59,13 @@ export function UploadPanel({ gatewayUrl, userId }: { gatewayUrl: string; userId
     }
 
     setState({ kind: 'loading' });
-    form.set('userId', userId);
 
     try {
-      const response = await fetch(`${gatewayUrl}/v1/resume/upload`, { method: 'POST', body: form });
+      const response = await fetch(`${gatewayUrl}/v1/resume/upload`, {
+        method: 'POST',
+        headers: devAuthHeader(devUserId),
+        body: form,
+      });
       const body: unknown = await response.json();
 
       if (!response.ok) {
@@ -85,8 +105,8 @@ export function UploadPanel({ gatewayUrl, userId }: { gatewayUrl: string; userId
     try {
       const response = await fetch(`${gatewayUrl}/v1/resume/corrections`, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ userId, slug: skill.slug, status: next }),
+        headers: { 'content-type': 'application/json', ...devAuthHeader(devUserId) },
+        body: JSON.stringify({ slug: skill.slug, status: next }),
       });
       const body: unknown = await response.json();
 
