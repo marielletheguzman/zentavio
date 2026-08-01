@@ -9,18 +9,21 @@
  * authority, dated (`docs/database/entities/requirement.md`).
  */
 
-import { randomUUID } from 'node:crypto';
+import { uuidv7 } from '@zentavio/db';
 import type { Pool } from 'pg';
 
 export const PATHWAY_ID = 'de.eu-blue-card';
 
 /**
- * `randomUUID` is v4, while the schema documents UUIDv7. The column is `uuid` and does not care;
- * the ordering benefit of v7 is a property of the generator, and no generator exists in
- * `packages/db` yet. That gap is real and tracked — it is not what these tests are about.
+ * UUIDv7, as the schema documents (`docs/database/README.md`).
+ *
+ * This used to be `crypto.randomUUID` — v4 — with a comment saying no v7 generator existed yet.
+ * One does now, so fixtures write the same kind of id the application will. Tests generating a
+ * different id format from production is how a format assumption survives until it breaks
+ * somewhere that matters.
  */
 export function newId(): string {
-  return randomUUID();
+  return uuidv7();
 }
 
 export async function insertPathway(pool: Pool, pathwayId: string = PATHWAY_ID): Promise<string> {

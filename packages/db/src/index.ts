@@ -12,6 +12,8 @@
 
 export { createCompileOnlyDb, createDb, type DbConnectionOptions } from './client.ts';
 
+export { uuidv7, uuidv7Timestamp } from './uuid.ts';
+
 export { applyMigrations, migrationsDirectory, type ApplyMigrationsOptions } from './migrations/apply.ts';
 export { PostgresMigrationExecutor } from './migrations/executor.ts';
 export { loadMigrationFiles, migrationIdFromFilename } from './migrations/files.ts';
