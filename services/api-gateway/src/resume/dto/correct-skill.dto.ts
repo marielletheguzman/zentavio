@@ -7,18 +7,13 @@
  * key violation.
  */
 
-import { IsIn, IsOptional, IsString, IsUUID, Matches } from 'class-validator';
+import { IsIn, IsOptional, IsString, Matches } from 'class-validator';
 
 export const PROFILE_SKILL_STATUSES = ['evidenced', 'claimed'] as const;
 export const EVIDENCE_KINDS = ['role', 'project', 'certification', 'assessment', 'artifact'] as const;
 
 export class CorrectSkillDto {
-  /**
-   * Whose profile. Explicit until authentication exists (decided 2026-08-01) — and the reason this
-   * is not deployable: a caller can name any user. When auth lands this comes from the token.
-   */
-  @IsUUID()
-  userId!: string;
+  /** **No `userId`.** The subject comes from the guard, never the body — see ADR-0017. */
 
   /** Kebab-case, matching `skills.slug`. Validated in shape here, in existence by the service. */
   @IsString()

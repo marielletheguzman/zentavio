@@ -1,0 +1,13 @@
+{
+  "name": "@zentavio/auth",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Session, RBAC, and identity helpers. The subject boundary; the mechanism is ADR-0017.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}

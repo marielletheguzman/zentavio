@@ -134,11 +134,27 @@ already shipped; outcome recording is wired here, before anything reads it.
 **Cuttable:** DOCX (PDF alone is a real answer), role/employer extraction beyond titles, any styling.
 **Not cuttable:** source spans, the evidenced/claimed distinction, the correction path, retention.
 
-**Authentication is out of M1a** (decided 2026-08-01). `packages/auth` is a placeholder, and M1a runs
-against a **seeded test user** rather than a real sign-in. Real authentication becomes its own slice
-before anything is exposed to an actual person — a profile surface without auth is one URL away from
-being everybody's profile. Until that slice lands, M1a is demoable but not deployable, and
-`docs/database/entities/user.md`'s `users` row for the test subject is fixture data, not an account.
+**The authorization hole is closed; the mechanism is still open** (2026-08-01). `userId` used to
+arrive in the request body, so any caller could read and correct any person's profile. It is gone
+from every DTO: the subject now comes from `@CurrentSubject()`, established by a **global** guard —
+deny by default, because opting a route *in* to protection is a list someone forgets, and the route
+they forget is the one that leaks.
+
+Verified by attempting the attack against the running gateway:
+
+```text
+no credential                        → 401 UNAUTHENTICATED
+naming another user in the body      → 400 "property userId should not exist"
+acting on your own profile           → 200, v3
+victim's profile after the attempt   → untouched at v2
+NODE_ENV=production + dev flag on    → 401, the flag is ignored
+```
+
+**What remains is ADR-0017 — how a person actually proves who they are — and it is Proposed, not
+decided.** Today the gateway trusts an `x-zentavio-dev-user` header behind
+`ZENTAVIO_INSECURE_DEV_AUTH`, which defaults off and is refused outright in production. That is a
+stand-in for a decision, not a shortcut around one, so **M1a is demoable and still not deployable** —
+but for a smaller and better-understood reason than before.
 
 **Two schema dependencies were found while planning M1a**, and they change the M1a/M1b boundary:
 

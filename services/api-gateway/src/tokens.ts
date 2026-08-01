@@ -12,3 +12,4 @@
 
 export const DATABASE = Symbol('DATABASE');
 export const PARSER_CLIENT = Symbol('PARSER_CLIENT');
+export const SUBJECT_RESOLVER = Symbol('SUBJECT_RESOLVER');

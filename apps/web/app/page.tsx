@@ -5,9 +5,10 @@
  * App Router, and the right one here: nothing on this page needs client JavaScript except the
  * upload itself.
  *
- * `userId` is passed explicitly because **authentication is deliberately out of M1a** (decided
- * 2026-08-01). It comes from a seeded test user, which is exactly why this page is demoable and not
- * deployable: when auth lands, the subject comes from a session and this prop disappears.
+ * The subject now comes from a credential the caller cannot choose (ADR-0017), not from the request
+ * body. What remains is a **development** credential: a seeded user id sent as a header, which the
+ * gateway refuses outright in production. When a real session lands it is an httpOnly cookie the
+ * browser sends by itself, and this prop disappears entirely.
  */
 
 import { UploadPanel } from './resume/upload-panel.tsx';
@@ -30,7 +31,7 @@ export default function Home() {
         claim, and an honest answer where it does not know.
       </p>
 
-      <UploadPanel gatewayUrl={GATEWAY_URL} userId={SEEDED_TEST_USER} />
+      <UploadPanel gatewayUrl={GATEWAY_URL} devUserId={SEEDED_TEST_USER} />
     </main>
   );
 }
