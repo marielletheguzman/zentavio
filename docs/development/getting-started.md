@@ -44,6 +44,21 @@ pip install uv==0.9.6      # or: pipx install uv, or Astral's standalone install
 pnpm py:sync               # uv sync --project ai
 ```
 
+**`services/*` are compiled; everything else is not.** NestJS needs decorators, which Node's
+type-stripping cannot run, so a service is built before it runs (ADR-0014's 2026-08-01 amendment):
+
+```bash
+pnpm --filter @zentavio/api-gateway build   # tsc -p tsconfig.build.json
+pnpm --filter @zentavio/api-gateway start   # node dist/main.js
+```
+
+Scripts and CLIs are unchanged — `pnpm migrate` and `pnpm seed` still run TypeScript directly with no
+build step. A stale `dist/` is the failure mode to watch for: the symptom is a change that appears to
+do nothing.
+
+**`ZENTAVIO_RESUME_PARSER_URL` must be added to `.env.example` by hand** — that file is not writable
+from this environment. It has no default, deliberately.
+
 **Two things named "workspace" live here.** pnpm workspaces manage the TypeScript packages; the uv
 workspace at `ai/pyproject.toml` manages the Python services. They are conceptually similar and
 mechanically unrelated — ADR-0006 accepted that confusion as a cost, so it is named rather than

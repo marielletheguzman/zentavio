@@ -5,7 +5,24 @@
   "description": "Public API surface: auth, rate-limiting, request routing to internal services.",
   "type": "module",
   "dependencies": {
+    "@nestjs/common": "11",
+    "@nestjs/core": "11",
+    "@nestjs/platform-express": "11",
     "@zentavio/config": "workspace:*",
-    "@zentavio/types": "workspace:*"
+    "@zentavio/db": "workspace:^",
+    "@zentavio/types": "workspace:*",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/multer": "^2.2.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "typecheck": "tsc -p tsconfig.json"
   }
 }

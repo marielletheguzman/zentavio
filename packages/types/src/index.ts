@@ -87,5 +87,6 @@ export {
   type ParseResponseWire,
   type ParseStatus,
   type ParsedSkillWire,
+  type ProfileEvidenceKind,
   type ServiceErrorWire,
 } from './resume-parser.ts';

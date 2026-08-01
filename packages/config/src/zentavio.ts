@@ -91,12 +91,28 @@ export const testDatabaseSchema = {
 } as const satisfies Schema;
 
 /**
+ * Where `services/api-gateway` reaches `ai/resume-parser` (ADR-0003).
+ *
+ * No default. A plausible-but-wrong default here means uploads silently fail against localhost in
+ * an environment where the parser lives somewhere else — the same reasoning that keeps
+ * `databaseUrl` required.
+ */
+export const parserSchema = {
+  resumeParserUrl: {
+    env: 'ZENTAVIO_RESUME_PARSER_URL',
+    type: 'url',
+    description: 'Base URL of the résumé parser service, e.g. http://127.0.0.1:8001',
+  },
+} as const satisfies Schema;
+
+/**
  * The whole schema. One object so `envKeys` can generate the complete `.env.example`, and so a
  * reader cannot forget a section exists.
  */
 export const zentavioSchema = {
   ...evalSchema,
   ...databaseSchema,
+  ...parserSchema,
 } as const satisfies Schema;
 
 export type ZentavioConfig = {

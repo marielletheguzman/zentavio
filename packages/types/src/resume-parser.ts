@@ -17,14 +17,30 @@
  * recorded. Nothing throws; the data is simply wrong.
  */
 
-import type { Confidence, EvidenceKind } from './explained.ts';
+import type { Confidence } from './explained.ts';
+
+/**
+ * How a profile skill is evidenced (`profile_skills.evidence_kind`).
+ *
+ * **Deliberately not `EvidenceKind` from `explained.ts`.** That one is the *scoring* evidence kind —
+ * `skill_match`, `skill_missing`, `sponsorship` — which describes why a number came out as it did.
+ * This one describes what backs a claim on a person's profile. They are different vocabularies that
+ * happen to share a word, and conflating them typechecked cleanly while being wrong: the runtime
+ * validator below used these strings, so every test passed and only `tsc` caught it.
+ */
+export type ProfileEvidenceKind =
+  | 'role'
+  | 'project'
+  | 'certification'
+  | 'assessment'
+  | 'artifact';
 
 /** Wire field names are `snake_case` — the Python service's, not TypeScript's. Do not "fix" them. */
 export interface ParsedSkillWire {
   readonly slug: string;
   readonly status: 'evidenced' | 'claimed';
   /** Required by the schema when `status` is `evidenced`; `null` when `claimed`. */
-  readonly evidence_kind: EvidenceKind | null;
+  readonly evidence_kind: ProfileEvidenceKind | null;
   /** The verbatim line the claim came from. What makes it correctable. */
   readonly source_span: string;
   readonly confidence: Confidence;

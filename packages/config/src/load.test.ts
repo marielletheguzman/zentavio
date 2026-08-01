@@ -177,7 +177,10 @@ describe('the Zentavio schema', () => {
   });
 
   it('loads once the database url is supplied', () => {
-    const config = load(zentavioSchema, { ZENTAVIO_DATABASE_URL: 'postgresql://localhost/z' });
+    const config = load(zentavioSchema, {
+      ZENTAVIO_DATABASE_URL: 'postgresql://localhost/z',
+      ZENTAVIO_RESUME_PARSER_URL: 'http://127.0.0.1:8001',
+    });
     expect(config.ollamaHost).toBe('http://127.0.0.1:11434');
     expect(config.databaseMaxConnections).toBe(10);
   });
@@ -197,7 +200,10 @@ describe('the Zentavio schema', () => {
     // stdlib-only and cannot import from here. This test pins the TypeScript values; it cannot
     // see the Python ones. The actual drift check is
     // ai/shared/evals/tests/test_config_parity.py, which parses this schema and compares.
-    const config = load(zentavioSchema, { ZENTAVIO_DATABASE_URL: 'postgresql://localhost/z' });
+    const config = load(zentavioSchema, {
+      ZENTAVIO_DATABASE_URL: 'postgresql://localhost/z',
+      ZENTAVIO_RESUME_PARSER_URL: 'http://127.0.0.1:8001',
+    });
     expect(config.ollamaHost).toBe('http://127.0.0.1:11434');
     expect(config.evalModel).toBe('qwen2.5:7b-instruct');
   });
@@ -209,6 +215,10 @@ describe('the Zentavio schema', () => {
       'ZENTAVIO_DATABASE_MAX_CONNECTIONS',
       'ZENTAVIO_DATABASE_URL',
       'ZENTAVIO_EVAL_MODEL',
+      // ADR-0003: where services/api-gateway reaches ai/resume-parser. No default, for the same
+      // reason as the database url — a plausible-but-wrong default fails silently against the
+      // wrong host.
+      'ZENTAVIO_RESUME_PARSER_URL',
     ]);
   });
 });
