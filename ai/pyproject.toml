@@ -1,0 +1,49 @@
+# The uv workspace for the Python half of the monorepo (ADR-0006).
+#
+# One lockfile, one resolution pass. That is the whole reason uv won over pip-tools and Poetry:
+# `shared` and every service consuming it are guaranteed the same versions, which a per-service
+# requirements.txt cannot promise. A `uv.lock` inside an individual service directory means the
+# workspace was bypassed.
+#
+#   uv sync              install the workspace, dev dependencies included
+#   uv run pytest        run the Python tests
+#   uv run ruff check .  lint
+#   uv lock --check      fail if the lockfile has drifted from these files
+#
+# This root is NOT a package. It declares the workspace and the shared dev toolchain; runtime
+# dependencies belong to the member that needs them — document parsing to resume-parser, embedding
+# libraries to embeddings.
+#
+# Turborepo does not manage this tree (ADR-0001), and pnpm workspaces are unrelated to this one.
+# Two things named "workspace" in one repository is a documented cost of ADR-0006, not an accident.
+
+[project]
+name = "zentavio-ai"
+version = "0.0.0"
+description = "Workspace root for Zentavio's stateless AI capability services. Not a package."
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.uv.workspace]
+# Members are added when their first service is written, not in advance. A member declared before
+# it has a single Python file is a dependency set nobody has verified — the same reason
+# `career_edges` is documented but not migrated.
+members = ["shared"]
+
+[dependency-groups]
+# Pinned exactly: a different Ruff version is a different rule set, which would make ruff.toml's
+# statelessness bans (ADR-0003) a coincidence rather than a rule.
+#
+# **These pins are duplicated in `requirements-dev.txt` and must be changed together.** That
+# duplication is temporary and deliberate: CI still installs `requirements-dev.txt` directly, and
+# deleting it before `.github/workflows/ci.yml` switches to `uv sync --frozen` would break every
+# run. Both files carry a comment saying so. See ADR-0006's follow-up list.
+dev = [
+  "ruff==0.16.0",
+  "pytest==9.1.1",
+]
+
+# pytest configuration deliberately stays in `pytest.ini` for now rather than moving here, so
+# there is exactly one place it is configured while CI still invokes `python -m pytest` directly.
+# Two config sources would be a drift waiting to happen, and this file already carries one
+# duplication it must not carry two of.

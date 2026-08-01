@@ -37,6 +37,29 @@ ai/<service>/
 `compute.py` and `explain.py` are separate files on purpose. The moment they merge, someone lets the model
 produce a number.
 
+### Adding the service to the workspace
+
+The uv workspace exists (`ai/pyproject.toml`, `ai/uv.lock` committed). A new service is two steps:
+
+```bash
+# 1. add the directory to `members` in ai/pyproject.toml
+# 2. re-resolve — one lockfile, one resolution pass
+pnpm py:sync
+```
+
+**Members are added when the service is written, never in advance.** A member declared before it has a
+single Python file is a dependency set nobody has verified.
+
+**Runtime dependencies belong to the service, not to `shared`.** Document parsing libraries are
+`resume-parser`'s; embedding libraries are `embeddings`'. A `shared` package that accumulates every
+service's dependencies is the single bloated environment ADR-0006 rejected — the reason uv won was that
+one resolution pass keeps `shared` and its consumers on the same versions *without* pooling their
+dependencies.
+
+**Never `pip install` in a Dockerfile or a CI step.** Every install path goes through `uv.lock`, or the
+lockfile's guarantee is conditional on the machine. A `uv.lock` inside a service directory means the
+workspace was bypassed.
+
 ## The division that matters
 
 ```text

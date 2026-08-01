@@ -12,11 +12,12 @@ Anything below that you cannot execute is a bug in this document — say so rath
 
 | Tool | Version | Why |
 |---|---|---|
-| **Node** | ≥ 20.11 (CI uses 22) | the TypeScript half |
+| **Node** | ≥ 22.18 (CI uses 22) | the TypeScript half. The floor is ADR-0014: below 22.18 Node cannot strip types, so no `.ts` entrypoint runs |
 | **pnpm** | from `packageManager` via corepack — do not install separately | workspace management (ADR-0001) |
 | **Python** | 3.12 (CI) or 3.13 | the `ai/` half (ADR-0003) |
-| **Ruff** | pinned in `requirements-dev.txt` | lint and format for `ai/` |
-| **pytest** | pinned in `requirements-dev.txt` | tests for `ai/` (ADR-0007) |
+| **uv** | pinned; installs everything under `ai/` | the Python workspace and its lockfile (ADR-0006) |
+| **Ruff** | pinned in `ai/pyproject.toml`, locked in `ai/uv.lock` | lint and format for `ai/` |
+| **pytest** | pinned in `ai/pyproject.toml`, locked in `ai/uv.lock` | tests for `ai/` (ADR-0007) |
 | **Docker** | any recent, daemon running | PostgreSQL for `pnpm test:integration` |
 | **Git** | any recent | — |
 
@@ -38,9 +39,19 @@ cd zentavio
 corepack enable
 pnpm install --frozen-lockfile
 
-# Python tooling for ai/
-pip install -r requirements-dev.txt
+# Python tooling for ai/ — one workspace, one lockfile (ADR-0006)
+pip install uv==0.9.6      # or: pipx install uv, or Astral's standalone installer
+pnpm py:sync               # uv sync --project ai
 ```
+
+**Two things named "workspace" live here.** pnpm workspaces manage the TypeScript packages; the uv
+workspace at `ai/pyproject.toml` manages the Python services. They are conceptually similar and
+mechanically unrelated — ADR-0006 accepted that confusion as a cost, so it is named rather than
+glossed.
+
+`requirements-dev.txt` still exists and is **superseded**. It survives only because CI has not yet
+switched to `uv sync --frozen`; its pins are duplicated in `ai/pyproject.toml` and must be changed in
+both places until it is deleted.
 
 **Do not `npm install -g pnpm`.** Corepack pins the exact version from `package.json`, so CI and your
 machine cannot drift. If `pnpm` is not on your PATH after `corepack enable`, `corepack pnpm <cmd>` works
@@ -60,7 +71,7 @@ That is the whole thing, and it runs exactly what CI runs:
 | `tsc --noEmit` | strict TypeScript |
 | `vitest run --project unit` | the fast TypeScript tests (ADR-0007) |
 | `ruff check ai/` | `ai/` statelessness — no database, cache, or vector client |
-| `python -m pytest` | the Python tests — currently the prompt-eval runner |
+| `pnpm test:py` | the Python tests — currently the prompt-eval runner. Runs through uv |
 | boundary-disable audit | no inline `eslint-disable` silencing a layer rule |
 
 Expect it to pass: 9 Vitest tests and 43 pytest tests, and the eval runner reporting `no prompt fixtures
@@ -116,7 +127,8 @@ Then delete it: `rm -rf packages/db/src`.
 | Symptom | Cause |
 |---|---|
 | `pnpm: command not found` | run `corepack enable`, or use `corepack pnpm` |
-| `ruff: command not found` | `pip install -r requirements-dev.txt`; on Windows add Python's user `Scripts` directory to PATH |
+| `ruff: command not found` | `pnpm py:sync`; every Python command goes through `uv run --project ai`, so Ruff need not be on PATH |
+| `uv: command not found` | `pip install uv==0.9.6`; on Windows add Python's user `Scripts` directory to PATH, or use `python -m uv` |
 | `tsc` reports `TS18003` | expected only if `tsconfig.json`'s includes were changed — it needs at least one input |
 | ESLint errors on a new top-level directory | `boundaries/no-unknown-files` — add it to `boundaries/elements` in `eslint.config.mjs`, deliberately |
 | Lockfile conflict after a pull | `pnpm install --frozen-lockfile`; never hand-merge `pnpm-lock.yaml` |
