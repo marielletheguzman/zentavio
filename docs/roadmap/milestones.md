@@ -52,6 +52,92 @@ corrects it, and watches the number change for a reason they can see.
 The correction path is part of the milestone, not a follow-up: a profile a user cannot fix is a profile
 they will not trust.
 
+### M1 in three slices
+
+M1 is too large to build in one go and too easy to build in the wrong order. The split below is by
+**user question**, never by layer — "build the parser, then the graph, then the scorer" would produce
+nothing demonstrable until the end, and the end always slips (`.claude/skills/roadmap/SKILL.md`).
+
+Each slice is demoable on its own, and each carries the full non-cuttable list at its own scale:
+evidence, an honest `unknown`, provenance, privacy, and docs.
+
+Chain position, from `docs/features/README.md`: **résumé → profile → skill gap → readiness.** The slices
+follow that order because each genuinely needs the one before it.
+
+---
+
+#### M1a — "What does the system think about me?"
+
+*The profile exists, and the user can fix it.*
+
+Résumé (PDF/DOCX) → parsed profile → skills marked **evidenced** or **claimed**, each with the source
+span it came from → the user disagrees with one, corrects it, and the correction sticks.
+
+No score yet. That is the point: a profile is useful on its own, and a score built on a profile nobody has
+checked is a confident wrong answer.
+
+**Vertical:** `ai/resume-parser` · `packages/db` (profile, skills, corrections) · `services/api-gateway` ·
+`apps/web` upload and profile surface.
+
+**Done when:** an unparseable or image-only résumé returns an honest failure naming what is wrong rather
+than an empty profile; every extracted skill shows its source span; a correction persists and is
+attributed to the user rather than overwriting the parser's claim; retention and deletion for résumés
+work **in this slice**, because this is where résumés first exist and retrofitted privacy is a breach
+already shipped; outcome recording is wired here, before anything reads it.
+
+**Cuttable:** DOCX (PDF alone is a real answer), role/employer extraction beyond titles, any styling.
+**Not cuttable:** source spans, the evidenced/claimed distinction, the correction path, retention.
+
+---
+
+#### M1b — "How far am I from cloud / platform engineering?"
+
+*The gap exists, and it is honest about what it does not know.*
+
+Profile → seeded skill graph for the one track → weighted, dependency-ordered gap → each missing skill
+shows why it is required and how far it sits from what the user already has.
+
+**Vertical:** `knowledge-engine/skills-graph` (seeded, sourced edges only) · `ai/skill-gap` ·
+`apps/web` gap surface.
+
+**Done when:** a skill the graph does not cover returns `unknown` naming what is missing, never a zero;
+every `requires` edge carries its source; the ordering is dependency-driven and reproducible — the same
+profile and graph produce the same gap, asserted by a determinism test.
+
+**Cuttable:** learning paths (`mvp.md` already names them first to cut — a gap without a plan is still a
+useful answer), breadth of the seeded graph, any second track.
+**Not cuttable:** sourced edges, the `unknown` path, determinism.
+
+---
+
+#### M1c — "Am I ready, and why that number?"
+
+*The number exists, carries its remainder, and moves for a reason the user can see.*
+
+Gap → readiness score + remainder + the evidence bundle that produced it → the correction from M1a
+changes the number, and the change is explainable.
+
+This slice is what M1's stated verification actually tests. It is small **only because M1a and M1b did
+their work honestly** — which is the argument for this ordering.
+
+**Vertical:** `ai/skill-gap` scoring · the evidence bundle contract in `packages/types` · `apps/web`
+readiness surface with evidence disclosure.
+
+**Done when:** every number is traceable to the evidence that produced it, reachable in the UI; confidence
+is visible, not implied; a profile too sparse to score returns `unknown` with the one input that would
+resolve it, rather than a low number; the full path — upload, correct, watch it change — works for a real
+user.
+
+**Cuttable:** comparison against `REMOTE`, charts, multiple score presentations.
+**Not cuttable:** the evidence bundle, visible confidence, the `unknown` path, the correction loop.
+
+---
+
+**Why this order and not another.** Each slice makes the next one's answer more honest rather than merely
+possible. Building the scorer first would mean scoring a profile nobody had checked; building the graph
+first would mean a gap against skills the system had not confirmed the user has. The prioritization rule
+is to finish a vertical, then deepen it — not to start three (`.claude/skills/roadmap/SKILL.md`).
+
 ---
 
 ## M2 — Germany is answerable

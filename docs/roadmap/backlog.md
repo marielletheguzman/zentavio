@@ -16,11 +16,14 @@ Not features. Each one gates work that cannot start without it.
 |---|---|---|
 | **Source origin-side authorities** | Does my licence transfer? | any verdict for a regulated profession (ADR-0010 is Accepted; the data is not sourced) |
 | **Observability backend** | — engineering | dashboards and alert routing (ADR-0008 deferred it) |
-| **`ci` as a required status check** | — engineering | ADR-0005 being enforced rather than advisory; needs one observed green run first |
+| ~~**`ci` as a required status check**~~ | — engineering | **Resolved 2026-07-31.** Configured and violation-tested; the required check is named `CI`, not `ci` (ADR-0011 Correction) |
+| **A hosted PostgreSQL provider** | — engineering | any environment that is not a developer's Docker. Nothing in `tech-stack.md` names one; Supabase was raised and never decided |
 
 **Resolved since this list was written:** ADRs 0007–0011 are all Accepted, and the
-`applications` / `practice_sessions` entity documents exist. What remains of those decisions is
-implementation, tracked as follow-up in each ADR rather than as a blocker here.
+`applications` / `practice_sessions` entity documents exist. ADR-0014 is Accepted **and implemented** —
+TypeScript entrypoints run on Node's native type stripping, so `pnpm migrate` exists and no runner entered
+the stack. What remains of those decisions is implementation, tracked as follow-up in each ADR rather than
+as a blocker here.
 
 ## Near — inside the current phases
 
