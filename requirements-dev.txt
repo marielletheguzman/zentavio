@@ -33,3 +33,6 @@ pytest==9.1.1
 # OAuth scope — `gh auth refresh -h github.com -s workflow`.
 pypdf==6.1.3
 python-docx==1.2.0
+fastapi==0.121.2
+pydantic==2.12.4
+httpx==0.28.1

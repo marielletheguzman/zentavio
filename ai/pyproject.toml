@@ -41,6 +41,9 @@ members = ["shared", "resume-parser"]
 dev = [
   "ruff==0.16.0",
   "pytest==9.1.1",
+  # FastAPI's TestClient needs httpx. Test-only, so it lives in the workspace dev group rather
+  # than in any service's runtime dependencies.
+  "httpx==0.28.1",
 ]
 
 # pytest configuration deliberately stays in `pytest.ini` for now rather than moving here, so
