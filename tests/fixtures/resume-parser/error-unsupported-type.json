@@ -1,0 +1,13 @@
+{
+  "name": "error-unsupported-type",
+  "httpStatus": 400,
+  "body": {
+    "error": {
+      "code": "VALIDATION_FAILED",
+      "message": "Unsupported content type: application/x-msdownload. Upload a PDF, a DOCX, or plain text.",
+      "details": [],
+      "correlationId": "<redacted: non-deterministic>",
+      "retryable": false
+    }
+  }
+}

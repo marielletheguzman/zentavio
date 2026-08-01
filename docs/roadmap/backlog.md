@@ -16,6 +16,7 @@ Not features. Each one gates work that cannot start without it.
 |---|---|---|
 | **Source origin-side authorities** | Does my licence transfer? | any verdict for a regulated profession (ADR-0010 is Accepted; the data is not sourced) |
 | **Observability backend** | — engineering | dashboards and alert routing (ADR-0008 deferred it) |
+| **JSON Schema generation for cross-language contracts** | — engineering | `tech-stack.md`'s "neither side hand-writes the other's types". Now live: `ai/resume-parser` produces a shape TypeScript consumes. Held today by golden fixtures the Python side generates (`tests/unit/contracts/`), which proves the shapes agree **today**, not that they cannot diverge. Generation tooling is a dependency and needs its own ADR |
 | ~~**`ci` as a required status check**~~ | — engineering | **Resolved 2026-07-31.** Configured and violation-tested; the required check is named `CI`, not `ci` (ADR-0011 Correction) |
 | ~~**A hosted PostgreSQL provider**~~ | — engineering | **Resolved 2026-08-01 (ADR-0015): Supabase, as managed PostgreSQL and nothing else.** Provisioning and the pooler-versus-runner question are follow-up work, not a blocking decision |
 
