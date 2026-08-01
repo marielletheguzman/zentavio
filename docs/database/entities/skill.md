@@ -25,6 +25,7 @@ CREATE TABLE skills (
   deleted_at    timestamptz,
 
   CONSTRAINT ck_skills__kind CHECK (kind IN ('technology','tool','practice','domain','language','soft')),
+  CONSTRAINT ck_skills__basis CHECK (basis IN ('official-taxonomy','posting-derived','curated')),
   CONSTRAINT ck_skills__tier CHECK (source_tier BETWEEN 1 AND 4)
 );
 
@@ -49,9 +50,11 @@ CREATE TABLE skill_aliases (
   normalized  text        NOT NULL,          -- casefolded, punctuation stripped
   source_tier smallint    NOT NULL,
   created_at  timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT fk_skill_aliases__skills FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE RESTRICT
+  CONSTRAINT fk_skill_aliases__skills FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE RESTRICT,
+  CONSTRAINT ck_skill_aliases__tier CHECK (source_tier BETWEEN 1 AND 4)
 );
 CREATE UNIQUE INDEX uq_skill_aliases__normalized ON skill_aliases (normalized);
+CREATE INDEX idx_skill_aliases__skill ON skill_aliases (skill_id);
 ```
 
 Resolution goes through this table, never through string equality on `name`

@@ -10,6 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Pool } from 'pg';
 import { applyMigrations, loadMigrationFiles, migrationsDirectory } from '@zentavio/db';
 import { migratedTestPool, resetSchema } from './database.ts';
+import { parseDeclaredTables } from './declared-schema.ts';
 
 let pool: Pool;
 
@@ -42,16 +43,16 @@ describe('migrations', () => {
   });
 
   it('creates the tables the Database interface declares', async () => {
+    // Compared against the parsed interface rather than a literal. This assertion used to hardcode
+    // its table list, so it had to be hand-edited on every migration and would have gone stale
+    // silently the first time someone forgot — while still reading as though it checked the
+    // interface it names.
     const { rows } = await pool.query<{ table_name: string }>(
       `SELECT table_name FROM information_schema.tables
         WHERE table_schema = 'public' ORDER BY table_name`,
     );
-    expect(rows.map((r) => r.table_name)).toEqual([
-      'immigration_pathways',
-      'requirements',
-      'schema_migrations',
-      'users',
-    ]);
+    const declared = [...parseDeclaredTables().keys()].sort();
+    expect(rows.map((r) => r.table_name)).toEqual(declared);
   });
 
   it('creates every documented index', async () => {
@@ -67,6 +68,16 @@ describe('migrations', () => {
     expect(names).toContain('uq_ip__pathway_id');
     expect(names).toContain('uq_users__email');
     expect(names).toContain('uq_users__auth_subject');
+
+    // The profile schema's correctness indexes. uq_user_profiles__current is what makes "exactly
+    // one live profile per user" true; uq_skill_aliases__normalized is what stops an ambiguous
+    // alias resolving to whichever skill the planner returned first.
+    expect(names).toContain('uq_careers__slug');
+    expect(names).toContain('uq_skills__slug');
+    expect(names).toContain('uq_skill_aliases__normalized');
+    expect(names).toContain('uq_user_profiles__current');
+    expect(names).toContain('uq_user_profiles__version');
+    expect(names).toContain('uq_profile_skills__profile_skill');
 
     for (const index of [
       'idx_req__pathway_current',
