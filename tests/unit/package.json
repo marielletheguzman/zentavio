@@ -2,9 +2,10 @@
   "name": "@zentavio/tests-unit",
   "version": "0.0.0",
   "private": true,
-  "description": "Cross-package tests that belong to no single package — currently the parser contract (ADR-0003).",
+  "description": "Cross-package tests that belong to no single package \u2014 the parser contract and M1a's invariants.",
   "type": "module",
   "dependencies": {
-    "@zentavio/types": "workspace:*"
+    "@zentavio/types": "workspace:*",
+    "@zentavio/db": "workspace:*"
   }
 }
