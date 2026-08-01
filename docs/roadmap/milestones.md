@@ -150,11 +150,20 @@ victim's profile after the attempt   → untouched at v2
 NODE_ENV=production + dev flag on    → 401, the flag is ignored
 ```
 
-**What remains is ADR-0017 — how a person actually proves who they are — and it is Proposed, not
-decided.** Today the gateway trusts an `x-zentavio-dev-user` header behind
-`ZENTAVIO_INSECURE_DEV_AUTH`, which defaults off and is refused outright in production. That is a
-stand-in for a decision, not a shortcut around one, so **M1a is demoable and still not deployable** —
-but for a smaller and better-understood reason than before.
+**ADR-0017 is Accepted: a hosted OIDC provider, verified generically.** The issuer, audience, and
+JWKS endpoint are configuration, so Clerk, WorkOS, Auth0, or a self-hosted Keycloak are three
+environment variables rather than a code change. Tokens are checked for signature, algorithm,
+issuer, audience, and expiry; users are provisioned just-in-time on first valid token.
+
+**What is left is provisioning a provider account** — `ZENTAVIO_OIDC_ISSUER` and
+`ZENTAVIO_OIDC_AUDIENCE`. Until they are set the gateway falls back to deny-by-default, or to the
+loudly-named `ZENTAVIO_INSECURE_DEV_AUTH` header, which is refused outright in production. Real
+authentication wins whenever it is configured, so leaving the dev flag set cannot downgrade a
+properly-configured environment.
+
+**One behaviour worth knowing:** a person who erases their account and signs in again becomes a
+**new** account with no data. Erasure clears `auth_subject`, so the tombstone cannot be matched —
+deliberately, because refusing them forever would be a ban rather than an erasure.
 
 **Two schema dependencies were found while planning M1a**, and they change the M1a/M1b boundary:
 

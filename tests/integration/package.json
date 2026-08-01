@@ -6,6 +6,7 @@
   "type": "module",
   "dependencies": {
     "@zentavio/config": "workspace:*",
-    "@zentavio/db": "workspace:*"
+    "@zentavio/db": "workspace:*",
+    "@zentavio/auth": "workspace:*"
   }
 }

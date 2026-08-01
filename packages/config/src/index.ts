@@ -30,6 +30,7 @@ export {
   databaseSchema,
   devAuthSchema,
   evalSchema,
+  oidcSchema,
   parserSchema,
   testDatabaseSchema,
   zentavioSchema,
