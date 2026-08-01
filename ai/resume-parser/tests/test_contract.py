@@ -1,0 +1,122 @@
+"""Golden-file contract between the parser and its TypeScript callers.
+
+`.claude/context/tech-stack.md` says neither side hand-writes the other's types. There is no
+schema-generation tooling yet — that is a dependency needing its own ADR — so this is the interim
+guard, and it is a real one rather than a promise:
+
+* **This file writes the fixtures** in `tests/fixtures/resume-parser/`, from the actual FastAPI app.
+* **`tests/unit/contracts/resume-parser-contract.test.ts` reads them** and validates them against the
+  hand-written TypeScript types.
+
+So a change on either side breaks a test. If the Python response shape moves, the fixture changes and
+the TypeScript validator rejects it. If the TypeScript type drifts from the fixture, the same test
+fails. The failure mode this prevents — a gateway that compiles perfectly and misreads every
+response at runtime — is otherwise invisible until production.
+"""
+
+from __future__ import annotations
+
+import base64
+import json
+from pathlib import Path
+
+from extract import PDF_CONTENT_TYPE, PLAIN_TEXT_CONTENT_TYPE
+from fastapi.testclient import TestClient
+from fixtures import pdf_image_only
+from main import app
+
+FIXTURE_DIR = Path(__file__).resolve().parents[3] / "tests" / "fixtures" / "resume-parser"
+
+CLOSED_SET = [
+    {
+        "slug": "kubernetes",
+        "name": "Kubernetes",
+        "kind": "technology",
+        "aliases": ["kubernetes", "k8s"],
+    },
+    {"slug": "go", "name": "Go", "kind": "technology", "aliases": ["go", "golang"]},
+]
+
+client = TestClient(app)
+
+
+#: `correlationId` is a fresh uuid per request, so comparing it byte for byte would make this
+#: golden file fail on every run. The contract is that the field EXISTS and is a non-empty string —
+#: its value is deliberately unpredictable. Redacted here so a real shape change is the only thing
+#: that can break the comparison.
+CORRELATION_ID_PLACEHOLDER = "<redacted: non-deterministic>"
+
+
+def _redact(body: dict) -> dict:
+    error = body.get("error")
+    if isinstance(error, dict) and "correlationId" in error:
+        assert isinstance(error["correlationId"], str) and error["correlationId"], (
+            "correlationId must be a non-empty string — it is what ties a user report to a log line"
+        )
+        error = {**error, "correlationId": CORRELATION_ID_PLACEHOLDER}
+        return {**body, "error": error}
+    return body
+
+
+def _capture(name: str, content: bytes, content_type: str) -> dict:
+    response = client.post(
+        "/parse",
+        json={
+            "document_base64": base64.b64encode(content).decode(),
+            "content_type": content_type,
+            "skills": CLOSED_SET,
+        },
+    )
+    return {"name": name, "httpStatus": response.status_code, "body": _redact(response.json())}
+
+
+def _capture_all() -> list[dict]:
+    """One capture per response shape a caller must handle.
+
+    Deliberately includes the failure shapes. A contract proven only against the happy path is the
+    reason `unknown` handling rots — nothing fails when it changes.
+    """
+    return [
+        _capture(
+            "ok",
+            b"Skills\nKubernetes\n\nExperience\nRan Go in production",
+            PLAIN_TEXT_CONTENT_TYPE,
+        ),
+        _capture("unknown-scan", pdf_image_only(), PDF_CONTENT_TYPE),
+        _capture("partial-nothing-recognised", b"Skills\nCobol", PLAIN_TEXT_CONTENT_TYPE),
+        _capture("error-unsupported-type", b"anything", "application/x-msdownload"),
+    ]
+
+
+def test_fixtures_are_current() -> None:
+    """The committed fixtures match what the service returns right now.
+
+    Run ``python ai/resume-parser/tests/test_contract.py`` to regenerate after an intentional
+    contract change — and expect the TypeScript side to fail until it is updated too. That is the
+    point: the break is loud and lands in the same pull request.
+    """
+    captured = _capture_all()
+
+    for capture in captured:
+        path = FIXTURE_DIR / f"{capture['name']}.json"
+        assert path.exists(), f"missing fixture {path.name} — run this file to generate it"
+        committed = json.loads(path.read_text(encoding="utf-8"))
+        assert committed == capture, (
+            f"{path.name} is stale: the parser's response shape changed. Regenerate the fixtures "
+            "and update the TypeScript contract in the same change."
+        )
+
+
+def test_every_documented_status_is_covered() -> None:
+    # A contract that never exercises `unknown` is a contract that will not notice when `unknown`
+    # stops working.
+    statuses = {c["body"].get("status") for c in _capture_all() if c["httpStatus"] == 200}
+    assert statuses == {"ok", "partial", "unknown"}
+
+
+if __name__ == "__main__":  # pragma: no cover — regeneration entry point
+    FIXTURE_DIR.mkdir(parents=True, exist_ok=True)
+    for capture in _capture_all():
+        target = FIXTURE_DIR / f"{capture['name']}.json"
+        target.write_text(json.dumps(capture, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        print(f"wrote {target}")

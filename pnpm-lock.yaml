@@ -70,6 +70,12 @@ importers:
         specifier: workspace:*
         version: link:../../packages/db
 
+  tests/unit:
+    dependencies:
+      '@zentavio/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+
 packages:
 
   '@babel/helper-string-parser@7.29.7':

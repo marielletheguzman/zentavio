@@ -1,0 +1,12 @@
+{
+  "name": "partial-nothing-recognised",
+  "httpStatus": 200,
+  "body": {
+    "status": "partial",
+    "skills": [],
+    "reason": "The document was readable, but no known skills were recognised in it. Nothing was invented to fill the gap.",
+    "degraded_sections": [],
+    "completeness": 0.0,
+    "parser_version": "resume-parser/2026-08-01"
+  }
+}

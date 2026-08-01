@@ -9,11 +9,15 @@
  * so a consumer cannot reimplement them slightly differently. A type cannot enforce that
  * evidence weights sum to a score; a function can, and can be tested.
  *
- * **Not yet JSON Schema.** ADR-0003 requires JSON Schema as the source of truth with generation
- * to TypeScript and Pydantic, so neither side hand-writes the other's shapes. That matters when a
- * Python service consumes a shape, and no `ai/` service exists yet. Generation tooling is a
- * dependency and needs its own ADR; until then these are hand-written TypeScript and the
- * conversion is tracked work rather than a silent gap.
+ * **Not yet JSON Schema, and the condition that made that comfortable is gone.** ADR-0003 requires
+ * JSON Schema as the source of truth with generation to TypeScript and Pydantic. This file used to
+ * say that mattered only "when a Python service consumes a shape, and no `ai/` service exists yet".
+ * As of 2026-08-01 one does: `ai/resume-parser` produces a shape TypeScript consumes.
+ *
+ * Generation tooling is a dependency and needs its own ADR. Until it lands, `resume-parser.ts` is
+ * hand-written **and pinned to the real service** by golden fixtures the Python side generates —
+ * see `tests/unit/contracts/resume-parser-contract.test.ts`. That is weaker than generation: it
+ * proves the shapes agree today, not that they cannot diverge tomorrow.
  */
 
 export {
@@ -75,3 +79,13 @@ export {
   type SponsorshipSourceKind,
   type SponsorshipStatus,
 } from './sponsorship.ts';
+
+export {
+  isParseResponse,
+  isServiceError,
+  type ParseRequestWire,
+  type ParseResponseWire,
+  type ParseStatus,
+  type ParsedSkillWire,
+  type ServiceErrorWire,
+} from './resume-parser.ts';

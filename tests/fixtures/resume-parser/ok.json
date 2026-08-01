@@ -1,0 +1,27 @@
+{
+  "name": "ok",
+  "httpStatus": 200,
+  "body": {
+    "status": "ok",
+    "skills": [
+      {
+        "slug": "go",
+        "status": "evidenced",
+        "evidence_kind": "role",
+        "source_span": "Ran Go in production",
+        "confidence": "high"
+      },
+      {
+        "slug": "kubernetes",
+        "status": "claimed",
+        "evidence_kind": null,
+        "source_span": "Kubernetes",
+        "confidence": "medium"
+      }
+    ],
+    "reason": null,
+    "degraded_sections": [],
+    "completeness": 0.25,
+    "parser_version": "resume-parser/2026-08-01"
+  }
+}
