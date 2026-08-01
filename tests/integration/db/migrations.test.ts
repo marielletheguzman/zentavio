@@ -9,7 +9,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Pool } from 'pg';
 import { applyMigrations, loadMigrationFiles, migrationsDirectory } from '@zentavio/db';
-import { migratedTestPool, resetSchema } from './database.js';
+import { migratedTestPool, resetSchema } from './database.ts';
 
 let pool: Pool;
 

@@ -62,9 +62,15 @@ Verified by injecting drift and watching it go red, not by watching it pass.
 ## The remaining gap
 
 **A standalone `migrate` command.** `applyMigrations` is exported and used by the integration suite,
-but there is no CLI. Node cannot resolve this repository's `.js` import specifiers to `.ts` sources,
-and neither `tsx` nor `vite-node` is in the stack — adding one is a dependency decision that needs an
-ADR (`.claude/context/tech-stack.md`), not a convenience import. Until then, migrations are applied
+but there is still no CLI. The blocker is gone: **ADR-0014 is Accepted and implemented**, so relative
+imports name `.ts` files and Node runs a TypeScript entrypoint with no loader and no new dependency.
+
+```text
+$ node --input-type=module -e "const m = await import('./packages/db/src/index.ts'); console.log(typeof m.applyMigrations)"
+function
+```
+
+What remains is writing the command itself, with a dry-run mode. Until then, migrations are applied
 programmatically.
 
 ## How the repository is verified without a database

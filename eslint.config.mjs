@@ -54,6 +54,22 @@ const bannedRuntimeDeps = [
   },
 ];
 
+/**
+ * ADR-0014. A relative specifier must name the file that exists on disk — `./thing.ts`.
+ * Node resolves `./thing.js` literally and fails at run time, and `tsc` will not catch it
+ * because under `moduleResolution: "Bundler"` the `.js` form type-checks perfectly well.
+ *
+ * Shared because `no-restricted-syntax` options replace rather than merge across flat-config
+ * blocks: any later block that sets this rule must spread these back in.
+ */
+const relativeJsSpecifiers = ['ImportDeclaration', 'ExportNamedDeclaration', 'ExportAllDeclaration', 'ImportExpression'].map(
+  (node) => ({
+    selector: `${node}[source.value=/^\\.\\.?\\/.*\\.js$/]`,
+    message:
+      'Name the file that exists on disk: write ./thing.ts, not ./thing.js. Node resolves the specifier literally — ADR-0014.',
+  }),
+);
+
 export default tseslint.config(
   {
     ignores: [
@@ -191,16 +207,35 @@ export default tseslint.config(
     },
   },
 
+  // ── relative imports name the file on disk ───────────────────────────────
+  // ADR-0014: Node's type stripping erases annotations, it never rewrites specifiers. A
+  // relative import ending in `.js` resolves literally, finds nothing, and fails with
+  // ERR_MODULE_NOT_FOUND at run time — which `tsc` does not catch, because under
+  // moduleResolution: Bundler the `.js` form type-checks fine. So this has to be a lint rule.
+  {
+    files: ['**/*.{ts,tsx,mts,cts}'],
+    rules: {
+      'no-restricted-syntax': ['error', ...relativeJsSpecifiers],
+    },
+  },
+
   // ── packages/config is the only reader of the environment ────────────────
   // .claude/skills/backend-service/SKILL.md: "No process.env outside packages/config."
+  //
+  // NOTE: `no-restricted-syntax` options REPLACE rather than merge across flat-config
+  // blocks, so the specifier selectors above must be repeated here or this block silently
+  // switches them off for every file it matches. Verified by probe, not by reading docs.
   {
     files: ['**/*.{ts,tsx,mts,cts}'],
     ignores: ['packages/config/**'],
     rules: {
-      'no-restricted-syntax': ['error', {
-        selector: 'MemberExpression[object.name="process"][property.name="env"]',
-        message: 'Read configuration through packages/config. Untyped, undocumented env access is banned — .claude/skills/backend-service/SKILL.md.',
-      }],
+      'no-restricted-syntax': ['error',
+        ...relativeJsSpecifiers,
+        {
+          selector: 'MemberExpression[object.name="process"][property.name="env"]',
+          message: 'Read configuration through packages/config. Untyped, undocumented env access is banned — .claude/skills/backend-service/SKILL.md.',
+        },
+      ],
     },
   },
 

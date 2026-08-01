@@ -7,7 +7,7 @@
  */
 
 import type { Pool, PoolClient } from 'pg';
-import type { MigrationExecutor } from './runner.js';
+import type { MigrationExecutor } from './runner.ts';
 
 /**
  * The runner's own bookkeeping table.

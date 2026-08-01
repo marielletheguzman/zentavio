@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { ConfigError, describe as describeConfig, envKeys, load } from './load.js';
-import type { Schema } from './schema.js';
-import { zentavioSchema } from './zentavio.js';
+import { ConfigError, describe as describeConfig, envKeys, load } from './load.ts';
+import type { Schema } from './schema.ts';
+import { zentavioSchema } from './zentavio.ts';
 
 // The properties under test are behavioural, not cosmetic: a missing required value must stop
 // startup, every problem must be reported at once, and a secret must never reach a message.

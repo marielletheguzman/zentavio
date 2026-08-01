@@ -7,7 +7,7 @@ import {
   plan,
   type MigrationExecutor,
   type MigrationFile,
-} from './runner.js';
+} from './runner.ts';
 
 // ADR-0012 makes this runner ours to maintain, so its failure modes are ours too. These tests are
 // about the ways a migration set corrupts a database — out-of-order application, an edited file,

@@ -109,7 +109,7 @@ CI and a developer's machine must run the same rule set, or a green run means no
 
 - **pnpm** — from `package.json`'s `packageManager` field, activated by corepack. No third-party
   setup action.
-- **Node** — `22` in CI; `package.json` `engines` requires `>=20.11.0`.
+- **Node** — `22` in CI; `package.json` `engines` requires `>=22.18.0`. The floor is ADR-0014: below 22.18 Node cannot strip types, so no TypeScript entrypoint runs without a loader.
 - **Ruff** — pinned in `requirements-dev.txt`. A different Ruff version is a different rule set.
 - **Installs** — always `pnpm install --frozen-lockfile`.
 - **Third-party actions** — pinned to commit SHAs with the version in a trailing comment

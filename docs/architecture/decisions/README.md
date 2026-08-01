@@ -41,8 +41,8 @@ section, which also records that the required check is named `CI`, not `ci`, and
 required making the repository public.
 
 Still undone: nothing is instrumented (0008), and graded evals do not run in CI (0009 defers the runner
-deliberately). **0014 is Accepted but not implemented** — until its follow-up work lands, relative imports
-still carry `.js` extensions, the Node floor is still 20.11, and there is no standalone `migrate` command.
+deliberately). **0014's import convention and Node floor are implemented and enforced; its `migrate`
+command is not yet written** — migrations are still applied programmatically.
 
 0001–0004 define the boundaries every skill and context file assumes: one repository, sources as
 plugins, a polyglot contract at the `ai/` boundary, and a vector store that is an index rather than

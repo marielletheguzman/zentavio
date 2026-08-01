@@ -62,8 +62,11 @@ v22.21.0 and printed the imported value.
 which is the whole reason `tech-stack.md` requires an ADR. One execution model for every future CLI. It is
 also the direction the ecosystem is moving, so this is unlikely to need revisiting.
 
-**Disadvantages.** It touches **every relative import in the repository**, not just `packages/db` — a large,
-mechanical, entirely reviewable diff, but a large one. It raises the Node floor, which is a real constraint
+**Disadvantages.** It touches every relative import in the repository, not just `packages/db`. *(Measured
+during implementation: **37 specifiers across 18 files**. The estimate in the drafted version of this ADR —
+"the largest diff in the repository's history" — was wrong, and wrong in the direction that would have
+argued for Option B. Recorded rather than quietly deleted.)* It raises the Node floor, which is a real
+constraint
 on contributors and on any deployment target pinned below 22.18. And it permanently restricts the codebase
 to **erasable syntax only**: no `enum`, no `namespace`, no constructor parameter properties. The tree is
 already clean on that point (checked), and `erasableSyntaxOnly: true` makes the restriction enforced rather
@@ -145,8 +148,9 @@ protection is ever removed, this decision's safety argument goes with it.
 
 **Accepted costs.**
 
-- Every relative import in the TypeScript tree changes extension. Mechanical and reviewable, but it is the
-  largest diff in the repository's history so far and will conflict with anything in flight.
+- Every relative import in the TypeScript tree changes extension — 37 specifiers across 18 files, all in
+  `packages/` and `tests/`. Mechanical and reviewable, and smaller than this ADR estimated before it was
+  measured.
 - The `engines` floor moves from `>=20.11.0` to `>=22.18.0`. Anyone on Node 20 or 21 must upgrade, and any
   deployment target pinned below 22.18 is excluded.
 - `enum`, `namespace`, and constructor parameter properties become permanently unavailable. `.claude` skills

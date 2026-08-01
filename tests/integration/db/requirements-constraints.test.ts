@@ -11,8 +11,8 @@
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { Pool } from 'pg';
-import { expectViolation, migratedTestPool } from './database.js';
-import { PATHWAY_ID, insertPathway, insertRequirement, newId, validRequirement } from './fixtures.js';
+import { expectViolation, migratedTestPool } from './database.ts';
+import { PATHWAY_ID, insertPathway, insertRequirement, newId, validRequirement } from './fixtures.ts';
 
 let pool: Pool;
 

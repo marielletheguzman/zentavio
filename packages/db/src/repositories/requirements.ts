@@ -10,7 +10,7 @@
  */
 
 import type { Insertable, Kysely } from 'kysely';
-import type { Database, RequirementsTable } from '../schema.js';
+import type { Database, RequirementsTable } from '../schema.ts';
 
 export class RequirementInvariantError extends Error {
   readonly rule: string;

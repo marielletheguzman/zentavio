@@ -13,8 +13,8 @@
  * ```
  */
 
-export { ConfigError, describe, envKeys, load } from './load.js';
-export { parseValue } from './schema.js';
+export { ConfigError, describe, envKeys, load } from './load.ts';
+export { parseValue } from './schema.ts';
 export type {
   BooleanSpec,
   ConfigValue,
@@ -25,11 +25,11 @@ export type {
   StringSpec,
   UrlSpec,
   ValidationIssue,
-} from './schema.js';
+} from './schema.ts';
 export {
   databaseSchema,
   evalSchema,
   testDatabaseSchema,
   zentavioSchema,
   type ZentavioConfig,
-} from './zentavio.js';
+} from './zentavio.ts';

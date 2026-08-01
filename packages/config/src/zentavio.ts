@@ -9,7 +9,7 @@
  * Adding a key: define it here, add it to `.env.example`, read it only through this package.
  */
 
-import type { Schema } from './schema.js';
+import type { Schema } from './schema.ts';
 
 /**
  * The eval runner reads these two today (`ai/shared/evals/model.py`). They are duplicated there

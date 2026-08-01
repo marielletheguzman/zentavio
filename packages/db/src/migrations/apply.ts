@@ -9,9 +9,9 @@
 
 import { fileURLToPath } from 'node:url';
 import type { Pool } from 'pg';
-import { PostgresMigrationExecutor } from './executor.js';
-import { loadMigrationFiles } from './files.js';
-import { migrate, type MigrateResult } from './runner.js';
+import { PostgresMigrationExecutor } from './executor.ts';
+import { loadMigrationFiles } from './files.ts';
+import { migrate, type MigrateResult } from './runner.ts';
 
 /**
  * `packages/db/migrations/`, resolved from this module rather than from the working directory —
