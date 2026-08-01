@@ -67,6 +67,8 @@ export {
   type ProfileVersion,
 } from './repositories/profiles.ts';
 
+export { eraseUser, hasPersonalData, type ErasureReport } from './repositories/erasure.ts';
+
 export type {
   Database,
   EvaluationColumn,

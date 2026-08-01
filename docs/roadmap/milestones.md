@@ -83,6 +83,22 @@ checked is a confident wrong answer.
 skill set are done — `pnpm migrate`, `pnpm seed`. What remains is the parser itself, the repositories
 and correction path, the upload route, the web surface, retention, and the invariant tests.
 
+**Outcome recording is blocked on a schema question, found 2026-08-01.** `outcomes.kind` is a closed
+set of application-lifecycle events — `applied`, `screened`, `interviewed`, `offered`, `rejected`,
+`withdrawn`, `accepted`, `started`, `relocated`, `course_completed`, `assessment_passed`
+(`docs/database/entities/outcome.md`). **None of them describes "a profile was created."** Forcing an
+upload into one of these would corrupt the calibration data the table exists for — a `kind` that
+means two different things cannot be aggregated.
+
+The `outcomes` table also has foreign keys to `applications` and `companies`, neither of which
+exists, so it cannot be migrated as documented yet.
+
+So M1a records **no** outcomes, and that is a deliberate gap rather than an oversight. Resolving it
+needs a decision: add a profile-lifecycle `kind`, add a separate table for profile events, or accept
+that outcomes begin at M2 when there is an application to attach them to. Erasure — the other half of
+this step — **is** implemented, because it could not wait: retrofitted privacy is a breach already
+shipped.
+
 **Done when:** an unparseable or image-only résumé returns an honest failure naming what is wrong rather
 than an empty profile; every extracted skill shows its source span; a correction persists and is
 attributed to the user rather than overwriting the parser's claim; retention and deletion for résumés
