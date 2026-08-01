@@ -6,6 +6,7 @@ requires-python = ">=3.12"
 members = [
     "zentavio-ai",
     "zentavio-ai-shared",
+    "zentavio-resume-parser",
 ]
 
 [[package]]
@@ -117,3 +118,8 @@ dev = [
 name = "zentavio-ai-shared"
 version = "0.0.0"
 source = { editable = "shared" }
+
+[[package]]
+name = "zentavio-resume-parser"
+version = "0.0.0"
+source = { editable = "resume-parser" }

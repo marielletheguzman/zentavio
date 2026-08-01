@@ -29,6 +29,7 @@ already ruled out and how the rule is enforced.
 | [0013](0013-lower-email-unique-index.md) | Case-insensitive email uniqueness via a `lower(email)` unique index; no `citext` | Accepted | 2026-07-29 |
 | [0014](0014-typescript-runner.md) | Node native type stripping with `.ts` specifiers; no runner dependency | Accepted | 2026-07-31 |
 | [0015](0015-hosted-postgresql.md) | Supabase as the managed PostgreSQL provider — and as nothing else | Accepted | 2026-08-01 |
+| [0016](0016-document-text-extraction.md) | Libraries for extracting text from uploaded résumés | **Proposed** | 2026-08-01 |
 
 **0010 is Accepted, and the rename is done** — `immigration_rules` is now `requirements`, with `domain`,
 `imposed_by`, and `authority`. Regulated professions remain blocked on **data**, not schema: nursing,

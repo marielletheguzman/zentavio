@@ -28,7 +28,7 @@ dependencies = []
 # Members are added when their first service is written, not in advance. A member declared before
 # it has a single Python file is a dependency set nobody has verified — the same reason
 # `career_edges` is documented but not migrated.
-members = ["shared"]
+members = ["shared", "resume-parser"]
 
 [dependency-groups]
 # Pinned exactly: a different Ruff version is a different rule set, which would make ruff.toml's
