@@ -79,6 +79,10 @@ checked is a confident wrong answer.
 **Vertical:** `ai/resume-parser` · `packages/db` (profile, skills, corrections) · `services/api-gateway` ·
 `apps/web` upload and profile surface.
 
+**Progress (2026-08-01):** the schema, the UUIDv7 generator, the uv workspace, and the seeded closed
+skill set are done — `pnpm migrate`, `pnpm seed`. What remains is the parser itself, the repositories
+and correction path, the upload route, the web surface, retention, and the invariant tests.
+
 **Done when:** an unparseable or image-only résumé returns an honest failure naming what is wrong rather
 than an empty profile; every extracted skill shows its source span; a correction persists and is
 attributed to the user rather than overwriting the parser's claim; retention and deletion for résumés
