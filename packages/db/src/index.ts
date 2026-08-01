@@ -52,6 +52,21 @@ export {
   type NewRequirement,
 } from './repositories/requirements.ts';
 
+export {
+  ProfileInvariantError,
+  applyCorrection,
+  createProfileVersion,
+  currentProfile,
+  profileSkills,
+  validateProfileSkill,
+  type Correction,
+  type CreateProfileVersionOptions,
+  type NewProfile,
+  type NewProfileSkill,
+  type ProfileSkillInput,
+  type ProfileVersion,
+} from './repositories/profiles.ts';
+
 export type {
   Database,
   EvaluationColumn,
