@@ -79,9 +79,24 @@ checked is a confident wrong answer.
 **Vertical:** `ai/resume-parser` · `packages/db` (profile, skills, corrections) · `services/api-gateway` ·
 `apps/web` upload and profile surface.
 
-**Progress (2026-08-01):** the schema, the UUIDv7 generator, the uv workspace, and the seeded closed
-skill set are done — `pnpm migrate`, `pnpm seed`. What remains is the parser itself, the repositories
-and correction path, the upload route, the web surface, retention, and the invariant tests.
+**Progress (2026-08-01): steps 1–11 are built, and the stack was run end to end for real** — three
+processes, a real PDF over HTTP, into PostgreSQL:
+
+```text
+POST /v1/resume/upload  →  200 {"stored":true,"version":1}
+   kubernetes  evidenced  "Led a Kubernetes migration across 40 services"
+   terraform   evidenced  "Wrote Go services and Terraform modules"
+   go          evidenced  "Wrote Go services and Terraform modules"
+scan.pdf       →  200 {"stored":false,"status":"unknown"}  and v1 survived
+wrong type     →  400 VALIDATION_FAILED with a correlation id
+```
+
+**One gap the run exposed, and it blocks the milestone as written.** M1a is verified by "a real user
+… disagrees with one extracted skill, corrects it, and watches the number change". `applyCorrection`
+works — proven against this profile, creating v2 while v1 stayed byte-identical — but **there is no
+HTTP route and no UI for it.** A user cannot correct anything; only a program can. The correction
+path is the part of M1a that is not optional, so **M1a is not met until a correction endpoint and
+control exist.**
 
 **Outcome recording is blocked on a schema question, found 2026-08-01.** `outcomes.kind` is a closed
 set of application-lifecycle events — `applied`, `screened`, `interviewed`, `offered`, `rejected`,
