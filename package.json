@@ -15,6 +15,8 @@
     "lint:all": "eslint . && tsc --noEmit && vitest run --project unit && ruff check ai/ && python -m pytest && node tools/scripts/audit-boundary-disables.mjs",
     "lint:fix": "eslint . --fix",
     "lint:py": "ruff check ai/",
+    "migrate": "node packages/db/src/migrate.ts",
+    "migrate:dry-run": "node packages/db/src/migrate.ts --dry-run",
     "test": "vitest run",
     "test:integration": "vitest run --project integration",
     "test:py": "python -m pytest",

@@ -49,6 +49,9 @@ importers:
 
   packages/db:
     dependencies:
+      '@zentavio/config':
+        specifier: workspace:*
+        version: link:../config
       kysely:
         specifier: ^0.29.4
         version: 0.29.4
