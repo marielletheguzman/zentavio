@@ -5,12 +5,12 @@ schema-generation tooling yet — that is a dependency needing its own ADR — s
 guard, and it is a real one rather than a promise:
 
 * **This file writes the fixtures** in `tests/fixtures/resume-parser/`, from the actual FastAPI app.
-* **`tests/unit/contracts/resume-parser-contract.test.ts` reads them** and validates them against the
-  hand-written TypeScript types.
+* **`tests/unit/contracts/resume-parser-contract.test.ts` reads them** and validates them against
+  the hand-written TypeScript types.
 
-So a change on either side breaks a test. If the Python response shape moves, the fixture changes and
-the TypeScript validator rejects it. If the TypeScript type drifts from the fixture, the same test
-fails. The failure mode this prevents — a gateway that compiles perfectly and misreads every
+So a change on either side breaks a test. If the Python response shape moves, the fixture changes
+and the TypeScript validator rejects it. If the TypeScript type drifts from the fixture, the same
+test fails. The failure mode this prevents — a gateway that compiles perfectly and misreads every
 response at runtime — is otherwise invisible until production.
 """
 
@@ -115,8 +115,14 @@ def test_every_documented_status_is_covered() -> None:
 
 
 if __name__ == "__main__":  # pragma: no cover — regeneration entry point
+    import sys
+
     FIXTURE_DIR.mkdir(parents=True, exist_ok=True)
     for capture in _capture_all():
         target = FIXTURE_DIR / f"{capture['name']}.json"
-        target.write_text(json.dumps(capture, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-        print(f"wrote {target}")
+        target.write_text(
+            json.dumps(capture, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
+        # sys.stdout rather than print(): ruff bans print in this tree (T201), and a regeneration
+        # script that reports nothing leaves the operator guessing whether it ran.
+        sys.stdout.write(f"wrote {target}\n")
