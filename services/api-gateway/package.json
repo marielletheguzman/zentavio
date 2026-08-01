@@ -1,0 +1,11 @@
+{
+  "name": "@zentavio/api-gateway",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Public API surface: auth, rate-limiting, request routing to internal services.",
+  "type": "module",
+  "dependencies": {
+    "@zentavio/config": "workspace:*",
+    "@zentavio/types": "workspace:*"
+  }
+}
