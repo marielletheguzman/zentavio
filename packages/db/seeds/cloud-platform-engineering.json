@@ -1,0 +1,226 @@
+{
+  "$comment": "Bootstrap registry for the MVP track (docs/roadmap/mvp.md). See seeds/README.md for what these tiers mean and why they are not higher.",
+  "career": {
+    "slug": "cloud-platform-engineer",
+    "name": "Cloud / Platform Engineer",
+    "family": "software-it",
+    "description": "Builds and operates the infrastructure other engineers deploy onto: container orchestration, infrastructure as code, CI/CD, and the reliability of the platform itself. Not a systems administrator, and not a backend developer who occasionally writes Terraform.",
+    "profession": null,
+    "licenceGated": false,
+    "sourceTier": 3,
+    "basis": "curated",
+    "sourceUrl": null
+  },
+  "skills": [
+    {
+      "slug": "linux-fundamentals",
+      "name": "Linux Fundamentals",
+      "kind": "practice",
+      "sourceUrl": "https://www.kernel.org/doc/html/latest/",
+      "aliases": ["linux", "gnu/linux", "linux administration"]
+    },
+    {
+      "slug": "networking-fundamentals",
+      "name": "Networking Fundamentals",
+      "kind": "practice",
+      "sourceUrl": null,
+      "aliases": ["tcp/ip", "networking", "dns", "network fundamentals"]
+    },
+    {
+      "slug": "docker",
+      "name": "Docker",
+      "kind": "tool",
+      "sourceUrl": "https://docs.docker.com/",
+      "aliases": ["dockerfile", "docker engine", "containerisation with docker"]
+    },
+    {
+      "slug": "containers",
+      "name": "Containers",
+      "kind": "practice",
+      "sourceUrl": "https://opencontainers.org/",
+      "aliases": ["containerization", "containerisation", "oci containers"]
+    },
+    {
+      "slug": "kubernetes",
+      "name": "Kubernetes",
+      "kind": "technology",
+      "sourceUrl": "https://kubernetes.io/docs/home/",
+      "aliases": ["k8s", "kube", "kubernetes (k8s)", "k8's"]
+    },
+    {
+      "slug": "helm",
+      "name": "Helm",
+      "kind": "tool",
+      "sourceUrl": "https://helm.sh/docs/",
+      "aliases": ["helm charts", "helm3"]
+    },
+    {
+      "slug": "terraform",
+      "name": "Terraform",
+      "kind": "tool",
+      "sourceUrl": "https://developer.hashicorp.com/terraform/docs",
+      "aliases": ["hashicorp terraform", "tf", "opentofu"]
+    },
+    {
+      "slug": "infrastructure-as-code",
+      "name": "Infrastructure as Code",
+      "kind": "practice",
+      "sourceUrl": null,
+      "aliases": ["iac", "infra as code", "infrastructure-as-code"]
+    },
+    {
+      "slug": "ansible",
+      "name": "Ansible",
+      "kind": "tool",
+      "sourceUrl": "https://docs.ansible.com/",
+      "aliases": ["ansible playbooks", "red hat ansible"]
+    },
+    {
+      "slug": "aws",
+      "name": "Amazon Web Services",
+      "kind": "technology",
+      "sourceUrl": "https://docs.aws.amazon.com/",
+      "aliases": ["amazon web services", "aws cloud", "ec2", "amazon aws"]
+    },
+    {
+      "slug": "azure",
+      "name": "Microsoft Azure",
+      "kind": "technology",
+      "sourceUrl": "https://learn.microsoft.com/en-us/azure/",
+      "aliases": ["microsoft azure", "ms azure", "azure cloud"]
+    },
+    {
+      "slug": "gcp",
+      "name": "Google Cloud Platform",
+      "kind": "technology",
+      "sourceUrl": "https://cloud.google.com/docs",
+      "aliases": ["google cloud", "google cloud platform", "gcloud"]
+    },
+    {
+      "slug": "cloud-fundamentals",
+      "name": "Cloud Fundamentals",
+      "kind": "practice",
+      "sourceUrl": null,
+      "aliases": ["cloud computing", "cloud concepts", "cloud architecture basics"]
+    },
+    {
+      "slug": "ci-cd",
+      "name": "CI/CD",
+      "kind": "practice",
+      "sourceUrl": null,
+      "aliases": ["ci/cd", "continuous integration", "continuous delivery", "continuous deployment", "cicd"]
+    },
+    {
+      "slug": "github-actions",
+      "name": "GitHub Actions",
+      "kind": "tool",
+      "sourceUrl": "https://docs.github.com/en/actions",
+      "aliases": ["gh actions", "github workflows"]
+    },
+    {
+      "slug": "gitlab-ci",
+      "name": "GitLab CI",
+      "kind": "tool",
+      "sourceUrl": "https://docs.gitlab.com/ee/ci/",
+      "aliases": ["gitlab ci/cd", "gitlab pipelines"]
+    },
+    {
+      "slug": "git",
+      "name": "Git",
+      "kind": "tool",
+      "sourceUrl": "https://git-scm.com/doc",
+      "aliases": ["git scm", "version control with git"]
+    },
+    {
+      "slug": "observability",
+      "name": "Observability",
+      "kind": "practice",
+      "sourceUrl": "https://opentelemetry.io/docs/",
+      "aliases": ["monitoring and observability", "telemetry"]
+    },
+    {
+      "slug": "prometheus",
+      "name": "Prometheus",
+      "kind": "tool",
+      "sourceUrl": "https://prometheus.io/docs/",
+      "aliases": ["promql", "prometheus monitoring"]
+    },
+    {
+      "slug": "grafana",
+      "name": "Grafana",
+      "kind": "tool",
+      "sourceUrl": "https://grafana.com/docs/",
+      "aliases": ["grafana dashboards"]
+    },
+    {
+      "slug": "sre-practices",
+      "name": "Site Reliability Engineering",
+      "kind": "practice",
+      "sourceUrl": null,
+      "aliases": ["sre", "site reliability engineering", "slo", "error budgets"]
+    },
+    {
+      "slug": "incident-response",
+      "name": "Incident Response",
+      "kind": "practice",
+      "sourceUrl": null,
+      "aliases": ["on-call", "oncall", "incident management", "postmortems"]
+    },
+    {
+      "slug": "bash-scripting",
+      "name": "Bash Scripting",
+      "kind": "technology",
+      "sourceUrl": "https://www.gnu.org/software/bash/manual/",
+      "aliases": ["bash", "shell scripting", "sh scripting"]
+    },
+    {
+      "slug": "python",
+      "name": "Python",
+      "kind": "technology",
+      "sourceUrl": "https://docs.python.org/3/",
+      "aliases": ["python3", "python programming"]
+    },
+    {
+      "slug": "go",
+      "name": "Go",
+      "kind": "technology",
+      "sourceUrl": "https://go.dev/doc/",
+      "aliases": ["golang", "go lang"]
+    },
+    {
+      "slug": "postgresql",
+      "name": "PostgreSQL",
+      "kind": "technology",
+      "sourceUrl": "https://www.postgresql.org/docs/",
+      "aliases": ["postgres", "psql", "postgre sql"]
+    },
+    {
+      "slug": "cloud-security",
+      "name": "Cloud Security",
+      "kind": "domain",
+      "sourceUrl": null,
+      "aliases": ["iam", "identity and access management", "security hardening"]
+    },
+    {
+      "slug": "cost-optimisation",
+      "name": "Cloud Cost Optimisation",
+      "kind": "domain",
+      "sourceUrl": null,
+      "aliases": ["finops", "cost optimization", "cloud cost management"]
+    },
+    {
+      "slug": "german",
+      "name": "German",
+      "kind": "language",
+      "sourceUrl": "https://www.coe.int/en/web/common-european-framework-reference-languages",
+      "aliases": ["deutsch", "german language"]
+    },
+    {
+      "slug": "english",
+      "name": "English",
+      "kind": "language",
+      "sourceUrl": "https://www.coe.int/en/web/common-european-framework-reference-languages",
+      "aliases": ["english language"]
+    }
+  ]
+}

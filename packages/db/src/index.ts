@@ -14,6 +14,18 @@ export { createCompileOnlyDb, createDb, type DbConnectionOptions } from './clien
 
 export { uuidv7, uuidv7Timestamp } from './uuid.ts';
 
+export {
+  applySeed,
+  loadSeedFile,
+  normalizeAlias,
+  seedsDirectory,
+  validateSeed,
+  type SeedCareer,
+  type SeedFile,
+  type SeedPlan,
+  type SeedSkill,
+} from './seed.ts';
+
 export { applyMigrations, migrationsDirectory, type ApplyMigrationsOptions } from './migrations/apply.ts';
 export { PostgresMigrationExecutor } from './migrations/executor.ts';
 export { loadMigrationFiles, migrationIdFromFilename } from './migrations/files.ts';
