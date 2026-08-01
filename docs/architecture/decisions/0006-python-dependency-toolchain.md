@@ -125,6 +125,12 @@ already list this as blocking follow-up; deferring a third time means it is deci
   `ai/shared` as its first member and `ai/uv.lock` committed. **Members are added when their service
   is written, not in advance** — a member declared before it has a Python file is a dependency set
   nobody has verified. The other six directories join as they are built.
+- **This gap has now cost a red CI run, as predicted.** Adding `pypdf` and `python-docx` to
+  `ai/resume-parser` (ADR-0016) turned the whole Python job red with `ModuleNotFoundError: No module
+  named 'docx'`, because CI installs `requirements-dev.txt` with pip and never reads `ai/uv.lock`.
+  The stopgap is that two **runtime** dependencies now sit in a dev-tooling file, pinned to what the
+  lockfile resolves. That is the cost of the deferral, and it is paid again by every dependency any
+  `ai/` service adds until the workflow switches.
 - **Partly done: the dev pins are declared in the workspace, but `requirements-dev.txt` still
   exists.** Deleting it requires `.github/workflows/ci.yml` to stop running
   `pip install -r requirements-dev.txt` first, so the pins are **duplicated in both files and must

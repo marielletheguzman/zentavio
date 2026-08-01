@@ -18,3 +18,18 @@
 # **These versions are duplicated and must be changed in both places until then.**
 ruff==0.16.0
 pytest==9.1.1
+
+# STOPGAP — these two are RUNTIME dependencies of ai/resume-parser (ADR-0016), not dev tooling, and
+# they do not belong in this file. They are here only because CI installs this file with pip and
+# never reads ai/uv.lock, so without them `python -m pytest` fails on `import docx` while every
+# local run through uv passes. A green local suite and a red CI on the same commit is the worst of
+# both.
+#
+# They are pinned to exactly what ai/uv.lock resolves, and must be changed together with
+# ai/resume-parser/pyproject.toml.
+#
+# **All of this disappears in one change**: point .github/workflows/ci.yml at
+# `uv sync --frozen --all-packages`, then delete this file. That needs a token with the `workflow`
+# OAuth scope — `gh auth refresh -h github.com -s workflow`.
+pypdf==6.1.3
+python-docx==1.2.0

@@ -1,19 +1,24 @@
 # The résumé parser (ADR-0003, ADR-0006 workspace member).
 #
-# **No document-parsing dependency yet, deliberately.** ADR-0016 is Proposed, not Accepted, so
-# `pypdf` and `python-docx` are not declared here. Text extraction sits behind a port
-# (`src/ports.py`), and the only implementation today reads plain text — which is enough to build
-# and test everything downstream of extraction.
+# Document parsing per ADR-0016: `pypdf` and `python-docx`, both behind the `TextExtractor` port in
+# `src/ports.py`. Nothing outside `src/extract.py` may import them — that is what keeps a swap to
+# `pdfplumber` a one-file change rather than a rewrite.
 #
-# When ADR-0016 is Accepted, the libraries are added HERE and nowhere else. `ai/shared` must not
-# accumulate its members' dependencies (ADR-0006).
+# Declared HERE and nowhere else: `ai/shared` must not accumulate its members' dependencies
+# (ADR-0006). These are the only two runtime dependencies the résumé parser has.
+#
+# An uploaded document is hostile input (`docs/features/resume-parsing.md`), so these pins are
+# updated deliberately rather than pinned and forgotten — a parser CVE is our CVE.
 
 [project]
 name = "zentavio-resume-parser"
 version = "0.0.0"
 description = "Extract skills, roles, and experience from a résumé, with the source span for every claim."
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+  "pypdf==6.1.3",
+  "python-docx==1.2.0",
+]
 
 [build-system]
 requires = ["hatchling"]
