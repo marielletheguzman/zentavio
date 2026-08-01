@@ -134,6 +134,9 @@ importers:
 
   tests/unit:
     dependencies:
+      '@zentavio/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@zentavio/types':
         specifier: workspace:*
         version: link:../../packages/types
