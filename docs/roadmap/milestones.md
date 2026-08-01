@@ -91,12 +91,23 @@ scan.pdf       →  200 {"stored":false,"status":"unknown"}  and v1 survived
 wrong type     →  400 VALIDATION_FAILED with a correlation id
 ```
 
-**One gap the run exposed, and it blocks the milestone as written.** M1a is verified by "a real user
-… disagrees with one extracted skill, corrects it, and watches the number change". `applyCorrection`
-works — proven against this profile, creating v2 while v1 stayed byte-identical — but **there is no
-HTTP route and no UI for it.** A user cannot correct anything; only a program can. The correction
-path is the part of M1a that is not optional, so **M1a is not met until a correction endpoint and
-control exist.**
+**The correction path is now reachable by a person** (2026-08-01). `POST /v1/resume/corrections`
+plus a control that sits **inside the evidence disclosure**, next to the sentence the claim came
+from — disagreeing is only possible once you can see what the claim was based on, and putting the
+two apart is how a correction path exists and never gets used.
+
+Verified over HTTP against the running stack:
+
+```text
+upload                    → v1  terraform = evidenced (parser)
+POST /v1/resume/corrections → v2  terraform = claimed   (self-reported)
+v1 in the database         → still evidenced, byte-identical
+unknown slug               → 400 "Unknown skill: not-a-real-skill"
+bad payload                → 400 with field-level details
+```
+
+The route is keyed by **slug, not skill id**: the browser has no business holding database UUIDs,
+and an unknown slug becomes a 400 naming it rather than a foreign key violation surfacing as a 500.
 
 **Outcome recording is blocked on a schema question, found 2026-08-01.** `outcomes.kind` is a closed
 set of application-lifecycle events — `applied`, `screened`, `interviewed`, `offered`, `rejected`,

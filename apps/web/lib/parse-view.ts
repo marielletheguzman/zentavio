@@ -53,6 +53,8 @@ export interface SkillView {
    * carries in text as well as style.
    */
   readonly confidenceLabel: string;
+  /** True once the user has corrected this row. A correction outweighs an inference. */
+  readonly selfReported?: boolean;
 }
 
 const CONFIDENCE_LABEL: Record<SkillView['confidence'], string> = {
@@ -71,6 +73,7 @@ function toSkillView(skill: ParseResponseWire['skills'][number]): SkillView {
     sourceSpan: skill.source_span,
     confidence: skill.confidence,
     confidenceLabel: CONFIDENCE_LABEL[skill.confidence],
+    selfReported: false,
   };
 }
 
@@ -111,6 +114,45 @@ export function viewStateFor(body: UploadBody): ViewState {
   }
 
   return { kind: 'success', skills, stored: body.stored };
+}
+
+/**
+ * What a correction returns: the profile as it now stands, at a new version.
+ *
+ * The version matters to the UI, not just to the database — the user was looking at v1 and is now
+ * looking at v2, and saying so is what makes "your correction was recorded" a fact rather than an
+ * animation.
+ */
+export interface CorrectionBody {
+  readonly version: number;
+  readonly skills: readonly {
+    readonly slug: string;
+    readonly status: 'evidenced' | 'claimed';
+    readonly evidenceKind: string | null;
+    readonly sourceSpan: string | null;
+    readonly confidence: 'high' | 'medium' | 'low';
+    readonly selfReported: boolean;
+  }[];
+}
+
+/**
+ * Fold a correction's result back into the view.
+ *
+ * Deliberately rebuilds from the response rather than patching the row in place: the correction
+ * rewrote the whole profile version, so trusting a local edit would drift from what was stored the
+ * first time the server does anything the client did not predict.
+ */
+export function applyCorrectionToView(body: CorrectionBody): readonly SkillView[] {
+  return body.skills.map((skill) => ({
+    slug: skill.slug,
+    label: skill.slug,
+    evidenced: skill.status === 'evidenced',
+    // A self-reported skill has no parser span; saying so is better than showing an empty quote.
+    sourceSpan: skill.sourceSpan ?? 'You told us this.',
+    confidence: skill.confidence,
+    confidenceLabel: skill.selfReported ? 'You corrected this' : CONFIDENCE_LABEL[skill.confidence],
+    selfReported: skill.selfReported,
+  }));
 }
 
 /** How many of the shown claims are backed by described work rather than a list. */

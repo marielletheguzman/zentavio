@@ -8,7 +8,14 @@
 
 import { describe, expect, it } from 'vitest';
 import type { ParseResponseWire } from '@zentavio/types';
-import { evidencedCount, summaryFor, viewStateFor, type UploadBody } from './parse-view.ts';
+import {
+  applyCorrectionToView,
+  evidencedCount,
+  summaryFor,
+  viewStateFor,
+  type CorrectionBody,
+  type UploadBody,
+} from './parse-view.ts';
 
 function response(overrides: Partial<ParseResponseWire> = {}): ParseResponseWire {
   return {
@@ -151,3 +158,67 @@ function viewSkills() {
   if (state.kind !== 'success') throw new Error('expected success');
   return state.skills;
 }
+
+describe('applyCorrectionToView', () => {
+  const corrected: CorrectionBody = {
+    version: 2,
+    skills: [
+      {
+        slug: 'terraform',
+        status: 'claimed',
+        evidenceKind: null,
+        sourceSpan: 'Wrote Go services and Terraform modules',
+        confidence: 'high',
+        selfReported: true,
+      },
+      {
+        slug: 'go',
+        status: 'evidenced',
+        evidenceKind: 'role',
+        sourceSpan: 'Wrote Go services and Terraform modules',
+        confidence: 'high',
+        selfReported: false,
+      },
+    ],
+  };
+
+  it('rebuilds the list from the response rather than patching a row', () => {
+    // The server rewrote the whole profile version. Trusting a local edit would drift from what was
+    // stored the first time the server does anything the client did not predict.
+    const skills = applyCorrectionToView(corrected);
+    expect(skills.map((s) => s.slug)).toEqual(['terraform', 'go']);
+    expect(skills[0]?.evidenced).toBe(false);
+  });
+
+  it('marks a corrected row as the user own statement, not as a confidence level', () => {
+    // "You corrected this" is a different kind of statement from "Fairly confident" — conflating
+    // them would present the user's own correction as the platform's assessment.
+    const skills = applyCorrectionToView(corrected);
+    expect(skills[0]?.confidenceLabel).toBe('You corrected this');
+    expect(skills[0]?.selfReported).toBe(true);
+  });
+
+  it('leaves an uncorrected row reading as the parser left it', () => {
+    const skills = applyCorrectionToView(corrected);
+    expect(skills[1]?.confidenceLabel).toBe('Confident');
+    expect(skills[1]?.selfReported).toBe(false);
+  });
+
+  it('says where a self-reported claim came from when there is no span', () => {
+    // An empty quote would look like missing evidence rather than the user's own statement.
+    const [skill] = applyCorrectionToView({
+      version: 3,
+      skills: [
+        {
+          slug: 'kubernetes',
+          status: 'evidenced',
+          evidenceKind: 'role',
+          sourceSpan: null,
+          confidence: 'high',
+          selfReported: true,
+        },
+      ],
+    });
+    expect(skill?.sourceSpan).toBe('You told us this.');
+  });
+});
