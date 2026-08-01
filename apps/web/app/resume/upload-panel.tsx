@@ -13,12 +13,22 @@
  */
 
 import { useId, useRef, useState } from 'react';
-import { viewStateFor, summaryFor, type ViewState, type SkillView } from '../../lib/parse-view.ts';
+import {
+  applyCorrectionToView,
+  summaryFor,
+  viewStateFor,
+  type CorrectionBody,
+  type SkillView,
+  type ViewState,
+} from '../../lib/parse-view.ts';
 
 const ACCEPTED = '.pdf,.docx,text/plain';
 
 export function UploadPanel({ gatewayUrl, userId }: { gatewayUrl: string; userId: string }) {
   const [state, setState] = useState<ViewState>({ kind: 'empty' });
+  /** Announced separately from the result, so a correction is confirmed without redrawing the list. */
+  const [correctionNote, setCorrectionNote] = useState<string | null>(null);
+  const [correcting, setCorrecting] = useState<string | null>(null);
   const fileInputId = useId();
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -50,6 +60,7 @@ export function UploadPanel({ gatewayUrl, userId }: { gatewayUrl: string; userId
         return;
       }
 
+      setCorrectionNote(null);
       setState(viewStateFor(body as Parameters<typeof viewStateFor>[0]));
     } catch {
       // Network-level failure. Retryable by nature, and the message says so rather than showing a
@@ -59,6 +70,48 @@ export function UploadPanel({ gatewayUrl, userId }: { gatewayUrl: string; userId
         message: 'Could not reach the server.',
         retryable: true,
       });
+    }
+  }
+
+  /**
+   * Record a disagreement with one extracted skill.
+   *
+   * The server writes a **new profile version** and returns it, so the list is rebuilt from the
+   * response rather than patched locally — a local edit would drift from what was stored the first
+   * time the server does anything the client did not predict.
+   */
+  async function correct(skill: SkillView, next: 'evidenced' | 'claimed') {
+    setCorrecting(skill.slug);
+    try {
+      const response = await fetch(`${gatewayUrl}/v1/resume/corrections`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ userId, slug: skill.slug, status: next }),
+      });
+      const body: unknown = await response.json();
+
+      if (!response.ok) {
+        const error = (body as { error?: { message?: string } }).error;
+        setCorrectionNote(error?.message ?? 'That correction could not be saved.');
+        return;
+      }
+
+      const corrected = body as CorrectionBody;
+      const skills = applyCorrectionToView(corrected);
+
+      setState((current) =>
+        current.kind === 'success' || current.kind === 'partial'
+          ? { ...current, skills }
+          : current,
+      );
+      // Saying the version out loud is what makes "recorded" a fact rather than an animation.
+      setCorrectionNote(
+        `Thanks — we updated ${skill.label}. Your profile is now version ${String(corrected.version)}.`,
+      );
+    } catch {
+      setCorrectionNote('Could not reach the server. Your correction was not saved.');
+    } finally {
+      setCorrecting(null);
     }
   }
 
@@ -80,13 +133,31 @@ export function UploadPanel({ gatewayUrl, userId }: { gatewayUrl: string; userId
         already saying.
       */}
       <div aria-live="polite" aria-busy={state.kind === 'loading'}>
-        <StateView state={state} onRetry={() => formRef.current?.requestSubmit()} />
+        <StateView
+          state={state}
+          onRetry={() => formRef.current?.requestSubmit()}
+          onCorrect={correct}
+          correcting={correcting}
+        />
       </div>
+
+      {/*
+        A separate live region: a correction confirms without the result list being re-announced in
+        full, which would make a screen reader re-read every skill for a one-row change.
+      */}
+      <p aria-live="polite">{correctionNote}</p>
     </section>
   );
 }
 
-function StateView({ state, onRetry }: { state: ViewState; onRetry: () => void }) {
+interface StateViewProps {
+  readonly state: ViewState;
+  readonly onRetry: () => void;
+  readonly onCorrect: (skill: SkillView, next: 'evidenced' | 'claimed') => void;
+  readonly correcting: string | null;
+}
+
+function StateView({ state, onRetry, onCorrect, correcting }: StateViewProps) {
   switch (state.kind) {
     case 'empty':
       // Says why it is empty and offers the next action, rather than "No results".
@@ -138,7 +209,12 @@ function StateView({ state, onRetry }: { state: ViewState; onRetry: () => void }
           <h3>Partly read</h3>
           {/* What loaded is shown; what did not is named; the page stays usable. */}
           <p className="caveat">{state.reason}</p>
-          <SkillList skills={state.skills} stored={state.stored} />
+          <SkillList
+            skills={state.skills}
+            stored={state.stored}
+            onCorrect={onCorrect}
+            correcting={correcting}
+          />
         </div>
       );
 
@@ -146,13 +222,25 @@ function StateView({ state, onRetry }: { state: ViewState; onRetry: () => void }
       return (
         <div>
           <h3>What we read</h3>
-          <SkillList skills={state.skills} stored={state.stored} />
+          <SkillList
+            skills={state.skills}
+            stored={state.stored}
+            onCorrect={onCorrect}
+            correcting={correcting}
+          />
         </div>
       );
   }
 }
 
-function SkillList({ skills, stored }: { skills: readonly SkillView[]; stored: boolean }) {
+interface SkillListProps {
+  readonly skills: readonly SkillView[];
+  readonly stored: boolean;
+  readonly onCorrect: (skill: SkillView, next: 'evidenced' | 'claimed') => void;
+  readonly correcting: string | null;
+}
+
+function SkillList({ skills, stored, onCorrect, correcting }: SkillListProps) {
   if (skills.length === 0) {
     return <p>{summaryFor(skills)}</p>;
   }
@@ -183,6 +271,26 @@ function SkillList({ skills, stored }: { skills: readonly SkillView[]; stored: b
             <details>
               <summary>Why we think so</summary>
               <blockquote>{skill.sourceSpan}</blockquote>
+
+              {/*
+                The correction control sits WITH the evidence, not in a settings screen. Disagreeing
+                is only possible once you can see what the claim was based on — putting the two
+                apart is how a correction path exists and never gets used.
+              */}
+              <p>
+                <button
+                  type="button"
+                  disabled={correcting === skill.slug || !stored}
+                  onClick={() => onCorrect(skill, skill.evidenced ? 'claimed' : 'evidenced')}
+                >
+                  {correcting === skill.slug
+                    ? 'Saving…'
+                    : skill.evidenced
+                      ? 'I only listed this, I did not use it'
+                      : 'I actually used this in my work'}
+                </button>
+              </p>
+              {!stored && <p>Corrections need a saved profile.</p>}
             </details>
           </li>
         ))}

@@ -13,12 +13,14 @@ import {
   Controller,
   HttpCode,
   HttpStatus,
+  NotFoundException,
   Post,
   ServiceUnavailableException,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { CorrectSkillDto } from './dto/correct-skill.dto.ts';
 import { ACCEPTED_CONTENT_TYPES, MAX_UPLOAD_BYTES, UploadResumeDto } from './dto/upload-resume.dto.ts';
 import { ResumeService } from './resume.service.ts';
 
@@ -93,6 +95,41 @@ export class ResumeController {
         // 503 maps to UPSTREAM_UNAVAILABLE with `retryable: true` in the envelope filter, which is
         // what tells the client this one is worth trying again.
         throw new ServiceUnavailableException('The résumé parser is unavailable. Try again shortly.');
+    }
+  }
+
+  /**
+   * Record a user's disagreement with one extracted skill.
+   *
+   * **This is the half of M1a that is not optional** — "a profile a user cannot fix is a profile
+   * they will not trust" (`docs/roadmap/milestones.md`). The route existed nowhere until an
+   * end-to-end run made the omission obvious: every layer beneath it worked, and no user could
+   * reach any of it.
+   *
+   * Returns the **new version number**, because the repository writes a new profile version rather
+   * than editing the current one — the caller was looking at v1 and is now looking at v2.
+   */
+  @Post('corrections')
+  @HttpCode(HttpStatus.OK)
+  async correct(@Body() dto: CorrectSkillDto): Promise<unknown> {
+    const outcome = await this.#service.correct({
+      userId: dto.userId,
+      slug: dto.slug,
+      status: dto.status,
+      ...(dto.evidenceKind ? { evidenceKind: dto.evidenceKind } : {}),
+    });
+
+    switch (outcome.kind) {
+      case 'corrected':
+        return { version: outcome.version, skills: outcome.skills };
+
+      case 'no-profile':
+        throw new NotFoundException('There is no profile to correct yet. Upload a résumé first.');
+
+      case 'unknown-skill':
+        // Named rather than generic: the user picked from a list we supplied, so an unknown slug
+        // means our list and our registry disagree — worth saying out loud.
+        throw new BadRequestException(`Unknown skill: ${outcome.slug}`);
     }
   }
 }

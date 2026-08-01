@@ -13,7 +13,14 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { sql, type Kysely } from 'kysely';
 import type { Database } from '@zentavio/db';
-import { createProfileVersion, type ProfileSkillInput, type ProfileVersion } from '@zentavio/db';
+import {
+  applyCorrection,
+  createProfileVersion,
+  currentProfile,
+  profileSkills,
+  type ProfileSkillInput,
+  type ProfileVersion,
+} from '@zentavio/db';
 import type { ParseRequestWire, ParseResponseWire } from '@zentavio/types';
 import type { ParserClient, ParserOutcome } from './parser-client.ts';
 import { DATABASE, PARSER_CLIENT } from '../tokens.ts';
@@ -28,6 +35,21 @@ export type UploadOutcome =
   | { readonly kind: 'not-stored'; readonly parse: ParseResponseWire }
   | { readonly kind: 'rejected'; readonly code: string; readonly message: string }
   | { readonly kind: 'unavailable'; readonly reason: string };
+
+/** One skill as the profile now records it — what a correction returns so the UI can redraw. */
+export interface ProfileSkillView {
+  readonly slug: string;
+  readonly status: 'evidenced' | 'claimed';
+  readonly evidenceKind: string | null;
+  readonly sourceSpan: string | null;
+  readonly confidence: 'high' | 'medium' | 'low';
+  readonly selfReported: boolean;
+}
+
+export type CorrectionOutcome =
+  | { readonly kind: 'corrected'; readonly version: number; readonly skills: readonly ProfileSkillView[] }
+  | { readonly kind: 'no-profile' }
+  | { readonly kind: 'unknown-skill'; readonly slug: string };
 
 @Injectable()
 export class ResumeService {
@@ -105,6 +127,56 @@ export class ResumeService {
     });
 
     return { kind: 'stored', profile, parse };
+  }
+
+  /**
+   * Apply a user's correction to one skill.
+   *
+   * The repository writes a **new profile version** rather than editing the current one, so a score
+   * already computed against v1 stays reproducible. That is the whole reason profiles are versioned,
+   * and it is why this returns the new version number — the caller is looking at v1 and needs to
+   * know it is now looking at v2.
+   */
+  async correct(input: {
+    readonly userId: string;
+    readonly slug: string;
+    readonly status: 'evidenced' | 'claimed';
+    readonly evidenceKind?: ProfileSkillInput['evidence_kind'];
+  }): Promise<CorrectionOutcome> {
+    const profile = await currentProfile(this.#db, input.userId);
+    if (!profile) return { kind: 'no-profile' };
+
+    const skill = await this.#db
+      .selectFrom('skills')
+      .select('id')
+      .where('slug', '=', input.slug)
+      .where('deleted_at', 'is', null)
+      .executeTakeFirst();
+
+    // Resolved here so an unknown slug is a 400 naming it, rather than a foreign key violation
+    // surfacing as a 500 from somewhere deeper.
+    if (!skill) return { kind: 'unknown-skill', slug: input.slug };
+
+    const corrected = await applyCorrection(this.#db, input.userId, {
+      kind: 'upsert',
+      skillId: skill.id,
+      status: input.status,
+      ...(input.evidenceKind ? { evidenceKind: input.evidenceKind } : {}),
+    });
+
+    const rows = await profileSkills(this.#db, corrected.id);
+    return {
+      kind: 'corrected',
+      version: corrected.version,
+      skills: rows.map((row) => ({
+        slug: row.slug,
+        status: row.status,
+        evidenceKind: row.evidence_kind,
+        sourceSpan: row.source_span,
+        confidence: row.confidence,
+        selfReported: row.self_reported,
+      })),
+    };
   }
 
   /**

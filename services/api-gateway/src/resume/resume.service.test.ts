@@ -7,7 +7,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ParseResponseWire } from '@zentavio/types';
+import type { ParseRequestWire, ParseResponseWire } from '@zentavio/types';
 import type { ParserOutcome } from './parser-client.ts';
 import { ResumeService } from './resume.service.ts';
 
@@ -31,9 +31,24 @@ beforeEach(() => {
   created.length = 0;
 });
 
-/** The two calls the service makes on the parser client, and nothing else. */
+/**
+ * The one call the service makes on the parser client.
+ *
+ * The parameter is declared even though the fake ignores it: without it the mock's call tuple is
+ * typed `[]` and reading `calls[0][0]` stops compiling — which is how the assertion that the closed
+ * set was actually sent would quietly disappear.
+ */
 function fakeParser(outcome: ParserOutcome) {
-  return { parse: vi.fn(async () => outcome) };
+  // The request is captured rather than ignored — that is what makes `calls[0][0]` typed, and it
+  // doubles as the record the closed-set assertion reads.
+  const seen: ParseRequestWire[] = [];
+  return {
+    seen,
+    parse: vi.fn(async (request: ParseRequestWire) => {
+      seen.push(request);
+      return outcome;
+    }),
+  };
 }
 
 function parseResponse(overrides: Partial<ParseResponseWire> = {}): ParseResponseWire {
@@ -107,8 +122,9 @@ describe('ResumeService.upload', () => {
       response: parseResponse(),
     });
 
-    const request = parser.parse.mock.calls[0]?.[0] as { skills: unknown[] };
-    expect(request.skills).toHaveLength(1);
+    const request = parser.seen[0];
+    expect(request).toBeDefined();
+    expect(request?.skills).toHaveLength(1);
 
     // The positive case, so the "nothing was stored" assertions below mean something: this proves
     // the array they check is one a write actually reaches.
