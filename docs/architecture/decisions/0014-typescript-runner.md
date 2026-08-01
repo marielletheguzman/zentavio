@@ -144,6 +144,56 @@ outranked keeping the stack minimal, B would have been the defensible choice. It
 only because the `CI` check is required on `main` and was verified by attempting to violate it. If branch
 protection is ever removed, this decision's safety argument goes with it.
 
+## Amendment — 2026-08-01: `services/*` are compiled
+
+**The decision above is unchanged for scripts, CLIs, and libraries. It does not hold for
+`services/*`, which now compile to JavaScript with `tsc` before running.**
+
+**Why, and it is not a preference.** `.claude/context/tech-stack.md` puts NestJS under `services/`,
+and NestJS is built on decorators and constructor parameter properties. Node's strip-only mode
+supports neither. Verified on Node v22.21 before this amendment was written:
+
+```text
+@Controller()
+^
+SyntaxError: Invalid or unexpected token
+
+class Bar { constructor(private readonly x: number) {} }
+                                         ^^^^^^^^^
+SyntaxError [ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX]: TypeScript parameter property is not supported
+in strip-only mode
+```
+
+Decorators are not type syntax, so stripping types leaves them for V8, which does not implement
+them. `erasableSyntaxOnly` — this ADR's own enforcement mechanism — bans parameter properties
+outright. So two Accepted ADRs contradicted each other, and the contradiction was invisible until
+someone tried to write the first service.
+
+**The resolution keeps each decision inside the domain it was actually reasoning about.** This ADR's
+entire argument was about *running a script* — a `migrate` command should not need a build step, and
+it still does not. A deployed service is a different thing: it is packaged, versioned, and shipped,
+and it was always going to have a build step. Compiling it costs nothing that was ever claimed here.
+
+Concretely:
+
+- `services/*` each carry a `tsconfig.build.json`: `erasableSyntaxOnly: false`,
+  `experimentalDecorators: true`, `emitDecoratorMetadata: true`, emitting to `dist/`.
+  `pnpm --filter <service> build`, then `node dist/main.js`.
+- **`tsc` does the compiling — no new dependency.** TypeScript is already a devDependency, so this
+  amendment adds nothing to the stack. That is the reason `tsc` beat esbuild or SWC here.
+- **Everything else is unchanged.** `packages/*`, `tools/*`, and `tests/*` keep
+  `erasableSyntaxOnly` and run directly. `pnpm migrate` and `pnpm seed` still take no build step.
+- **Compiled services import strip-only packages at runtime and that works**: `dist/main.js`
+  importing `@zentavio/db` loads its `src/index.ts`, which Node strips. Verified by booting the
+  gateway against a live database.
+- `rewriteRelativeImportExtensions` (already set) rewrites `./x.ts` to `./x.js` on emit, so the
+  import convention this ADR established is unchanged in the source.
+
+**What this costs.** A service must be built before it runs, which is a step to forget and a stale
+`dist/` to be confused by. Accepted because the alternative was reopening the runner question for
+the whole repository, or dropping NestJS — both larger than a build script in the one place that
+ships as an artifact.
+
 ## Consequences
 
 **Accepted costs.**

@@ -29,6 +29,7 @@ export type {
 export {
   databaseSchema,
   evalSchema,
+  parserSchema,
   testDatabaseSchema,
   zentavioSchema,
   type ZentavioConfig,
