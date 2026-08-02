@@ -21,6 +21,8 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
+  await pool.query('DELETE FROM career_skills');
+  await pool.query('DELETE FROM skill_edges');
   await pool.query('DELETE FROM skill_aliases');
   await pool.query('DELETE FROM skills');
   await pool.query('DELETE FROM careers');
@@ -118,27 +120,80 @@ describe('the shipped seed file', () => {
     expect(rows.every((r) => r.retrieved_at === null)).toBe(true);
   });
 
-  it('leaves the graph empty — the skill set is not the graph', async () => {
-    // `skill_edges` and `career_skills` exist as of M1b, so this no longer asserts their absence.
-    // What it still asserts is the point the original test was making: the shipped seed populates
-    // the closed *set* and asserts no edges. If a seed starts claiming that one skill requires
-    // another without a method behind it, every learning path becomes a guess presented as a
-    // sequence — and the guess would be indistinguishable from a sourced edge.
-    //
-    // `career_edges` is still not migrated: career-to-career transferability has no reader yet.
+  it('seeds a graph whose every edge is sourced and tier-bounded', async () => {
+    // "Sourced edges" is on M1b's not-cuttable list. Curated at tier 3 is the honest posture for a
+    // hand-authored graph: it is checkable, and tier 3 maps to `low` confidence downstream, which
+    // is the intended consequence rather than a shortcoming to fix later.
     await applySeed(pool, await loadSeedFile(seedPath));
 
-    const { rows } = await pool.query<{ count: string }>(
-      `SELECT (SELECT count(*) FROM skill_edges)::text AS count
-       UNION ALL
-       SELECT (SELECT count(*) FROM career_skills)::text`,
+    const { rows } = await pool.query<{ bad: string }>(
+      `SELECT count(*)::text AS bad FROM skill_edges
+        WHERE deleted_at IS NULL AND (source_tier <> 3 OR basis <> 'curated')`,
     );
-    expect(rows.map((r) => r.count)).toEqual(['0', '0']);
+    expect(rows[0]?.bad).toBe('0');
 
-    const { rows: absent } = await pool.query<{ table_name: string }>(
+    const { rows: requirements } = await pool.query<{ bad: string }>(
+      `SELECT count(*)::text AS bad FROM career_skills
+        WHERE deleted_at IS NULL AND (source_tier <> 3 OR basis <> 'curated')`,
+    );
+    expect(requirements[0]?.bad).toBe('0');
+  });
+
+  it('keeps requires-edges sparse enough to be walkable', async () => {
+    // An over-eager prerequisite makes a learning path longer than the gap requires, which makes a
+    // reachable target look unreachable (`docs/database/entities/skill.md`). This is a smell test,
+    // not a proof: it fails loudly if someone starts asserting that everything requires everything.
+    await applySeed(pool, await loadSeedFile(seedPath));
+
+    const { rows } = await pool.query<{ requires: string; skills: string }>(
+      `SELECT (SELECT count(*) FROM skill_edges WHERE edge_type = 'requires' AND deleted_at IS NULL)::text AS requires,
+              (SELECT count(*) FROM skills WHERE deleted_at IS NULL)::text AS skills`,
+    );
+    const requires = Number(rows[0]?.requires);
+    const skills = Number(rows[0]?.skills);
+    expect(requires).toBeGreaterThan(0);
+    expect(requires).toBeLessThan(skills);
+  });
+
+  it('has no cycle among requires-edges, so a gap has a first step', async () => {
+    // The database cannot catch this: every individual row is legal, and only the whole set is
+    // cyclic. A ring of prerequisites means there is nothing the user can start with.
+    await applySeed(pool, await loadSeedFile(seedPath));
+
+    const { rows } = await pool.query<{ cycle: string | null }>(
+      `WITH RECURSIVE walk(root, node, depth) AS (
+         SELECT from_skill_id, to_skill_id, 1 FROM skill_edges
+          WHERE edge_type = 'requires' AND deleted_at IS NULL
+         UNION ALL
+         SELECT w.root, e.to_skill_id, w.depth + 1
+           FROM walk w
+           JOIN skill_edges e ON e.from_skill_id = w.node
+          WHERE e.edge_type = 'requires' AND e.deleted_at IS NULL AND w.depth < 20
+       )
+       SELECT s.slug AS cycle FROM walk w JOIN skills s ON s.id = w.root
+        WHERE w.node = w.root LIMIT 1`,
+    );
+    expect(rows[0]?.cycle ?? null).toBeNull();
+  });
+
+  it('does not migrate career_edges — transferability has no reader yet', async () => {
+    const { rows } = await pool.query<{ table_name: string }>(
       `SELECT table_name FROM information_schema.tables
         WHERE table_schema = 'public' AND table_name = 'career_edges'`,
     );
-    expect(absent).toEqual([]);
+    expect(rows).toEqual([]);
+  });
+
+  it('scopes a market-specific requirement rather than making it global', async () => {
+    // German is a real requirement for a Berlin role and absent for a remote-worldwide one.
+    // Storing it globally would put it in every gap, everywhere.
+    await applySeed(pool, await loadSeedFile(seedPath));
+
+    const { rows } = await pool.query<{ slug: string; market_scope: string | null }>(
+      `SELECT s.slug, cs.market_scope FROM career_skills cs
+         JOIN skills s ON s.id = cs.skill_id
+        WHERE cs.market_scope IS NOT NULL AND cs.deleted_at IS NULL`,
+    );
+    expect(rows).toEqual([{ slug: 'german', market_scope: 'DE' }]);
   });
 });

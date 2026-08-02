@@ -8,7 +8,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { normalizeAlias, validateSeed, type SeedFile } from './seed.ts';
+import { normalizeAlias, requiresCycles, validateSeed, type SeedFile } from './seed.ts';
 
 function seedWith(skills: SeedFile['skills']): SeedFile {
   return {
@@ -110,5 +110,121 @@ describe('validateSeed', () => {
       seedWith([skill('Bad_Slug', 'One'), skill('also_bad', 'Two'), skill('fine', 'Three')]),
     );
     expect(problems.length).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe('requiresCycles', () => {
+  it('finds nothing in an acyclic graph', () => {
+    expect(
+      requiresCycles([
+        { from: 'kubernetes', to: 'containers', type: 'requires', weight: 0.9 },
+        { from: 'containers', to: 'linux', type: 'requires', weight: 0.8 },
+      ]),
+    ).toEqual([]);
+  });
+
+  it('finds a ring the database cannot see', () => {
+    // Every one of these rows satisfies ck_skill_edges__no_self. Only the set is cyclic, and a
+    // cyclic prerequisite graph means the gap has no first step.
+    const cycles = requiresCycles([
+      { from: 'a', to: 'b', type: 'requires', weight: 0.5 },
+      { from: 'b', to: 'c', type: 'requires', weight: 0.5 },
+      { from: 'c', to: 'a', type: 'requires', weight: 0.5 },
+    ]);
+    expect(cycles).toHaveLength(1);
+    expect(cycles[0]?.[0]).toBe(cycles[0]?.at(-1));
+  });
+
+  it('ignores cycles among edge types that are not requires', () => {
+    // `transfers_to` is deliberately stored both ways — AWS transfers to Azure and back — and
+    // `adjacent_to` is required to be symmetric. Neither is walked for ordering.
+    expect(
+      requiresCycles([
+        { from: 'aws', to: 'azure', type: 'transfers_to', weight: 0.65 },
+        { from: 'azure', to: 'aws', type: 'transfers_to', weight: 0.7 },
+        { from: 'prometheus', to: 'grafana', type: 'adjacent_to', weight: 0.7 },
+        { from: 'grafana', to: 'prometheus', type: 'adjacent_to', weight: 0.7 },
+      ]),
+    ).toEqual([]);
+  });
+});
+
+describe('validateSeed — the graph', () => {
+  const base = {
+    career: {
+      slug: 'cloud-platform-engineer',
+      name: 'Cloud / Platform Engineer',
+      family: 'software-it',
+      description: null,
+      profession: null,
+      licenceGated: false,
+      sourceTier: 3,
+      basis: 'curated',
+      sourceUrl: null,
+    },
+    skills: [
+      { slug: 'kubernetes', name: 'Kubernetes', kind: 'technology', sourceUrl: null, aliases: ['k8s'] },
+      { slug: 'containers', name: 'Containers', kind: 'practice', sourceUrl: null, aliases: [] },
+    ],
+  };
+
+  it('rejects an edge to a skill the file does not define', () => {
+    // The database would reject this too, as a foreign key violation naming a uuid. Here it names
+    // the slug, which is the thing an author can act on.
+    const problems = validateSeed({
+      ...base,
+      edges: [{ from: 'kubernetes', to: 'openshift', type: 'requires', weight: 0.5 }],
+    });
+    expect(problems).toContain('edge references unknown skill: openshift');
+  });
+
+  it('rejects a requires-cycle before it reaches the database', () => {
+    const problems = validateSeed({
+      ...base,
+      edges: [
+        { from: 'kubernetes', to: 'containers', type: 'requires', weight: 0.9 },
+        { from: 'containers', to: 'kubernetes', type: 'requires', weight: 0.9 },
+      ],
+    });
+    expect(problems.some((p) => p.startsWith('requires-edges form a cycle'))).toBe(true);
+  });
+
+  it('rejects a careerSkills entry for an unknown skill', () => {
+    const problems = validateSeed({
+      ...base,
+      careerSkills: [{ skill: 'openshift', weight: 0.5, cluster: 'core', marketScope: null }],
+    });
+    expect(problems).toContain('careerSkills references unknown skill: openshift');
+  });
+
+  it('rejects a market scope that is not an ISO alpha-2 code', () => {
+    const problems = validateSeed({
+      ...base,
+      careerSkills: [{ skill: 'kubernetes', weight: 0.5, cluster: 'core', marketScope: 'germany' }],
+    });
+    expect(problems.some((p) => p.includes('not an ISO 3166-1 alpha-2 code'))).toBe(true);
+  });
+
+  it('allows the same skill globally and market-scoped', () => {
+    // The pair a gap needs: a global requirement plus a stronger one in a specific market.
+    const problems = validateSeed({
+      ...base,
+      careerSkills: [
+        { skill: 'kubernetes', weight: 0.9, cluster: 'core', marketScope: null },
+        { skill: 'kubernetes', weight: 0.95, cluster: 'core', marketScope: 'DE' },
+      ],
+    });
+    expect(problems).toEqual([]);
+  });
+
+  it('rejects the same skill twice at the same scope', () => {
+    const problems = validateSeed({
+      ...base,
+      careerSkills: [
+        { skill: 'kubernetes', weight: 0.9, cluster: 'core', marketScope: null },
+        { skill: 'kubernetes', weight: 0.4, cluster: 'peripheral', marketScope: null },
+      ],
+    });
+    expect(problems.some((p) => p.startsWith('duplicate careerSkills entry'))).toBe(true);
   });
 });

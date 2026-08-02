@@ -1,5 +1,5 @@
 {
-  "$comment": "Bootstrap registry for the MVP track (docs/roadmap/mvp.md). See seeds/README.md for what these tiers mean and why they are not higher.",
+  "$comment": "Bootstrap registry and graph for the MVP track (docs/roadmap/mvp.md). See seeds/README.md for what these tiers mean and why they are not higher.",
   "career": {
     "slug": "cloud-platform-engineer",
     "name": "Cloud / Platform Engineer",
@@ -17,210 +17,711 @@
       "name": "Linux Fundamentals",
       "kind": "practice",
       "sourceUrl": "https://www.kernel.org/doc/html/latest/",
-      "aliases": ["linux", "gnu/linux", "linux administration"]
+      "aliases": [
+        "linux",
+        "gnu/linux",
+        "linux administration"
+      ]
     },
     {
       "slug": "networking-fundamentals",
       "name": "Networking Fundamentals",
       "kind": "practice",
       "sourceUrl": null,
-      "aliases": ["tcp/ip", "networking", "dns", "network fundamentals"]
+      "aliases": [
+        "tcp/ip",
+        "networking",
+        "dns",
+        "network fundamentals"
+      ]
     },
     {
       "slug": "docker",
       "name": "Docker",
       "kind": "tool",
       "sourceUrl": "https://docs.docker.com/",
-      "aliases": ["dockerfile", "docker engine", "containerisation with docker"]
+      "aliases": [
+        "dockerfile",
+        "docker engine",
+        "containerisation with docker"
+      ]
     },
     {
       "slug": "containers",
       "name": "Containers",
       "kind": "practice",
       "sourceUrl": "https://opencontainers.org/",
-      "aliases": ["containerization", "containerisation", "oci containers"]
+      "aliases": [
+        "containerization",
+        "containerisation",
+        "oci containers"
+      ]
     },
     {
       "slug": "kubernetes",
       "name": "Kubernetes",
       "kind": "technology",
       "sourceUrl": "https://kubernetes.io/docs/home/",
-      "aliases": ["k8s", "kube", "kubernetes (k8s)", "k8's"]
+      "aliases": [
+        "k8s",
+        "kube",
+        "kubernetes (k8s)",
+        "k8's"
+      ]
     },
     {
       "slug": "helm",
       "name": "Helm",
       "kind": "tool",
       "sourceUrl": "https://helm.sh/docs/",
-      "aliases": ["helm charts", "helm3"]
+      "aliases": [
+        "helm charts",
+        "helm3"
+      ]
     },
     {
       "slug": "terraform",
       "name": "Terraform",
       "kind": "tool",
       "sourceUrl": "https://developer.hashicorp.com/terraform/docs",
-      "aliases": ["hashicorp terraform", "tf", "opentofu"]
+      "aliases": [
+        "hashicorp terraform",
+        "tf",
+        "opentofu"
+      ]
     },
     {
       "slug": "infrastructure-as-code",
       "name": "Infrastructure as Code",
       "kind": "practice",
       "sourceUrl": null,
-      "aliases": ["iac", "infra as code", "infrastructure-as-code"]
+      "aliases": [
+        "iac",
+        "infra as code",
+        "infrastructure-as-code"
+      ]
     },
     {
       "slug": "ansible",
       "name": "Ansible",
       "kind": "tool",
       "sourceUrl": "https://docs.ansible.com/",
-      "aliases": ["ansible playbooks", "red hat ansible"]
+      "aliases": [
+        "ansible playbooks",
+        "red hat ansible"
+      ]
     },
     {
       "slug": "aws",
       "name": "Amazon Web Services",
       "kind": "technology",
       "sourceUrl": "https://docs.aws.amazon.com/",
-      "aliases": ["amazon web services", "aws cloud", "ec2", "amazon aws"]
+      "aliases": [
+        "amazon web services",
+        "aws cloud",
+        "ec2",
+        "amazon aws"
+      ]
     },
     {
       "slug": "azure",
       "name": "Microsoft Azure",
       "kind": "technology",
       "sourceUrl": "https://learn.microsoft.com/en-us/azure/",
-      "aliases": ["microsoft azure", "ms azure", "azure cloud"]
+      "aliases": [
+        "microsoft azure",
+        "ms azure",
+        "azure cloud"
+      ]
     },
     {
       "slug": "gcp",
       "name": "Google Cloud Platform",
       "kind": "technology",
       "sourceUrl": "https://cloud.google.com/docs",
-      "aliases": ["google cloud", "google cloud platform", "gcloud"]
+      "aliases": [
+        "google cloud",
+        "google cloud platform",
+        "gcloud"
+      ]
     },
     {
       "slug": "cloud-fundamentals",
       "name": "Cloud Fundamentals",
       "kind": "practice",
       "sourceUrl": null,
-      "aliases": ["cloud computing", "cloud concepts", "cloud architecture basics"]
+      "aliases": [
+        "cloud computing",
+        "cloud concepts",
+        "cloud architecture basics"
+      ]
     },
     {
       "slug": "ci-cd",
       "name": "CI/CD",
       "kind": "practice",
       "sourceUrl": null,
-      "aliases": ["ci/cd", "continuous integration", "continuous delivery", "continuous deployment", "cicd"]
+      "aliases": [
+        "ci/cd",
+        "continuous integration",
+        "continuous delivery",
+        "continuous deployment",
+        "cicd"
+      ]
     },
     {
       "slug": "github-actions",
       "name": "GitHub Actions",
       "kind": "tool",
       "sourceUrl": "https://docs.github.com/en/actions",
-      "aliases": ["gh actions", "github workflows"]
+      "aliases": [
+        "gh actions",
+        "github workflows"
+      ]
     },
     {
       "slug": "gitlab-ci",
       "name": "GitLab CI",
       "kind": "tool",
       "sourceUrl": "https://docs.gitlab.com/ee/ci/",
-      "aliases": ["gitlab ci/cd", "gitlab pipelines"]
+      "aliases": [
+        "gitlab ci/cd",
+        "gitlab pipelines"
+      ]
     },
     {
       "slug": "git",
       "name": "Git",
       "kind": "tool",
       "sourceUrl": "https://git-scm.com/doc",
-      "aliases": ["git scm", "version control with git"]
+      "aliases": [
+        "git scm",
+        "version control with git"
+      ]
     },
     {
       "slug": "observability",
       "name": "Observability",
       "kind": "practice",
       "sourceUrl": "https://opentelemetry.io/docs/",
-      "aliases": ["monitoring and observability", "telemetry"]
+      "aliases": [
+        "monitoring and observability",
+        "telemetry"
+      ]
     },
     {
       "slug": "prometheus",
       "name": "Prometheus",
       "kind": "tool",
       "sourceUrl": "https://prometheus.io/docs/",
-      "aliases": ["promql", "prometheus monitoring"]
+      "aliases": [
+        "promql",
+        "prometheus monitoring"
+      ]
     },
     {
       "slug": "grafana",
       "name": "Grafana",
       "kind": "tool",
       "sourceUrl": "https://grafana.com/docs/",
-      "aliases": ["grafana dashboards"]
+      "aliases": [
+        "grafana dashboards"
+      ]
     },
     {
       "slug": "sre-practices",
       "name": "Site Reliability Engineering",
       "kind": "practice",
       "sourceUrl": null,
-      "aliases": ["sre", "site reliability engineering", "slo", "error budgets"]
+      "aliases": [
+        "sre",
+        "site reliability engineering",
+        "slo",
+        "error budgets"
+      ]
     },
     {
       "slug": "incident-response",
       "name": "Incident Response",
       "kind": "practice",
       "sourceUrl": null,
-      "aliases": ["on-call", "oncall", "incident management", "postmortems"]
+      "aliases": [
+        "on-call",
+        "oncall",
+        "incident management",
+        "postmortems"
+      ]
     },
     {
       "slug": "bash-scripting",
       "name": "Bash Scripting",
       "kind": "technology",
       "sourceUrl": "https://www.gnu.org/software/bash/manual/",
-      "aliases": ["bash", "shell scripting", "sh scripting"]
+      "aliases": [
+        "bash",
+        "shell scripting",
+        "sh scripting"
+      ]
     },
     {
       "slug": "python",
       "name": "Python",
       "kind": "technology",
       "sourceUrl": "https://docs.python.org/3/",
-      "aliases": ["python3", "python programming"]
+      "aliases": [
+        "python3",
+        "python programming"
+      ]
     },
     {
       "slug": "go",
       "name": "Go",
       "kind": "technology",
       "sourceUrl": "https://go.dev/doc/",
-      "aliases": ["golang", "go lang"]
+      "aliases": [
+        "golang",
+        "go lang"
+      ]
     },
     {
       "slug": "postgresql",
       "name": "PostgreSQL",
       "kind": "technology",
       "sourceUrl": "https://www.postgresql.org/docs/",
-      "aliases": ["postgres", "psql", "postgre sql"]
+      "aliases": [
+        "postgres",
+        "psql",
+        "postgre sql"
+      ]
     },
     {
       "slug": "cloud-security",
       "name": "Cloud Security",
       "kind": "domain",
       "sourceUrl": null,
-      "aliases": ["iam", "identity and access management", "security hardening"]
+      "aliases": [
+        "iam",
+        "identity and access management",
+        "security hardening"
+      ]
     },
     {
       "slug": "cost-optimisation",
       "name": "Cloud Cost Optimisation",
       "kind": "domain",
       "sourceUrl": null,
-      "aliases": ["finops", "cost optimization", "cloud cost management"]
+      "aliases": [
+        "finops",
+        "cost optimization",
+        "cloud cost management"
+      ]
     },
     {
       "slug": "german",
       "name": "German",
       "kind": "language",
       "sourceUrl": "https://www.coe.int/en/web/common-european-framework-reference-languages",
-      "aliases": ["deutsch", "german language"]
+      "aliases": [
+        "deutsch",
+        "german language"
+      ]
     },
     {
       "slug": "english",
       "name": "English",
       "kind": "language",
       "sourceUrl": "https://www.coe.int/en/web/common-european-framework-reference-languages",
-      "aliases": ["english language"]
+      "aliases": [
+        "english language"
+      ]
+    }
+  ],
+  "careerSkills": [
+    {
+      "skill": "kubernetes",
+      "weight": 0.95,
+      "cluster": "core",
+      "marketScope": null
+    },
+    {
+      "skill": "containers",
+      "weight": 0.92,
+      "cluster": "core",
+      "marketScope": null
+    },
+    {
+      "skill": "infrastructure-as-code",
+      "weight": 0.9,
+      "cluster": "core",
+      "marketScope": null
+    },
+    {
+      "skill": "linux-fundamentals",
+      "weight": 0.88,
+      "cluster": "core",
+      "marketScope": null
+    },
+    {
+      "skill": "ci-cd",
+      "weight": 0.86,
+      "cluster": "core",
+      "marketScope": null
+    },
+    {
+      "skill": "cloud-fundamentals",
+      "weight": 0.85,
+      "cluster": "core",
+      "marketScope": null
+    },
+    {
+      "skill": "observability",
+      "weight": 0.8,
+      "cluster": "core",
+      "marketScope": null
+    },
+    {
+      "skill": "docker",
+      "weight": 0.78,
+      "cluster": "supporting",
+      "marketScope": null
+    },
+    {
+      "skill": "terraform",
+      "weight": 0.78,
+      "cluster": "supporting",
+      "marketScope": null
+    },
+    {
+      "skill": "git",
+      "weight": 0.75,
+      "cluster": "supporting",
+      "marketScope": null
+    },
+    {
+      "skill": "networking-fundamentals",
+      "weight": 0.72,
+      "cluster": "supporting",
+      "marketScope": null
+    },
+    {
+      "skill": "bash-scripting",
+      "weight": 0.68,
+      "cluster": "supporting",
+      "marketScope": null
+    },
+    {
+      "skill": "aws",
+      "weight": 0.65,
+      "cluster": "supporting",
+      "marketScope": null
+    },
+    {
+      "skill": "prometheus",
+      "weight": 0.6,
+      "cluster": "supporting",
+      "marketScope": null
+    },
+    {
+      "skill": "helm",
+      "weight": 0.58,
+      "cluster": "supporting",
+      "marketScope": null
+    },
+    {
+      "skill": "sre-practices",
+      "weight": 0.58,
+      "cluster": "supporting",
+      "marketScope": null
+    },
+    {
+      "skill": "grafana",
+      "weight": 0.55,
+      "cluster": "supporting",
+      "marketScope": null
+    },
+    {
+      "skill": "incident-response",
+      "weight": 0.55,
+      "cluster": "supporting",
+      "marketScope": null
+    },
+    {
+      "skill": "python",
+      "weight": 0.52,
+      "cluster": "supporting",
+      "marketScope": null
+    },
+    {
+      "skill": "github-actions",
+      "weight": 0.5,
+      "cluster": "supporting",
+      "marketScope": null
+    },
+    {
+      "skill": "cloud-security",
+      "weight": 0.55,
+      "cluster": "differentiating",
+      "marketScope": null
+    },
+    {
+      "skill": "cost-optimisation",
+      "weight": 0.45,
+      "cluster": "differentiating",
+      "marketScope": null
+    },
+    {
+      "skill": "go",
+      "weight": 0.4,
+      "cluster": "differentiating",
+      "marketScope": null
+    },
+    {
+      "skill": "azure",
+      "weight": 0.3,
+      "cluster": "peripheral",
+      "marketScope": null
+    },
+    {
+      "skill": "gcp",
+      "weight": 0.3,
+      "cluster": "peripheral",
+      "marketScope": null
+    },
+    {
+      "skill": "gitlab-ci",
+      "weight": 0.28,
+      "cluster": "peripheral",
+      "marketScope": null
+    },
+    {
+      "skill": "ansible",
+      "weight": 0.25,
+      "cluster": "peripheral",
+      "marketScope": null
+    },
+    {
+      "skill": "postgresql",
+      "weight": 0.22,
+      "cluster": "peripheral",
+      "marketScope": null
+    },
+    {
+      "skill": "english",
+      "weight": 0.8,
+      "cluster": "supporting",
+      "marketScope": null
+    },
+    {
+      "skill": "german",
+      "weight": 0.7,
+      "cluster": "supporting",
+      "marketScope": "DE"
+    }
+  ],
+  "edges": [
+    {
+      "from": "kubernetes",
+      "to": "containers",
+      "type": "requires",
+      "weight": 0.9
+    },
+    {
+      "from": "containers",
+      "to": "linux-fundamentals",
+      "type": "requires",
+      "weight": 0.8
+    },
+    {
+      "from": "kubernetes",
+      "to": "networking-fundamentals",
+      "type": "requires",
+      "weight": 0.7
+    },
+    {
+      "from": "helm",
+      "to": "kubernetes",
+      "type": "requires",
+      "weight": 0.95
+    },
+    {
+      "from": "bash-scripting",
+      "to": "linux-fundamentals",
+      "type": "requires",
+      "weight": 0.75
+    },
+    {
+      "from": "ci-cd",
+      "to": "git",
+      "type": "requires",
+      "weight": 0.85
+    },
+    {
+      "from": "aws",
+      "to": "cloud-fundamentals",
+      "type": "requires",
+      "weight": 0.7
+    },
+    {
+      "from": "azure",
+      "to": "cloud-fundamentals",
+      "type": "requires",
+      "weight": 0.7
+    },
+    {
+      "from": "gcp",
+      "to": "cloud-fundamentals",
+      "type": "requires",
+      "weight": 0.7
+    },
+    {
+      "from": "cloud-security",
+      "to": "cloud-fundamentals",
+      "type": "requires",
+      "weight": 0.75
+    },
+    {
+      "from": "cost-optimisation",
+      "to": "cloud-fundamentals",
+      "type": "requires",
+      "weight": 0.65
+    },
+    {
+      "from": "incident-response",
+      "to": "observability",
+      "type": "requires",
+      "weight": 0.7
+    },
+    {
+      "from": "terraform",
+      "to": "infrastructure-as-code",
+      "type": "tooling_of",
+      "weight": 0.9
+    },
+    {
+      "from": "ansible",
+      "to": "infrastructure-as-code",
+      "type": "tooling_of",
+      "weight": 0.75
+    },
+    {
+      "from": "github-actions",
+      "to": "ci-cd",
+      "type": "tooling_of",
+      "weight": 0.85
+    },
+    {
+      "from": "gitlab-ci",
+      "to": "ci-cd",
+      "type": "tooling_of",
+      "weight": 0.85
+    },
+    {
+      "from": "prometheus",
+      "to": "observability",
+      "type": "tooling_of",
+      "weight": 0.85
+    },
+    {
+      "from": "grafana",
+      "to": "observability",
+      "type": "tooling_of",
+      "weight": 0.8
+    },
+    {
+      "from": "docker",
+      "to": "containers",
+      "type": "tooling_of",
+      "weight": 0.9
+    },
+    {
+      "from": "helm",
+      "to": "kubernetes",
+      "type": "tooling_of",
+      "weight": 0.8
+    },
+    {
+      "from": "sre-practices",
+      "to": "incident-response",
+      "type": "subsumes",
+      "weight": 0.7
+    },
+    {
+      "from": "infrastructure-as-code",
+      "to": "terraform",
+      "type": "subsumes",
+      "weight": 0.6
+    },
+    {
+      "from": "aws",
+      "to": "azure",
+      "type": "transfers_to",
+      "weight": 0.65
+    },
+    {
+      "from": "azure",
+      "to": "aws",
+      "type": "transfers_to",
+      "weight": 0.7
+    },
+    {
+      "from": "aws",
+      "to": "gcp",
+      "type": "transfers_to",
+      "weight": 0.65
+    },
+    {
+      "from": "gcp",
+      "to": "aws",
+      "type": "transfers_to",
+      "weight": 0.7
+    },
+    {
+      "from": "azure",
+      "to": "gcp",
+      "type": "transfers_to",
+      "weight": 0.6
+    },
+    {
+      "from": "gcp",
+      "to": "azure",
+      "type": "transfers_to",
+      "weight": 0.6
+    },
+    {
+      "from": "github-actions",
+      "to": "gitlab-ci",
+      "type": "transfers_to",
+      "weight": 0.75
+    },
+    {
+      "from": "gitlab-ci",
+      "to": "github-actions",
+      "type": "transfers_to",
+      "weight": 0.75
+    },
+    {
+      "from": "prometheus",
+      "to": "grafana",
+      "type": "adjacent_to",
+      "weight": 0.7
+    },
+    {
+      "from": "grafana",
+      "to": "prometheus",
+      "type": "adjacent_to",
+      "weight": 0.7
+    },
+    {
+      "from": "docker",
+      "to": "kubernetes",
+      "type": "adjacent_to",
+      "weight": 0.6
+    },
+    {
+      "from": "kubernetes",
+      "to": "docker",
+      "type": "adjacent_to",
+      "weight": 0.6
     }
   ]
 }

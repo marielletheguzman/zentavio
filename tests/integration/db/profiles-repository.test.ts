@@ -40,6 +40,8 @@ beforeAll(async () => {
 beforeEach(async () => {
   await pool.query('DELETE FROM user_profiles');
   await pool.query('DELETE FROM users');
+  await pool.query('DELETE FROM career_skills');
+  await pool.query('DELETE FROM skill_edges');
   await pool.query('DELETE FROM skill_aliases');
   await pool.query('DELETE FROM skills');
   await pool.query('DELETE FROM careers');
