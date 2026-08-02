@@ -25,9 +25,9 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 
-from compute import number_lines, recover_spelling, spans_from_labels
-from model_client import load_prompt, render
-from ports import ModelClient, RegisteredSkill
+from resume_parser.compute import number_lines, recover_spelling, spans_from_labels
+from resume_parser.model_client import load_prompt, render
+from resume_parser.ports import ModelClient, RegisteredSkill
 
 QUARANTINE_PROMPT = "instruction-quarantine"
 RECALL_PROMPT = "skill-recall"

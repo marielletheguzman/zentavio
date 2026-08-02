@@ -11,7 +11,7 @@ Prompt files live at `ai/resume-parser/prompts/`. This document is the contract,
 ## What the model does here, and what it does not
 
 **ADR-0018 settled this with a measurement.** Skill resolution, the `EVIDENCED`/`CLAIMED` split,
-deduplication, confidence and ordering are done by `ai/resume-parser/src/compute.py` — no model
+deduplication, confidence and ordering are done by `ai/resume-parser/src/resume_parser/compute.py` — no model
 runs there and none should. Alias matching against a known set is a lookup, and a lookup a model
 performs is a lookup that can hallucinate.
 

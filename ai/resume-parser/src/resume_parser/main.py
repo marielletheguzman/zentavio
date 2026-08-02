@@ -23,14 +23,15 @@ import os
 import uuid
 from typing import Annotated, Literal
 
-from compute import parse
-from enrich import enrich
-from extract import SUPPORTED_CONTENT_TYPES, UnsupportedDocumentError, extract
 from fastapi import Body, FastAPI, Request, status
 from fastapi.responses import JSONResponse
-from model_client import OllamaClient
-from ports import ModelClient, RegisteredSkill
 from pydantic import BaseModel, Field
+
+from resume_parser.compute import parse
+from resume_parser.enrich import enrich
+from resume_parser.extract import SUPPORTED_CONTENT_TYPES, UnsupportedDocumentError, extract
+from resume_parser.model_client import OllamaClient
+from resume_parser.ports import ModelClient, RegisteredSkill
 
 #: Bumped whenever extraction, segmentation, or classification changes in a way that could move a
 #: profile. Recorded on every parse so a stored profile says which code produced it — a profile

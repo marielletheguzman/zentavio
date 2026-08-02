@@ -25,7 +25,7 @@ import re
 import unicodedata
 from dataclasses import dataclass
 
-from ports import ExtractedText, RegisteredSkill, SkillRegistry
+from resume_parser.ports import ExtractedText, RegisteredSkill, SkillRegistry
 
 #: Headings that mark a list of skills rather than a description of work. A match inside one of
 #: these is `claimed`; a match inside prose about a role or project is `evidenced`.

@@ -7,8 +7,8 @@ truncated arrays and hallucinated technologies are the normal weather, not edge 
 
 from __future__ import annotations
 
-from enrich import RECALL_PROMPT, enrich
-from ports import RegisteredSkill
+from resume_parser.enrich import RECALL_PROMPT, enrich
+from resume_parser.ports import RegisteredSkill
 
 SKILLS = (
     RegisteredSkill(slug="go", name="Go", kind="technology", aliases=frozenset({"go", "golang"})),

@@ -34,7 +34,10 @@ TIMEOUT_SECONDS = 120
 PROBE_TIMEOUT_SECONDS = 2
 HTTP_OK = 200
 
-PROMPT_DIR = Path(__file__).resolve().parents[1] / "prompts"
+#: `ai/resume-parser/prompts`. Three parents up because this module lives at
+#: `<service>/src/resume_parser/`, and prompts sit beside `src` rather than inside the package —
+#: they are versioned artifacts the eval runner also globs (`ai/*/prompts/*.md`), not package data.
+PROMPT_DIR = Path(__file__).resolve().parents[2] / "prompts"
 
 _PLACEHOLDER = re.compile(r"\{\{\s*(\w+)\s*\}\}")
 

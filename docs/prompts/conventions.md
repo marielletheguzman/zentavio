@@ -207,7 +207,7 @@ Rules:
 ```
 
 Note what is absent: no `skillId`, no EVIDENCED/CLAIMED, no `confidence`. Those come from
-`ai/resume-parser/src/compute.py`, which resolves against the same closed set deterministically and
+`ai/resume-parser/src/resume_parser/compute.py`, which resolves against the same closed set deterministically and
 is tested without a model at all.
 
 The closed `known_skills` set is what prevents vocabulary drift; `unmatched` is simultaneously the

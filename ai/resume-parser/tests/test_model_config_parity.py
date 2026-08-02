@@ -14,7 +14,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-import model_client
+from resume_parser import model_client
 
 CONFIG_TS = Path(__file__).resolve().parents[3] / "packages/config/src/zentavio.ts"
 

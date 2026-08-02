@@ -16,7 +16,7 @@ disagreement was invisible until a prompt was written against a real model.
 example is a `skill-extract` prompt that returns `skillId`, `status`, `sourceSpan`, and
 `confidence` — the whole job.
 
-`ai/resume-parser/src/compute.py` says the opposite, in its module docstring, and has said so since
+`ai/resume-parser/src/resume_parser/compute.py` says the opposite, in its module docstring, and has said so since
 step 6:
 
 > **No model runs here, and none should.** […] Alias matching against a known set is not messy: it
@@ -199,7 +199,7 @@ number.
 
 ## Compliance
 
-- **`ai/resume-parser/src/compute.py` imports no model client.** Its module docstring already says
+- **`ai/resume-parser/src/resume_parser/compute.py` imports no model client.** Its module docstring already says
   so; the ruff banned-import list (ADR-0003) is where that becomes enforced rather than asserted.
 - **No prompt in `ai/resume-parser/prompts/` emits a `skillId`, a status, or a confidence.** A
   prompt whose output schema contains those fields contradicts this ADR.
