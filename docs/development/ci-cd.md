@@ -110,8 +110,11 @@ CI and a developer's machine must run the same rule set, or a green run means no
 - **pnpm** — from `package.json`'s `packageManager` field, activated by corepack. No third-party
   setup action.
 - **Node** — `22` in CI; `package.json` `engines` requires `>=22.18.0`. The floor is ADR-0014: below 22.18 Node cannot strip types, so no TypeScript entrypoint runs without a loader.
-- **Ruff** — pinned in `requirements-dev.txt`. A different Ruff version is a different rule set.
-- **Installs** — always `pnpm install --frozen-lockfile`.
+- **uv** — pinned by exact version in `ci.yml` (`pip install uv==0.9.6`). ADR-0006 accepted a young
+  tool in a load-bearing position on that condition. No third-party setup action, same as pnpm.
+- **Ruff** — pinned in `ai/pyproject.toml`'s `dev` group and resolved through `ai/uv.lock`. A
+  different Ruff version is a different rule set.
+- **Installs** — always `pnpm install --frozen-lockfile`, and always `--frozen` for uv.
 - **Third-party actions** — pinned to commit SHAs with the version in a trailing comment
   (`actions/checkout@11d5960… # v4.4.0`). Tags are mutable; a SHA is not.
 
@@ -125,7 +128,9 @@ pnpm lint:all      # eslint + tsc + ruff + boundary audit — what CI runs
 `pnpm lint:all` invokes the binaries directly rather than through `pnpm run`, so it works
 regardless of how pnpm itself is invoked. Run it before pushing; same checks, same order.
 
-Python tooling is separate: `pip install -r requirements-dev.txt` once, then `ruff` is on PATH.
+Python tooling is separate and goes through uv: `pnpm py:sync` once, then `pnpm lint:py` and
+`pnpm test:py`. `--all-packages` is not optional — without it uv installs the workspace root, which
+declares no dependencies, and every service's runtime dependency is silently absent.
 
 ## Not yet built
 

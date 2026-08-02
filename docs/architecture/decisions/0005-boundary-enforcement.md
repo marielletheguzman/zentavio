@@ -154,7 +154,8 @@ written.
 - **Disable audit:** `grep -rn "eslint-disable.*boundaries"` must return nothing. Any hit needs an
   ADR justifying it.
 - **Ruff:** `ruff check ai/` runs in CI and enforces the `ai/` statelessness bans. Pinned in
-  `requirements-dev.txt` — a different Ruff version is a different rule set.
+  `ai/pyproject.toml`'s `dev` group and resolved through `ai/uv.lock` (ADR-0006) — a different Ruff
+  version is a different rule set.
 
 ## Implementation notes
 
