@@ -22,6 +22,8 @@ export interface ErasureReport {
   readonly userId: string;
   /** Profile versions hard-deleted. `profile_skills` cascades from these. */
   readonly profilesDeleted: number;
+  /** Target careers hard-deleted. What someone was trying to become is personal. */
+  readonly targetsDeleted: number;
   /** False when the user did not exist, so a caller can tell "erased" from "nothing to erase". */
   readonly userTombstoned: boolean;
 }
@@ -54,6 +56,11 @@ export async function eraseUser(db: Kysely<Database>, userId: string): Promise<E
       .where('user_id', '=', userId)
       .executeTakeFirst();
 
+    // Hard delete, per data-retention.md. A target is not a world fact — "I am trying to become a
+    // platform engineer" is a statement about a person, and it outlives the profile that motivated
+    // it unless it is deleted here.
+    const targets = await trx.deleteFrom('user_targets').where('user_id', '=', userId).executeTakeFirst();
+
     const tombstone = await trx
       .updateTable('users')
       .set({
@@ -74,6 +81,7 @@ export async function eraseUser(db: Kysely<Database>, userId: string): Promise<E
     return {
       userId,
       profilesDeleted: Number(profiles.numDeletedRows),
+      targetsDeleted: Number(targets.numDeletedRows),
       userTombstoned: Number(tombstone.numUpdatedRows) === 1,
     };
   });
@@ -94,6 +102,17 @@ export async function hasPersonalData(db: Kysely<Database>, userId: string): Pro
     .executeTakeFirst();
 
   if (profile) return true;
+
+  // Audited as well as deleted. A table added to the schema without a line here would leave the
+  // erasure claim technically false while every test still passed.
+  const target = await db
+    .selectFrom('user_targets')
+    .select('id')
+    .where('user_id', '=', userId)
+    .limit(1)
+    .executeTakeFirst();
+
+  if (target) return true;
 
   const user = await db
     .selectFrom('users')

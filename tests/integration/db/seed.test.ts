@@ -119,15 +119,26 @@ describe('the shipped seed file', () => {
   });
 
   it('leaves the graph empty — the skill set is not the graph', async () => {
-    // M1b owns requires-edges and career_skills, and neither table exists yet. If a future seed
-    // starts asserting edges without a method, every learning path becomes a guess presented as a
-    // sequence.
+    // `skill_edges` and `career_skills` exist as of M1b, so this no longer asserts their absence.
+    // What it still asserts is the point the original test was making: the shipped seed populates
+    // the closed *set* and asserts no edges. If a seed starts claiming that one skill requires
+    // another without a method behind it, every learning path becomes a guess presented as a
+    // sequence — and the guess would be indistinguishable from a sourced edge.
+    //
+    // `career_edges` is still not migrated: career-to-career transferability has no reader yet.
     await applySeed(pool, await loadSeedFile(seedPath));
 
-    const { rows } = await pool.query<{ table_name: string }>(
-      `SELECT table_name FROM information_schema.tables
-        WHERE table_schema = 'public' AND table_name IN ('skill_edges', 'career_skills', 'career_edges')`,
+    const { rows } = await pool.query<{ count: string }>(
+      `SELECT (SELECT count(*) FROM skill_edges)::text AS count
+       UNION ALL
+       SELECT (SELECT count(*) FROM career_skills)::text`,
     );
-    expect(rows).toEqual([]);
+    expect(rows.map((r) => r.count)).toEqual(['0', '0']);
+
+    const { rows: absent } = await pool.query<{ table_name: string }>(
+      `SELECT table_name FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'career_edges'`,
+    );
+    expect(absent).toEqual([]);
   });
 });

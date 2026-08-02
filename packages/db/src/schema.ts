@@ -254,6 +254,77 @@ export interface ProfileSkillsTable {
   updated_at: Generated<Timestamp>;
 }
 
+// ── the skill graph and what a track requires (entities/skill.md) ────────────
+
+export type SkillEdgeTypeColumn =
+  | 'requires'
+  | 'adjacent_to'
+  | 'transfers_to'
+  | 'subsumes'
+  | 'tooling_of';
+
+export type SkillEdgeBasisColumn =
+  | 'posting-cooccurrence'
+  | 'official-curriculum'
+  | 'outcome-derived'
+  | 'curated';
+
+export interface SkillEdgesTable {
+  id: string;
+  from_skill_id: string;
+  to_skill_id: string;
+  edge_type: SkillEdgeTypeColumn;
+  /** 0..1. How much competence carries, or how hard the prerequisite is. */
+  weight: Numeric;
+  basis: SkillEdgeBasisColumn;
+  /** Observations behind the weight. Required when `basis` is `posting-cooccurrence`. */
+  support: number | null;
+  compute_version: string | null;
+  /** Bounded 1..4: tier 5 is a model's opinion and this is a fact table. */
+  source_tier: number;
+  source_url: string | null;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+  deleted_at: Timestamp | null;
+}
+
+export type CareerSkillClusterColumn = 'core' | 'supporting' | 'differentiating' | 'peripheral';
+export type CareerSkillBasisColumn = 'posting-frequency' | 'official-curriculum' | 'curated';
+
+export interface CareerSkillsTable {
+  id: string;
+  career_id: string;
+  skill_id: string;
+  /** Importance for this career. Weights live here, never as a constant in code. */
+  weight: Numeric;
+  cluster: CareerSkillClusterColumn;
+  basis: CareerSkillBasisColumn;
+  support: number | null;
+  /** `null` is global. A market-specific row wins over a global one during evaluation. */
+  market_scope: string | null;
+  source_tier: number;
+  source_url: string | null;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+  deleted_at: Timestamp | null;
+}
+
+export type UserTargetStatusColumn = 'active' | 'achieved' | 'abandoned';
+
+export interface UserTargetsTable {
+  id: string;
+  user_id: string;
+  career_id: string;
+  /** 1 is the primary target. Unique among active rows only. */
+  rank: number;
+  market_scope: string | null;
+  status: Generated<UserTargetStatusColumn>;
+  decided_at: Generated<Timestamp>;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+  deleted_at: Timestamp | null;
+}
+
 // ── the runner's own bookkeeping ─────────────────────────────────────────────
 
 export interface SchemaMigrationsTable {
@@ -271,6 +342,9 @@ export interface Database {
   skill_aliases: SkillAliasesTable;
   user_profiles: UserProfilesTable;
   profile_skills: ProfileSkillsTable;
+  skill_edges: SkillEdgesTable;
+  career_skills: CareerSkillsTable;
+  user_targets: UserTargetsTable;
   schema_migrations: SchemaMigrationsTable;
 }
 
