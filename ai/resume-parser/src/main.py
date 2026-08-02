@@ -19,20 +19,23 @@ from __future__ import annotations
 
 import base64
 import binascii
+import os
 import uuid
 from typing import Annotated, Literal
 
 from compute import parse
+from enrich import enrich
 from extract import SUPPORTED_CONTENT_TYPES, UnsupportedDocumentError, extract
 from fastapi import Body, FastAPI, Request, status
 from fastapi.responses import JSONResponse
-from ports import RegisteredSkill
+from model_client import OllamaClient
+from ports import ModelClient, RegisteredSkill
 from pydantic import BaseModel, Field
 
 #: Bumped whenever extraction, segmentation, or classification changes in a way that could move a
 #: profile. Recorded on every parse so a stored profile says which code produced it — a profile
 #: whose parser is unknown cannot be reproduced or re-examined after a bug.
-PARSER_VERSION = "resume-parser/2026-08-01"
+PARSER_VERSION = "resume-parser/2026-08-03"
 
 #: A cap here as well as at the gateway. The gateway is the right place to reject early, but a
 #: service that trusts its caller's limits has no limit of its own.
@@ -82,6 +85,29 @@ class ParseResponse(BaseModel):
     degraded_sections: list[str]
     completeness: float | None
     parser_version: str
+    #: Technologies the résumé names that the closed set does not contain. A backlog for the skill
+    #: graph, never a claim about the person — nothing here is a skill on their profile.
+    unmatched: list[str]
+    #: 'applied' | 'partial' | 'unavailable'. On the wire because a profile parsed without
+    #: enrichment has had no injection screening, and a caller that cannot tell will treat a
+    #: degraded result as a complete one (ADR-0018).
+    enrichment: Literal["applied", "partial", "unavailable"]
+    #: promptVersion per prompt that contributed. Empty when none did.
+    prompt_versions: dict[str, str]
+    #: Which model answered, so a result is attributable. Null when none did.
+    model: str | None
+
+
+def _model_client() -> ModelClient | None:
+    """The model this process will use, or None when enrichment is switched off.
+
+    Built per request rather than held as module state: the client owns no connection, and a
+    module-level singleton would be the first piece of state in a service whose statelessness is
+    the point (ADR-0003).
+    """
+    if os.environ.get("ZENTAVIO_PARSER_ENRICHMENT", "on").lower() == "off":
+        return None
+    return OllamaClient()
 
 
 class _Registry:
@@ -191,7 +217,12 @@ def parse_resume(payload: Annotated[ParseRequest, Body()]) -> JSONResponse:
             correlation_id=correlation_id,
         )
 
-    result = parse(extracted, _Registry(payload.skills))
+    registry = _Registry(payload.skills)
+    # Enrichment runs before parsing because quarantine changes what parsing is allowed to read.
+    # It never raises: an unreachable or unhelpful model yields an empty enrichment and the
+    # deterministic profile is produced exactly as it would have been (ADR-0018).
+    enrichment = enrich(_model_client(), extracted.text, registry.all_skills())
+    result = parse(extracted, registry, enrichment.quarantined)
 
     return JSONResponse(
         status_code=status.HTTP_200_OK,
@@ -211,6 +242,10 @@ def parse_resume(payload: Annotated[ParseRequest, Body()]) -> JSONResponse:
             degraded_sections=list(result.degraded_sections),
             completeness=result.completeness,
             parser_version=PARSER_VERSION,
+            unmatched=list(enrichment.unmatched),
+            enrichment=enrichment.status,  # type: ignore[arg-type]
+            prompt_versions=enrichment.prompt_versions,
+            model=enrichment.model_name,
         ).model_dump(),
     )
 
@@ -225,9 +260,19 @@ def live() -> dict[str, str]:
 def ready() -> dict[str, str]:
     """Ready to serve.
 
-    This service has **no** external dependency — no database, no cache, no model call — so
-    readiness is genuinely just "the code imported". A probe that checks something it does not use
-    would be theatre, and a probe that reports healthy while a real dependency is down is worse
-    (``docs/development/ai-service-guide.md``).
+    This service has no **required** external dependency. It reaches a model when one is configured
+    and reachable, and produces a complete deterministic profile when it is not, so a model outage
+    must not take the service out of rotation — reporting unready would stop uploads that would
+    have succeeded.
+
+    The model's reachability is reported instead of graded, because that is the honest shape: a
+    probe that fails on an optional dependency is as misleading as one that hides a required one
+    (``docs/development/ai-service-guide.md``). Callers who need enrichment read ``enrichment`` on
+    the parse response, which is per-request truth rather than a probe's guess.
     """
-    return {"status": "ready", "version": PARSER_VERSION}
+    client = _model_client()
+    return {
+        "status": "ready",
+        "version": PARSER_VERSION,
+        "enrichment": "available" if client is not None and client.available() else "unavailable",
+    }

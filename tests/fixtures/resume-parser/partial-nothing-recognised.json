@@ -7,6 +7,10 @@
     "reason": "The document was readable, but no known skills were recognised in it. Nothing was invented to fill the gap.",
     "degraded_sections": [],
     "completeness": 0.0,
-    "parser_version": "resume-parser/2026-08-01"
+    "parser_version": "resume-parser/2026-08-03",
+    "unmatched": [],
+    "enrichment": "unavailable",
+    "prompt_versions": {},
+    "model": null
   }
 }

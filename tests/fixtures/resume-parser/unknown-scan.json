@@ -7,6 +7,10 @@
     "reason": "This document contains no selectable text — it looks like a scan or an image. Upload a text-based PDF or DOCX, or enter your profile manually.",
     "degraded_sections": [],
     "completeness": null,
-    "parser_version": "resume-parser/2026-08-01"
+    "parser_version": "resume-parser/2026-08-03",
+    "unmatched": [],
+    "enrichment": "unavailable",
+    "prompt_versions": {},
+    "model": null
   }
 }

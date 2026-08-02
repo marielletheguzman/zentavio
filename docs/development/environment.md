@@ -84,7 +84,20 @@ OLLAMA_HOST=http://127.0.0.1:11434      # default
 ZENTAVIO_EVAL_MODEL=qwen2.5:14b-instruct
 ```
 
-`ollama pull qwen2.5:14b-instruct` (~9 GB) before running graded evals. The 7b variant is not a
+The résumé parser reads two more, and both have defaults because a deployment without a model is
+supported rather than broken (ADR-0018):
+
+```bash
+ZENTAVIO_PARSER_MODEL=qwen2.5:14b-instruct   # default
+ZENTAVIO_PARSER_ENRICHMENT=on                # 'off' skips the model entirely
+```
+
+`ZENTAVIO_PARSER_ENRICHMENT=off` is the setting for a machine with no model host. The parser then
+produces a complete deterministic profile and reports `enrichment: "unavailable"` on the response,
+which means the profile had **no injection screening** — it is not the same result, and the field
+exists so a caller cannot mistake one for the other.
+
+`ollama pull qwen2.5:14b-instruct` (~9 GB) before running graded evals or serving enriched parses. The 7b variant is not a
 usable substitute: it cannot pass `instruction-quarantine`'s injection gates at any prompt wording,
 so a graded run against it reports failures that are the model's rather than the change's
 (ADR-0018).
