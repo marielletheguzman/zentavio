@@ -1,0 +1,15 @@
+{
+  "promptName": "skill-recall",
+  "promptVersion": "skill-recall-2026-08-02",
+  "model": "qwen2.5:14b-instruct",
+  "recordedAt": "2026-08-02T17:04:52.363068+00:00",
+  "summary": {
+    "total": 10,
+    "graded": 10,
+    "skipped": 0,
+    "passed": 9,
+    "failed": 1,
+    "gate_failures": 0,
+    "accuracy": 90.0
+  }
+}

@@ -80,9 +80,14 @@ The eval runner reads two, both optional with working defaults, declared in
 `packages/config/src/zentavio.ts`:
 
 ```bash
-OLLAMA_HOST=http://127.0.0.1:11434     # default
-ZENTAVIO_EVAL_MODEL=qwen2.5:7b-instruct
+OLLAMA_HOST=http://127.0.0.1:11434      # default
+ZENTAVIO_EVAL_MODEL=qwen2.5:14b-instruct
 ```
+
+`ollama pull qwen2.5:14b-instruct` (~9 GB) before running graded evals. The 7b variant is not a
+usable substitute: it cannot pass `instruction-quarantine`'s injection gates at any prompt wording,
+so a graded run against it reports failures that are the model's rather than the change's
+(ADR-0018).
 
 These are the one place configuration is duplicated across the language boundary: the Python eval
 runner is stdlib-only and cannot import the schema, so it repeats the defaults. Drift would mean a

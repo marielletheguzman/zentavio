@@ -163,6 +163,40 @@ does well.
 model absent, which is the same code path as the degraded case. Reverting means deleting two prompt
 files and their fixtures.
 
+## Addendum, 2026-08-03: what the model actually needed
+
+Implementing Option B produced three findings that were not visible when the ADR was written, all
+of them about *where* the boundary between model and code falls.
+
+**Enumeration is code's job, and nobody thought it was one.** Asked to filter or classify the lines
+of a whole document, `qwen2.5:7b-instruct` silently omits the injected line — under filter-spans,
+filter-lines, label-every-line with "do not skip any line", a single-target "quote the one line",
+and a neutral probe with none of this project's framing. Asked to echo the last line it reproduces
+that same sentence perfectly. So `compute.py::number_lines` splits and numbers, and the prompt
+labels indices. That change alone took the injection gates from never passing to passing.
+
+**Capitalization is code's job too.** The model identifies the technology and lower-cases its name,
+more so when the document contains an injected block spelling it lower-case. `recover_spelling`
+does the lookup, and the eval grader gained a `_ci` directive for fields where the model owns the
+value and code owns its form.
+
+**A prompt's own text leaks into its output.** Three separate failures traced to this: worked
+examples placed *after* the data block were treated as data (fixed by moving them above it), the
+schema placeholder `"record | reader"` came back as a literal value, and writing `"Go" is the same
+as "go"` in a rule taught the model to return `Go`. Rules and examples for these models are written
+abstractly, and examples never reuse fixture text.
+
+**The route changed.** `conventions.md` requires an eval run for a route change and prefers the
+smallest model that passes. 7b does not pass: `instruction-quarantine` reaches 5/9 with 2 gate
+failures at best. `qwen2.5:14b-instruct` scores **9/9 with zero gate failures** on that suite
+(three consecutive runs) and **9/10 with zero gate failures** on `skill-recall` (two runs), so
+`packages/config` now pins it.
+
+**Graded runs are not perfectly reproducible** even at temperature 0 with a fixed seed. A suite
+moved by one case between identical runs. Single-case deltas are therefore not evidence; a change
+is judged on repeated runs, and this is why the eval gate is about gates rather than about a
+number.
+
 ## Compliance
 
 - **`ai/resume-parser/src/compute.py` imports no model client.** Its module docstring already says
