@@ -192,6 +192,51 @@ CREATE UNIQUE INDEX uq_ucp__user_rank ON user_country_preferences (user_id, rank
 — no jurisdiction, and its constraints are employer policy, time zone, and tax treatment
 (`.claude/context/countries.md`).
 
+## `user_targets`
+
+The career track a person is pursuing. **This is what a gap is computed against** — without a
+target there is no "how far am I", only a list of skills someone happens to have.
+
+```sql
+CREATE TABLE user_targets (
+  id            uuid        PRIMARY KEY,
+  user_id       uuid        NOT NULL,
+  career_id     uuid        NOT NULL,
+  rank          smallint    NOT NULL,        -- 1 is the primary target
+  market_scope  char(2),                     -- null = global; set when the target is market-specific
+  status        text        NOT NULL DEFAULT 'active',  -- 'active' | 'achieved' | 'abandoned'
+  decided_at    timestamptz NOT NULL DEFAULT now(),
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  updated_at    timestamptz NOT NULL DEFAULT now(),
+  deleted_at    timestamptz,
+  CONSTRAINT fk_user_targets__users   FOREIGN KEY (user_id)   REFERENCES users(id)   ON DELETE RESTRICT,
+  CONSTRAINT fk_user_targets__careers FOREIGN KEY (career_id) REFERENCES careers(id) ON DELETE RESTRICT,
+  CONSTRAINT ck_user_targets__status CHECK (status IN ('active','achieved','abandoned')),
+  CONSTRAINT ck_user_targets__rank CHECK (rank >= 1)
+);
+CREATE UNIQUE INDEX uq_user_targets__user_career ON user_targets (user_id, career_id) WHERE deleted_at IS NULL;
+CREATE UNIQUE INDEX uq_user_targets__user_rank ON user_targets (user_id, rank) WHERE deleted_at IS NULL AND status = 'active';
+CREATE INDEX idx_user_targets__user_active ON user_targets (user_id) WHERE deleted_at IS NULL AND status = 'active';
+```
+
+**There is no stored readiness column, despite `schema-overview.md` describing this table as "target
+careers, with the readiness they are pursuing".** Readiness is *computed* against a target (M1c) and
+carries the evidence bundle that produced it. A number copied into this row would be a score with no
+provenance that goes stale the moment the profile changes — which is the one thing
+`.claude/context/ai-principles.md` forbids outright. The table is where a target and its computed
+readiness meet, not where a readiness is stored.
+
+`rank` is unique **only among active rows**, so abandoning a target frees its rank rather than
+forcing a renumber. `market_scope` mirrors `career_skills.market_scope`: a requirement can be real in
+one market and absent in another, and a person targeting Berlin is targeting a different requirement
+set than one targeting remote-worldwide.
+
+`status` is a closed set rather than a boolean because `achieved` and `abandoned` are different
+facts, and the difference is the whole value of the row afterwards — an achieved target is an outcome
+worth calibrating against, an abandoned one is a signal that the plan was wrong.
+
+**Erasure: hard delete** (`data-retention.md`). What someone was trying to become is personal.
+
 ## `user_immigration_facts`
 
 Isolated in its own table precisely because it is the most sensitive data in the system. Its disclosure
