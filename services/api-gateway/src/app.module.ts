@@ -22,14 +22,17 @@ import {
 } from '@zentavio/auth';
 import { OidcSubjectResolver } from './auth/oidc-subject.resolver.ts';
 import { SubjectGuard } from './auth/subject.guard.ts';
+import { GapClient } from './gap/gap-client.ts';
+import { GapController } from './gap/gap.controller.ts';
+import { GapService } from './gap/gap.service.ts';
 import { HealthController } from './health/health.controller.ts';
 import { ParserClient } from './resume/parser-client.ts';
 import { ResumeController } from './resume/resume.controller.ts';
 import { ResumeService } from './resume/resume.service.ts';
-import { DATABASE, PARSER_CLIENT, SUBJECT_RESOLVER } from './tokens.ts';
+import { DATABASE, GAP_CLIENT, PARSER_CLIENT, SUBJECT_RESOLVER } from './tokens.ts';
 
 @Module({
-  controllers: [ResumeController, HealthController],
+  controllers: [ResumeController, GapController, HealthController],
   providers: [
     {
       provide: DATABASE,
@@ -47,6 +50,11 @@ import { DATABASE, PARSER_CLIENT, SUBJECT_RESOLVER } from './tokens.ts';
       useFactory: (): ParserClient =>
         new ParserClient({ baseUrl: load(parserSchema).resumeParserUrl }),
     },
+    {
+      provide: GAP_CLIENT,
+      useFactory: (): GapClient => new GapClient({ baseUrl: load(parserSchema).skillGapUrl }),
+    },
+    GapService,
     {
       provide: SUBJECT_RESOLVER,
       useFactory: (db: Kysely<Database>): SubjectResolver => {

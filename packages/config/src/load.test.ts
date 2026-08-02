@@ -180,6 +180,7 @@ describe('the Zentavio schema', () => {
     const config = load(zentavioSchema, {
       ZENTAVIO_DATABASE_URL: 'postgresql://localhost/z',
       ZENTAVIO_RESUME_PARSER_URL: 'http://127.0.0.1:8001',
+      ZENTAVIO_SKILL_GAP_URL: 'http://127.0.0.1:8002',
     });
     expect(config.ollamaHost).toBe('http://127.0.0.1:11434');
     expect(config.databaseMaxConnections).toBe(10);
@@ -203,6 +204,7 @@ describe('the Zentavio schema', () => {
     const config = load(zentavioSchema, {
       ZENTAVIO_DATABASE_URL: 'postgresql://localhost/z',
       ZENTAVIO_RESUME_PARSER_URL: 'http://127.0.0.1:8001',
+      ZENTAVIO_SKILL_GAP_URL: 'http://127.0.0.1:8002',
     });
     expect(config.ollamaHost).toBe('http://127.0.0.1:11434');
     expect(config.evalModel).toBe('qwen2.5:14b-instruct');
@@ -227,6 +229,7 @@ describe('the Zentavio schema', () => {
       'ZENTAVIO_PARSER_ENRICHMENT',
       'ZENTAVIO_PARSER_MODEL',
       'ZENTAVIO_RESUME_PARSER_URL',
+      'ZENTAVIO_SKILL_GAP_URL',
     ]);
   });
 });

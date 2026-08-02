@@ -69,6 +69,20 @@ export {
 
 export { eraseUser, hasPersonalData, type ErasureReport } from './repositories/erasure.ts';
 
+export {
+  careerBySlug,
+  careerRequirements,
+  heldSkills,
+  primaryTarget,
+  setTarget,
+  skillGraph,
+  type EdgeRow,
+  type HeldSkillRow,
+  type RequirementRow,
+  type SetTargetOptions,
+  type UserTarget,
+} from './repositories/targets.ts';
+
 export type {
   Database,
   EvaluationColumn,

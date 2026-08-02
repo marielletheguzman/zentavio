@@ -31,4 +31,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src"]
+# The package directory, not `src`. Packaging `src` installs a top-level module called
+# `src` and leaves the real package unimportable — which pytest hides, because pytest.ini
+# puts the source directory on the path directly. `uvicorn resume_parser.main:app` is what found it.
+packages = ["src/resume_parser"]

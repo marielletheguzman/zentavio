@@ -84,6 +84,14 @@ OLLAMA_HOST=http://127.0.0.1:11434      # default
 ZENTAVIO_EVAL_MODEL=qwen2.5:14b-instruct
 ```
 
+The gateway also needs `ZENTAVIO_SKILL_GAP_URL` (e.g. `http://127.0.0.1:8002`). No default, for
+the same reason as the parser URL: a gap computed by something other than the service you meant is
+indistinguishable from a correct one.
+
+```bash
+uv run --project ai --all-packages uvicorn skill_gap.main:app --port 8002
+```
+
 The résumé parser reads two more, and both have defaults because a deployment without a model is
 supported rather than broken (ADR-0018):
 

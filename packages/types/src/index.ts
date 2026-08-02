@@ -81,6 +81,16 @@ export {
 } from './sponsorship.ts';
 
 export {
+  isGapResponse,
+  type GapCluster,
+  type GapHeldWire,
+  type GapItemWire,
+  type GapRequestWire,
+  type GapResponseWire,
+  type GapStatus,
+} from './skill-gap.ts';
+
+export {
   isParseResponse,
   isServiceError,
   type EnrichmentStatus,
