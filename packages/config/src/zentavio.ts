@@ -129,6 +129,14 @@ export const parserSchema = {
     type: 'url',
     description: 'Base URL of the résumé parser service, e.g. http://127.0.0.1:8001',
   },
+  skillGapUrl: {
+    env: 'ZENTAVIO_SKILL_GAP_URL',
+    type: 'url',
+    // No default, for the same reason as the parser URL and the database URL: a
+    // plausible-but-wrong default fails silently against the wrong host, and a gap computed by
+    // something other than the service you meant is indistinguishable from a correct one.
+    description: 'Base URL of the skill-gap service, e.g. http://127.0.0.1:8002',
+  },
 } as const satisfies Schema;
 
 /**
