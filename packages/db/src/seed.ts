@@ -66,10 +66,50 @@ export interface SeedCareer {
   readonly sourceUrl: string | null;
 }
 
+/**
+ * One requirement of the track, and how much it matters.
+ *
+ * `marketScope` is null for a global requirement. German for a Berlin role is real in one market
+ * and absent in another, and both rows coexist — the more specific one wins during evaluation
+ * (`docs/database/entities/skill.md`).
+ */
+export interface SeedCareerSkill {
+  readonly skill: string;
+  readonly weight: number;
+  readonly cluster: string;
+  readonly marketScope: string | null;
+}
+
+/** One typed, weighted edge of the graph. */
+export interface SeedEdge {
+  readonly from: string;
+  readonly to: string;
+  readonly type: string;
+  readonly weight: number;
+}
+
 export interface SeedFile {
   readonly career: SeedCareer;
   readonly skills: readonly SeedSkill[];
+  /** Optional so a seed file that predates the graph still loads. */
+  readonly careerSkills?: readonly SeedCareerSkill[];
+  readonly edges?: readonly SeedEdge[];
 }
+
+export const EDGE_TYPES = [
+  'requires',
+  'adjacent_to',
+  'transfers_to',
+  'subsumes',
+  'tooling_of',
+] as const;
+
+export const CAREER_SKILL_CLUSTERS = [
+  'core',
+  'supporting',
+  'differentiating',
+  'peripheral',
+] as const;
 
 /**
  * Alias resolution key: casefolded, punctuation stripped, whitespace collapsed.
@@ -124,7 +164,100 @@ export function validateSeed(seed: SeedFile): readonly string[] {
     }
   }
 
+  const known = new Set(slugs);
+
+  for (const entry of seed.careerSkills ?? []) {
+    if (!known.has(entry.skill)) {
+      problems.push(`careerSkills references unknown skill: ${entry.skill}`);
+    }
+    if (entry.weight < 0 || entry.weight > 1) {
+      problems.push(`careerSkills weight out of range for ${entry.skill}: ${entry.weight}`);
+    }
+    if (!(CAREER_SKILL_CLUSTERS as readonly string[]).includes(entry.cluster)) {
+      problems.push(`careerSkills unknown cluster for ${entry.skill}: ${entry.cluster}`);
+    }
+    if (entry.marketScope !== null && !/^[A-Z]{2}$/.test(entry.marketScope)) {
+      problems.push(`careerSkills marketScope is not an ISO 3166-1 alpha-2 code: ${entry.marketScope}`);
+    }
+  }
+
+  // Same (career, skill, market) twice would be rejected by uq_career_skills__career_skill_market
+  // mid-load, naming one row while the file may have several problems.
+  const seenRequirement = new Set<string>();
+  for (const entry of seed.careerSkills ?? []) {
+    const key = `${entry.skill}|${entry.marketScope ?? 'ZZ'}`;
+    if (seenRequirement.has(key)) {
+      problems.push(`duplicate careerSkills entry: ${entry.skill} (${entry.marketScope ?? 'global'})`);
+    }
+    seenRequirement.add(key);
+  }
+
+  const seenEdge = new Set<string>();
+  for (const edge of seed.edges ?? []) {
+    if (!known.has(edge.from)) problems.push(`edge references unknown skill: ${edge.from}`);
+    if (!known.has(edge.to)) problems.push(`edge references unknown skill: ${edge.to}`);
+    if (edge.from === edge.to) {
+      problems.push(`edge is self-referential: ${edge.from} ${edge.type} ${edge.to}`);
+    }
+    if (!(EDGE_TYPES as readonly string[]).includes(edge.type)) {
+      problems.push(`unknown edge type: ${edge.type}`);
+    }
+    if (edge.weight < 0 || edge.weight > 1) {
+      problems.push(`edge weight out of range: ${edge.from} ${edge.type} ${edge.to} = ${edge.weight}`);
+    }
+    const key = `${edge.from}|${edge.to}|${edge.type}`;
+    if (seenEdge.has(key)) problems.push(`duplicate edge: ${edge.from} ${edge.type} ${edge.to}`);
+    seenEdge.add(key);
+  }
+
+  // A `requires` cycle makes the dependency ordering M1b produces impossible, and the database
+  // cannot see it — every individual row is legal. Reported here, where the whole file is visible.
+  for (const cycle of requiresCycles(seed.edges ?? [])) {
+    problems.push(`requires-edges form a cycle: ${cycle.join(' -> ')}`);
+  }
+
   return problems;
+}
+
+/**
+ * Cycles among `requires` edges, as readable paths.
+ *
+ * A gap is ordered by walking prerequisites, so a cycle means there is no first thing to learn.
+ * `ck_skill_edges__no_self` catches the one-hop case; nothing in the schema can catch three skills
+ * that require each other in a ring, because each row is individually valid.
+ */
+export function requiresCycles(edges: readonly SeedEdge[]): readonly (readonly string[])[] {
+  const graph = new Map<string, string[]>();
+  for (const edge of edges) {
+    if (edge.type !== 'requires') continue;
+    const outgoing = graph.get(edge.from) ?? [];
+    outgoing.push(edge.to);
+    graph.set(edge.from, outgoing);
+  }
+
+  const found: string[][] = [];
+  const state = new Map<string, 'visiting' | 'done'>();
+  const stack: string[] = [];
+
+  const walk = (node: string): void => {
+    state.set(node, 'visiting');
+    stack.push(node);
+    for (const next of graph.get(node) ?? []) {
+      const seen = state.get(next);
+      if (seen === 'visiting') {
+        found.push([...stack.slice(stack.indexOf(next)), next]);
+      } else if (seen === undefined) {
+        walk(next);
+      }
+    }
+    stack.pop();
+    state.set(node, 'done');
+  };
+
+  for (const node of graph.keys()) {
+    if (state.get(node) === undefined) walk(node);
+  }
+  return found;
 }
 
 export interface SeedPlan {
@@ -132,6 +265,8 @@ export interface SeedPlan {
   readonly skillsInserted: number;
   readonly skillsUpdated: number;
   readonly aliasesInserted: number;
+  readonly careerSkillsInserted: number;
+  readonly edgesInserted: number;
 }
 
 interface RunOptions {
@@ -197,7 +332,9 @@ export async function run(options: RunOptions): Promise<number> {
         `${String(plan.careersInserted)} career(s), ` +
         `${String(plan.skillsInserted)} skill(s) inserted, ` +
         `${String(plan.skillsUpdated)} updated, ` +
-        `${String(plan.aliasesInserted)} alias(es).`,
+        `${String(plan.aliasesInserted)} alias(es), ` +
+        `${String(plan.careerSkillsInserted)} requirement(s), ` +
+        `${String(plan.edgesInserted)} edge(s).`,
     );
     if (dryRun) out('Nothing was written. Re-run without --dry-run to apply.');
     return EXIT.OK;
@@ -226,6 +363,8 @@ export async function applySeed(
   let skillsInserted = 0;
   let skillsUpdated = 0;
   let aliasesInserted = 0;
+  let careerSkillsInserted = 0;
+  let edgesInserted = 0;
 
   try {
     await client.query('BEGIN');
@@ -290,6 +429,51 @@ export async function applySeed(
       }
     }
 
+    // The graph, after every skill exists. Resolved by slug rather than carried through from the
+    // loop above, because a rerun updates existing skills instead of inserting them and the ids
+    // must be read back either way.
+    const idBySlug = new Map<string, string>();
+    const { rows: skillRows } = await client.query<{ id: string; slug: string }>(
+      'SELECT id, slug FROM skills WHERE deleted_at IS NULL',
+    );
+    for (const row of skillRows) idBySlug.set(row.slug, row.id);
+
+    const { rows: careerRows } = await client.query<{ id: string }>(
+      'SELECT id FROM careers WHERE slug = $1 AND deleted_at IS NULL',
+      [career.slug],
+    );
+    const careerId = careerRows[0]?.id;
+    if (careerId === undefined) throw new Error(`career ${career.slug} could not be read back`);
+
+    for (const entry of seed.careerSkills ?? []) {
+      const skillId = idBySlug.get(entry.skill);
+      if (skillId === undefined) throw new Error(`careerSkills references unknown skill ${entry.skill}`);
+      const result = await client.query(
+        `INSERT INTO career_skills (id, career_id, skill_id, weight, cluster, basis, market_scope, source_tier, source_url)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NULL)
+         ON CONFLICT (career_id, skill_id, COALESCE(market_scope, 'ZZ')) WHERE deleted_at IS NULL DO NOTHING`,
+        [uuidv7(), careerId, skillId, entry.weight, entry.cluster, SEED_BASIS, entry.marketScope, SEED_TIER],
+      );
+      careerSkillsInserted += result.rowCount ?? 0;
+    }
+
+    for (const edge of seed.edges ?? []) {
+      const from = idBySlug.get(edge.from);
+      const to = idBySlug.get(edge.to);
+      if (from === undefined || to === undefined) {
+        throw new Error(`edge references unknown skill: ${edge.from} -> ${edge.to}`);
+      }
+      // `support` stays NULL: these are curated, not counted. Only a posting-cooccurrence edge is
+      // required to state how many observations back it, and none of these are derived that way.
+      const result = await client.query(
+        `INSERT INTO skill_edges (id, from_skill_id, to_skill_id, edge_type, weight, basis, support, source_tier, source_url)
+         VALUES ($1, $2, $3, $4, $5, $6, NULL, $7, NULL)
+         ON CONFLICT (from_skill_id, to_skill_id, edge_type) WHERE deleted_at IS NULL DO NOTHING`,
+        [uuidv7(), from, to, edge.type, edge.weight, SEED_BASIS, SEED_TIER],
+      );
+      edgesInserted += result.rowCount ?? 0;
+    }
+
     if (options.dryRun === true) {
       await client.query('ROLLBACK');
     } else {
@@ -306,7 +490,7 @@ export async function applySeed(
     client.release();
   }
 
-  return { careersInserted, skillsInserted, skillsUpdated, aliasesInserted };
+  return { careersInserted, skillsInserted, skillsUpdated, aliasesInserted, careerSkillsInserted, edgesInserted };
 }
 
 const executedDirectly =

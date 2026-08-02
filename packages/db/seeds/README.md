@@ -20,6 +20,32 @@ only return ids from a supplied list, never invent one (`docs/prompts/convention
 populated `skills` table there is no closed set, so there is nothing to parse against. This is the
 smallest set that makes M1a's one track real.
 
+## What the seed contains
+
+| Part | Rows | What it is |
+|---|---|---|
+| `careers` | 1 | the MVP track |
+| `skills` + `skill_aliases` | 30 + aliases | the closed set the parser resolves against |
+| `career_skills` | 30 | what the track requires, weighted and clustered |
+| `skill_edges` | 34 | the graph: 12 `requires`, 8 `tooling_of`, 8 `transfers_to`, 4 `adjacent_to`, 2 `subsumes` |
+
+**`requires` edges are deliberately sparse — 12 across 30 skills.** Each one is a claim that the
+target is genuinely hard to learn without the prerequisite, not merely easier with it. An
+over-eager prerequisite makes a learning path longer than the gap requires, which makes a reachable
+target look unreachable (`docs/database/entities/skill.md`).
+
+**`german` is the one market-scoped requirement (`DE`).** It is real for a Berlin role and absent
+for a remote-worldwide one, and storing it globally would put it in every gap everywhere. It is
+also the row that proves `market_scope` works end to end.
+
+**`transfers_to` between the three clouds is asymmetric on purpose.** Arriving at AWS from Azure is
+a smaller step than the reverse, because AWS is the market default and more of the surrounding
+ecosystem is already familiar.
+
+**A `requires` cycle is refused before it reaches the database**, by `requiresCycles` in
+`packages/db/src/seed.ts`. Every individual row of a cycle satisfies `ck_skill_edges__no_self` —
+only the whole set is cyclic, and a cyclic prerequisite graph means the gap has no first step.
+
 ## The provenance, stated plainly
 
 **Every row here is `source_tier: 3`, `basis: 'curated'`, with `retrieved_at` NULL.** That is a

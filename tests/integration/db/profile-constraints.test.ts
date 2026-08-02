@@ -26,6 +26,8 @@ beforeEach(async () => {
   // profile_skills cascades from user_profiles; the rest are cleared explicitly. Order matters —
   // every foreign key here is RESTRICT except that one.
   await pool.query('DELETE FROM user_profiles');
+  await pool.query('DELETE FROM career_skills');
+  await pool.query('DELETE FROM skill_edges');
   await pool.query('DELETE FROM skill_aliases');
   await pool.query('DELETE FROM skills');
   await pool.query('DELETE FROM careers');
