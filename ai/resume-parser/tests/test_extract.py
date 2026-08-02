@@ -8,15 +8,6 @@ PDF is table stakes; a parser that turns a scan, a corrupt file, or a two-column
 from __future__ import annotations
 
 import pytest
-from compute import parse
-from extract import (
-    DOCX_CONTENT_TYPE,
-    PDF_CONTENT_TYPE,
-    PLAIN_TEXT_CONTENT_TYPE,
-    DocumentTextExtractor,
-    UnsupportedDocumentError,
-    extract,
-)
 from fixtures import (
     docx_with,
     not_a_document,
@@ -24,7 +15,16 @@ from fixtures import (
     pdf_image_only,
     pdf_with_text,
 )
-from ports import RegisteredSkill
+from resume_parser.compute import parse
+from resume_parser.extract import (
+    DOCX_CONTENT_TYPE,
+    PDF_CONTENT_TYPE,
+    PLAIN_TEXT_CONTENT_TYPE,
+    DocumentTextExtractor,
+    UnsupportedDocumentError,
+    extract,
+)
+from resume_parser.ports import RegisteredSkill
 from test_compute import FakeRegistry, skill
 
 REGISTRY = FakeRegistry(

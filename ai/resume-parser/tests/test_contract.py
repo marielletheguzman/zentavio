@@ -30,10 +30,10 @@ from pathlib import Path
 # here: the degraded response has exactly the same keys, which is what this file is guarding.
 os.environ["ZENTAVIO_PARSER_ENRICHMENT"] = "off"
 
-from extract import PDF_CONTENT_TYPE, PLAIN_TEXT_CONTENT_TYPE
 from fastapi.testclient import TestClient
 from fixtures import pdf_image_only
-from main import app
+from resume_parser.extract import PDF_CONTENT_TYPE, PLAIN_TEXT_CONTENT_TYPE
+from resume_parser.main import app
 
 FIXTURE_DIR = Path(__file__).resolve().parents[3] / "tests" / "fixtures" / "resume-parser"
 

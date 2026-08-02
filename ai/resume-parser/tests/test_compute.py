@@ -7,7 +7,7 @@ because those are the failures that produce a *plausible* wrong answer rather th
 from __future__ import annotations
 
 import pytest
-from compute import (
+from resume_parser.compute import (
     ParseResult,
     extract_skills,
     normalize_phrase,
@@ -17,7 +17,7 @@ from compute import (
     segment,
     spans_from_labels,
 )
-from ports import ExtractedText, RegisteredSkill
+from resume_parser.ports import ExtractedText, RegisteredSkill
 
 
 class FakeRegistry:

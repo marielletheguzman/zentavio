@@ -14,10 +14,10 @@ from __future__ import annotations
 
 import base64
 
-from extract import DOCX_CONTENT_TYPE, PDF_CONTENT_TYPE, PLAIN_TEXT_CONTENT_TYPE
 from fastapi.testclient import TestClient
 from fixtures import docx_with, not_a_document, pdf_image_only, pdf_with_text
-from main import MAX_DOCUMENT_BYTES, PARSER_VERSION, app
+from resume_parser.extract import DOCX_CONTENT_TYPE, PDF_CONTENT_TYPE, PLAIN_TEXT_CONTENT_TYPE
+from resume_parser.main import MAX_DOCUMENT_BYTES, PARSER_VERSION, app
 
 client = TestClient(app)
 

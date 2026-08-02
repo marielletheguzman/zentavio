@@ -20,15 +20,15 @@ import time
 from pathlib import Path
 
 import pytest
-from compute import ParseResult, normalize_phrase, parse
-from extract import (
+from fixtures import not_a_document, pdf_image_only, pdf_with_text
+from resume_parser.compute import ParseResult, normalize_phrase, parse
+from resume_parser.extract import (
     PDF_CONTENT_TYPE,
     PLAIN_TEXT_CONTENT_TYPE,
     UnsupportedDocumentError,
     extract,
 )
-from fixtures import not_a_document, pdf_image_only, pdf_with_text
-from ports import ExtractedText, RegisteredSkill
+from resume_parser.ports import ExtractedText, RegisteredSkill
 from test_compute import FakeRegistry, skill
 
 REGISTRY = FakeRegistry(

@@ -23,7 +23,8 @@ import zipfile
 
 import docx
 import pypdf
-from ports import ExtractedText
+
+from resume_parser.ports import ExtractedText
 
 PDF_CONTENT_TYPE = "application/pdf"
 DOCX_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
