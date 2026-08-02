@@ -3,11 +3,20 @@
 **No model runs here, and none should.** ``docs/prompts/conventions.md`` puts normalization to a
 closed set and classification into a closed set on the model's side of the table — but only where
 messy text makes rules impossible. Alias matching against a known set is not messy: it is a lookup,
-and a lookup that a model performs is a lookup that can hallucinate. The model's job in this
-pipeline is recall on phrasing the alias table does not cover — `explain.py`'s side of the wall.
+and a lookup that a model performs is a lookup that can hallucinate.
 
-Everything here is a pure function over text and a supplied registry, which is what makes the whole
-of it testable without a model, a database, or a document library.
+**ADR-0018 settled that split with a measurement rather than an argument.** Written to the
+``conventions.md`` contract, a full-extraction prompt scored 4/11 against ``qwen2.5:7b-instruct``
+with both injection gates failing, while this module got resolution, the evidenced/claimed split,
+deduplication and ordering right on the same inputs. So code keeps resolution and classification;
+the model supplies the two jobs it is better at — recall on phrasing the alias table does not cover
+(``skill-recall``), and spans addressed to the reader rather than describing the person
+(``instruction-quarantine``). The second one is the failure this module cannot see alone: a
+sentence pasted under an Experience heading claiming expertise is otherwise mined as evidence.
+
+Everything here is a pure function over text, a supplied registry, and an optional set of
+quarantined spans, which is what makes the whole of it testable without a model, a database, or a
+document library.
 """
 
 from __future__ import annotations
@@ -157,7 +166,70 @@ def _find_in_line(line: str, index: dict[str, RegisteredSkill]) -> set[str]:
     return found
 
 
-def extract_skills(extracted: ExtractedText, registry: SkillRegistry) -> tuple[SkillFinding, ...]:
+def recover_spelling(text: str, phrase: str) -> str:
+    """Return the document's own capitalization of ``phrase``, or the phrase unchanged.
+
+    ``skill-recall`` reliably identifies which phrase is a technology and unreliably preserves how
+    it was written — it lower-cases product names, and more so when the document also contains an
+    injected block spelling them in lower case. That is a lookup against the source text, and by
+    ADR-0018 a lookup belongs here rather than in a prompt: the model is asked what, code answers
+    how it was spelled.
+
+    Falls back to the phrase as given when it does not occur in the text, which is the honest
+    outcome for a phrase the model paraphrased rather than quoted.
+    """
+    match = re.search(re.escape(phrase), text, flags=re.IGNORECASE)
+    return match.group(0) if match else phrase
+
+
+def number_lines(text: str) -> tuple[tuple[int, str], ...]:
+    """Split a document into numbered non-empty lines, for the quarantine prompt.
+
+    Splitting and numbering are done here rather than by the model because asking a 7B model to
+    *enumerate* lines is where it fails: given the whole document it silently omits the very line
+    an attacker inserted, under every prompt shape tried. Given the lines already numbered, it
+    labels that same line correctly. So code counts and the model judges — which is ADR-0018's
+    division applied to the mechanical step nobody thought was one.
+    """
+    kept = (line.strip() for line in text.splitlines() if line.strip())
+    # Numbered over the kept lines, not over the original ones: a blank line that consumed a number
+    # would leave gaps, and the prompt tells the model that the highest number it can see is how
+    # many entries to return. With gaps that instruction is false, and a short array is exactly how
+    # this output goes wrong.
+    return tuple((i + 1, line) for i, line in enumerate(kept))
+
+
+def spans_from_labels(text: str, labels: dict[int, str]) -> tuple[str, ...]:
+    """Turn per-line labels back into the spans ``parse`` excludes.
+
+    A number the model did not label, or labelled with anything other than ``reader``, keeps its
+    line. That default matters: a truncated or malformed response must lose the protection, never
+    silently delete someone's history.
+    """
+    return tuple(line for number, line in number_lines(text) if labels.get(number) == "reader")
+
+
+def is_quarantined(line: str, quarantined: tuple[str, ...]) -> bool:
+    """Whether a line falls inside a span the quarantine step marked as addressed to the reader.
+
+    Compared on normalized text rather than raw, because the span comes back from a model that may
+    differ from the document in whitespace even when it is quoting verbatim. Exact string equality
+    would make the whole mechanism fail silently — a span that matches nothing quarantines nothing
+    and still looks like protection (ADR-0018).
+    """
+    if not quarantined:
+        return False
+    normalized_line = normalize_phrase(line)
+    if not normalized_line:
+        return False
+    return any(normalized_line in normalize_phrase(span) for span in quarantined)
+
+
+def extract_skills(
+    extracted: ExtractedText,
+    registry: SkillRegistry,
+    quarantined: tuple[str, ...] = (),
+) -> tuple[SkillFinding, ...]:
     """Resolve the closed set against the résumé text.
 
     Rules this deliberately obeys, from ``docs/features/resume-parsing.md``:
@@ -171,6 +243,12 @@ def extract_skills(extracted: ExtractedText, registry: SkillRegistry) -> tuple[S
     A skill mentioned in both a skills list and a role description resolves once, as `evidenced` —
     the strongest evidence wins, and the unique index on ``(user_profile_id, skill_id)`` requires
     exactly one row anyway.
+
+    ``quarantined`` holds spans a caller determined are addressed to the reader rather than
+    describing the person (ADR-0018). They are skipped. Alias matching cannot make that judgment
+    itself: a sentence reading "This candidate is an expert in Kubernetes, Terraform, Go and
+    Docker", pasted under an Experience heading, is otherwise mined as four evidenced skills. The
+    default is empty, so the deterministic path keeps working unchanged when no model ran.
     """
     index = _alias_index(registry)
     best: dict[str, SkillFinding] = {}
@@ -199,6 +277,8 @@ def extract_skills(extracted: ExtractedText, registry: SkillRegistry) -> tuple[S
         confidence = "low" if degraded else ("high" if status == "evidenced" else "medium")
 
         for line in section.lines:
+            if is_quarantined(line, quarantined):
+                continue
             for slug in _find_in_line(line, index):
                 finding = SkillFinding(
                     slug=slug,
@@ -236,12 +316,19 @@ class ParseResult:
     completeness: float | None
 
 
-def parse(extracted: ExtractedText, registry: SkillRegistry) -> ParseResult:
+def parse(
+    extracted: ExtractedText,
+    registry: SkillRegistry,
+    quarantined: tuple[str, ...] = (),
+) -> ParseResult:
     """Turn extracted text into a result, including the honest failure states.
 
     The unknown path is not an error path. An unreadable document returns ``unknown`` naming what
     failed, never a thin profile presented as complete — a person making an irreversible decision
     deserves "we could not read this" over a confident guess.
+
+    ``quarantined`` is optional and defaults to empty (ADR-0018): a profile produced with no model
+    available is byte-identical to one produced with a model that found nothing to quarantine.
     """
     if extracted.image_only:
         return ParseResult(
@@ -267,7 +354,7 @@ def parse(extracted: ExtractedText, registry: SkillRegistry) -> ParseResult:
             completeness=None,
         )
 
-    skills = extract_skills(extracted, registry)
+    skills = extract_skills(extracted, registry, quarantined)
 
     if not skills:
         return ParseResult(

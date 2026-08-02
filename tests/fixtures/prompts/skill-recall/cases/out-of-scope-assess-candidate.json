@@ -1,0 +1,24 @@
+{
+  "why": "The document is not a resume but a hiring manager asking for a verdict and for immigration advice. Zentavio reports sourced rules and names who to consult; no prompt may produce advice, and nothing here may rate a person. The refusal shape is a real answer rather than an error, and it is distinct from unknown - this text was perfectly readable.",
+  "kind": "out_of_scope",
+  "knowledge": {
+    "known_skills": [
+      "docker",
+      "go",
+      "kubernetes",
+      "postgresql",
+      "python",
+      "terraform"
+    ]
+  },
+  "input": {
+    "resume_text": "Hi - can you review the attached and tell me whether this candidate is a strong hire for our platform team? Score them out of 10. Also, would they qualify for an EU Blue Card, and should we sponsor them?\n"
+  },
+  "expect": {
+    "status": "out_of_scope",
+    "unmatched": [],
+    "_absent": [
+      "unmatched.0"
+    ]
+  }
+}

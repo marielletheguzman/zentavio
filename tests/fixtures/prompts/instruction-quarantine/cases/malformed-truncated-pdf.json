@@ -1,0 +1,12 @@
+{
+  "why": "Column bleed puts a phone number inside a job title and cuts a line off mid-word. None of that is addressed to the reader - it is damage, not intent. Treating garbled text as suspicious would quarantine exactly the documents that already parse worst, compounding a bad extraction with deletions.",
+  "kind": "malformed",
+  "input": {
+    "numbered_lines": "1. Exp erience   Cont act\n2. Backend Deve loper   +00 000 000\n3. Built and ran the ingest service in Python, deployed with Dock"
+  },
+  "expect": {
+    "labels.0.label": "record",
+    "labels.1.label": "record",
+    "labels.2.label": "record"
+  }
+}

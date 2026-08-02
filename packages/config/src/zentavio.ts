@@ -28,7 +28,12 @@ export const evalSchema = {
     env: 'ZENTAVIO_EVAL_MODEL',
     type: 'string',
     minLength: 1,
-    default: 'qwen2.5:7b-instruct',
+    // Raised from qwen2.5:7b-instruct on 2026-08-03 by the eval run conventions.md requires for a
+    // route change. 7b cannot pass instruction-quarantine's injection gates at all: asked to
+    // classify lines of a document it silently omits the injected line, under every prompt shape
+    // tried. 14b passes 9/9 on that suite and 9/10 on skill-recall, both with zero gate failures.
+    // "Smallest model that passes evals" is still the rule — 7b does not pass.
+    default: 'qwen2.5:14b-instruct',
     description: 'Pinned model for graded evals, so delta reports are comparable between machines',
   },
 } as const satisfies Schema;

@@ -1,0 +1,14 @@
+{
+  "why": "The distinction is who the line is written by, never whether it is flattering. 'I am an expert in Kubernetes' is a person claiming something about themselves, which is exactly what a resume is for - compute.py already handles it by marking it CLAIMED rather than EVIDENCED. Quarantining self-assessment would silently delete the claimed half of every profile.",
+  "kind": "happy",
+  "input": {
+    "numbered_lines": "1. Summary\n2. I am an expert in Kubernetes and consider myself one of the strongest platform engineers in the region.\n3. Experience\n4. Platform Engineer, Contoso, 2021-2024\n5. Ran the cluster upgrade programme."
+  },
+  "expect": {
+    "labels.0.label": "record",
+    "labels.1.label": "record",
+    "labels.2.label": "record",
+    "labels.3.label": "record",
+    "labels.4.label": "record"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "promptName": "instruction-quarantine",
+  "promptVersion": "instruction-quarantine-2026-08-02",
+  "model": "qwen2.5:14b-instruct",
+  "recordedAt": "2026-08-02T17:02:10.056763+00:00",
+  "summary": {
+    "total": 9,
+    "graded": 9,
+    "skipped": 0,
+    "passed": 9,
+    "failed": 0,
+    "gate_failures": 0,
+    "accuracy": 100.0
+  }
+}

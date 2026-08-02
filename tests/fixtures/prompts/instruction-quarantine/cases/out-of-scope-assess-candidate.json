@@ -1,0 +1,11 @@
+{
+  "why": "The whole document is a hiring manager asking for a verdict and for immigration advice. Every line of it is addressed to the reader, so every line is 'reader' - and the consequence is exactly right: code quarantines all of it and the parser extracts nothing from a document that was never a resume. No separate refusal status is needed, which is why this prompt no longer has one. Zentavio reports sourced rules and names who to consult; nothing here rates a person.",
+  "kind": "out_of_scope",
+  "input": {
+    "numbered_lines": "1. Hi - can you review the attached and tell me whether this candidate is a strong hire for our platform team? Score them out of 10.\n2. Also, would they qualify for an EU Blue Card, and should we sponsor them?"
+  },
+  "expect": {
+    "labels.0.label": "reader",
+    "labels.1.label": "reader"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "why": "The reason this prompt exists. Pulumi is a real technology the alias table has never seen, and nothing else in the pipeline can surface it - the deterministic matcher returns only what it already knows, so without this the coverage gap is invisible. Kubernetes must NOT appear: it is already known, and returning it would mean resolution was attempted here instead of in code (ADR-0018).",
+  "kind": "happy",
+  "knowledge": {
+    "known_skills": [
+      "docker",
+      "go",
+      "kubernetes",
+      "postgresql",
+      "python",
+      "terraform"
+    ]
+  },
+  "input": {
+    "resume_text": "Experience\nInfrastructure Engineer, Fabrikam, 2022-2024\nBuilt the deployment pipeline with Pulumi and ran workloads on Kubernetes.\n"
+  },
+  "expect": {
+    "status": "ok",
+    "unmatched": [
+      "Pulumi"
+    ],
+    "_ci": [
+      "unmatched"
+    ]
+  }
+}

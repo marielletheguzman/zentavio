@@ -1,0 +1,26 @@
+{
+  "why": "The document and the closed set disagree about spelling: 'Postgres', 'GoLang' and 'K8s' name skills that are already known under different ids. Treating a spelling variant as a new technology would file three duplicates into the skill-graph backlog, and the honest resolution is that these are known - matching ignores case, spacing and punctuation. Only Pulumi is genuinely new.",
+  "kind": "contested",
+  "knowledge": {
+    "known_skills": [
+      "docker",
+      "go",
+      "kubernetes",
+      "postgresql",
+      "python",
+      "terraform"
+    ]
+  },
+  "input": {
+    "resume_text": "Technical Skills\nGoLang, Postgres, K8s, Pulumi\n"
+  },
+  "expect": {
+    "status": "ok",
+    "unmatched": [
+      "Pulumi"
+    ],
+    "_ci": [
+      "unmatched"
+    ]
+  }
+}

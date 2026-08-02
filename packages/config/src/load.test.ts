@@ -205,7 +205,7 @@ describe('the Zentavio schema', () => {
       ZENTAVIO_RESUME_PARSER_URL: 'http://127.0.0.1:8001',
     });
     expect(config.ollamaHost).toBe('http://127.0.0.1:11434');
-    expect(config.evalModel).toBe('qwen2.5:7b-instruct');
+    expect(config.evalModel).toBe('qwen2.5:14b-instruct');
   });
 
   it('exposes every key for generating .env.example', () => {

@@ -17,7 +17,7 @@ import urllib.error
 import urllib.request
 
 DEFAULT_HOST = os.environ.get("OLLAMA_HOST", "http://127.0.0.1:11434")
-DEFAULT_MODEL = os.environ.get("ZENTAVIO_EVAL_MODEL", "qwen2.5:7b-instruct")
+DEFAULT_MODEL = os.environ.get("ZENTAVIO_EVAL_MODEL", "qwen2.5:14b-instruct")
 TIMEOUT_SECONDS = 120
 HTTP_OK = 200
 

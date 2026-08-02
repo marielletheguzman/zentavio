@@ -1,0 +1,21 @@
+{
+  "why": "Job titles, employers, schools, cities, methodologies and soft skills are not technologies. If any of these reach unmatched they become candidate skills for the graph, and a graph containing 'Agile' and 'Northwind Systems' as skills is worse than one with a gap. This is the precision half of recall.",
+  "kind": "happy",
+  "knowledge": {
+    "known_skills": [
+      "docker",
+      "go",
+      "kubernetes",
+      "postgresql",
+      "python",
+      "terraform"
+    ]
+  },
+  "input": {
+    "resume_text": "Senior Staff Engineer, Northwind Systems, Berlin\nBSc Computer Science, University of Warwick\nStrong leadership and stakeholder management. Agile practitioner, on-call rotation owner.\nShipped services in Go.\n"
+  },
+  "expect": {
+    "status": "ok",
+    "unmatched": []
+  }
+}
