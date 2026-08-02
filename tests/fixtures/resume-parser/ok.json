@@ -22,6 +22,10 @@
     "reason": null,
     "degraded_sections": [],
     "completeness": 0.25,
-    "parser_version": "resume-parser/2026-08-01"
+    "parser_version": "resume-parser/2026-08-03",
+    "unmatched": [],
+    "enrichment": "unavailable",
+    "prompt_versions": {},
+    "model": null
   }
 }

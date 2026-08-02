@@ -65,7 +65,32 @@ export interface ParseResponseWire {
   readonly completeness: number | null;
   /** Which parser produced this. Stored with the profile so it can be reproduced. */
   readonly parser_version: string;
+  /**
+   * Technologies the résumé names that the closed set does not contain — the coverage backlog for
+   * the skill graph. **Never a claim about the person:** nothing here is a skill on their profile,
+   * which is what bounds the damage a hallucinating model can do (ADR-0018).
+   */
+  readonly unmatched: readonly string[];
+  /**
+   * Whether the model-backed steps ran. `unavailable` means this profile had **no injection
+   * screening** — a line pasted into a résumé claiming expertise was matched as though the person
+   * wrote it. On the wire so a caller cannot mistake a degraded parse for a complete one.
+   */
+  readonly enrichment: EnrichmentStatus;
+  /** promptVersion per prompt that contributed. Empty when none did. */
+  readonly prompt_versions: Readonly<Record<string, string>>;
+  /** Which model answered, so a result is attributable. `null` when none did. */
+  readonly model: string | null;
 }
+
+/**
+ * `applied` — both prompts answered · `partial` — one did · `unavailable` — none did.
+ *
+ * Degradation is a supported outcome rather than an error: the deterministic profile is produced
+ * either way, and enrichment improves it. Treating `unavailable` as a failure would reject uploads
+ * that succeeded.
+ */
+export type EnrichmentStatus = 'applied' | 'partial' | 'unavailable';
 
 export interface ParseRequestWire {
   /** base64 — a résumé is binary. Decoded, parsed, and discarded within the request. */
@@ -81,6 +106,7 @@ export interface ParseRequestWire {
 }
 
 const STATUSES = new Set<string>(['ok', 'partial', 'unknown']);
+const ENRICHMENT_STATUSES = new Set<string>(['applied', 'partial', 'unavailable']);
 const SKILL_STATUSES = new Set<string>(['evidenced', 'claimed']);
 const CONFIDENCES = new Set<string>(['high', 'medium', 'low']);
 const EVIDENCE_KINDS_WIRE = new Set<string>([
@@ -133,6 +159,31 @@ export function isParseResponse(value: unknown): value is ParseResponseWire {
     return false;
   }
   if (typeof value['parser_version'] !== 'string' || value['parser_version'] === '') return false;
+  if (
+    !Array.isArray(value['unmatched']) ||
+    !value['unmatched'].every((s) => typeof s === 'string')
+  ) {
+    return false;
+  }
+  if (
+    typeof value['enrichment'] !== 'string' ||
+    !ENRICHMENT_STATUSES.has(value['enrichment'])
+  ) {
+    return false;
+  }
+  if (
+    !isRecord(value['prompt_versions']) ||
+    !Object.values(value['prompt_versions']).every((v) => typeof v === 'string')
+  ) {
+    return false;
+  }
+  if (value['model'] !== null && typeof value['model'] !== 'string') return false;
+
+  // A parse that claims enrichment ran must say which prompt versions produced it, or the result
+  // is unreproducible while asserting that it is not.
+  if (value['enrichment'] !== 'unavailable' && Object.keys(value['prompt_versions']).length === 0) {
+    return false;
+  }
 
   const completeness = value['completeness'];
   if (completeness !== null) {

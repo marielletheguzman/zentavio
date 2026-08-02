@@ -83,6 +83,7 @@ export {
 export {
   isParseResponse,
   isServiceError,
+  type EnrichmentStatus,
   type ParseRequestWire,
   type ParseResponseWire,
   type ParseStatus,

@@ -36,6 +36,27 @@ export const evalSchema = {
     default: 'qwen2.5:14b-instruct',
     description: 'Pinned model for graded evals, so delta reports are comparable between machines',
   },
+  parserModel: {
+    env: 'ZENTAVIO_PARSER_MODEL',
+    type: 'string',
+    minLength: 1,
+    // Separate from evalModel even though the value matches today. They answer different
+    // questions: the eval pin exists so delta reports compare like with like across machines and
+    // moves only with a recorded baseline, while this one is what actually serves traffic. Fusing
+    // them would mean a routing change silently invalidated every recorded baseline.
+    default: 'qwen2.5:14b-instruct',
+    description: 'Model backing skill-recall and instruction-quarantine in ai/resume-parser',
+  },
+  parserEnrichment: {
+    env: 'ZENTAVIO_PARSER_ENRICHMENT',
+    type: 'string',
+    minLength: 1,
+    // 'on' | 'off'. Off is a supported configuration, not a broken one: the parser produces a
+    // complete deterministic profile without a model, and the response says enrichment did not
+    // run (ADR-0018). Useful where no model host exists — CI, a reviewer's laptop.
+    default: 'on',
+    description: "Whether ai/resume-parser calls a model at all: 'on' or 'off'",
+  },
 } as const satisfies Schema;
 
 /**

@@ -222,6 +222,10 @@ describe('the Zentavio schema', () => {
       'ZENTAVIO_INSECURE_DEV_AUTH',
       'ZENTAVIO_OIDC_AUDIENCE',
       'ZENTAVIO_OIDC_ISSUER',
+      // ADR-0018: the parser's model-backed steps. Both have defaults, because a deployment with
+      // no model still produces a complete deterministic profile and says enrichment did not run.
+      'ZENTAVIO_PARSER_ENRICHMENT',
+      'ZENTAVIO_PARSER_MODEL',
       'ZENTAVIO_RESUME_PARSER_URL',
     ]);
   });

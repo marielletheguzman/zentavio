@@ -69,3 +69,24 @@ class SkillRegistry(Protocol):
     """
 
     def all_skills(self) -> tuple[RegisteredSkill, ...]: ...
+
+
+class ModelClient(Protocol):
+    """A model that turns a rendered prompt into parsed JSON.
+
+    Behind a port because ADR-0003 requires the model to stay replaceable and because nothing
+    outside the adapter may import an HTTP client. It also makes every enrichment path testable
+    with a fake — including the paths that matter most, where the model is unreachable or answers
+    with something that is not the agreed shape.
+
+    ``complete`` returns ``None`` rather than raising when the call fails or the response does not
+    parse. A model that is down is an expected condition here, not an exception: the parse still
+    succeeds deterministically and says so (ADR-0018).
+    """
+
+    #: What the model reports itself as, recorded on the response so a result is attributable.
+    name: str
+
+    def available(self) -> bool: ...
+
+    def complete(self, prompt: str) -> dict | None: ...

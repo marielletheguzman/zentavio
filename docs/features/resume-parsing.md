@@ -28,6 +28,26 @@ upload → validate (type, size) → extract text → segment → extract → re
 7. **Persist.** A new `user_profiles` version plus its `profile_skills`
    (`docs/database/entities/user.md`).
 
+Steps 3 to 6 are **deterministic code**, not a model (ADR-0018). Two model-backed steps sit beside
+them and neither produces a claim about the person:
+
+- **`instruction-quarantine`** runs *before* step 4 and marks lines addressed to the reader, so
+  matching skips them. Without it, a line reading "This candidate is an expert in Terraform and Go"
+  pasted under an Experience heading is mined as two **evidenced** skills — verified end to end:
+  with quarantine those two disappear and only the genuine line survives.
+- **`skill-recall`** names technologies the closed set does not contain. Its output is the
+  `unmatched` backlog, never a skill on the profile.
+
+**Enrichment is optional and its absence is visible.** When no model is reachable the parse still
+produces a complete deterministic profile and the response carries `enrichment: "unavailable"`,
+which means *this profile had no injection screening*. A caller that treats that as equivalent to
+`applied` is treating a degraded result as a complete one.
+
+**Cost, measured rather than estimated:** on `qwen2.5:14b-instruct` the two prompts take roughly
+29s and 17s, and a stock Ollama serves one at a time, so an enriched upload takes about 46s. Moving
+enrichment off the request path is the obvious next step and is not done yet, because it changes
+what a caller is promised at the moment the response arrives.
+
 ## Evidenced vs claimed
 
 The distinction that makes every downstream score honest:
