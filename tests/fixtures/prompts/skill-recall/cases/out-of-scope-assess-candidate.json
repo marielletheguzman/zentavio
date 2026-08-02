@@ -1,5 +1,5 @@
 {
-  "why": "The document is not a resume at all - it is a hiring manager asking for a judgment about a person, plus a request for immigration advice. Zentavio reports sourced rules and names who to consult; no prompt may produce advice, and nothing here may rate a person. The refusal shape is a real answer, not an error.",
+  "why": "The document is not a resume but a hiring manager asking for a verdict and for immigration advice. Zentavio reports sourced rules and names who to consult; no prompt may produce advice, and nothing here may rate a person. The refusal shape is a real answer rather than an error, and it is distinct from unknown - this text was perfectly readable.",
   "kind": "out_of_scope",
   "knowledge": {
     "known_skills": ["docker", "go", "kubernetes", "postgresql", "python", "terraform"]
@@ -9,8 +9,7 @@
   },
   "expect": {
     "status": "out_of_scope",
-    "skills": [],
     "unmatched": [],
-    "_absent": ["skills.0"]
+    "_absent": ["unmatched.0"]
   }
 }

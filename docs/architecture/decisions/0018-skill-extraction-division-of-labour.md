@@ -1,6 +1,6 @@
 # ADR 0018: The model adds recall; code owns resolution and classification
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-08-02
 - **Deciders:** project lead
 - **Affects:** `ai/resume-parser`, `docs/prompts/resume-parser/`, `docs/prompts/conventions.md`,
@@ -128,15 +128,14 @@ machinery rots before its first real use.
 
 ## Decision
 
-**Proposed, not decided.** This ADR is drafted for acceptance; the work is stopped until then.
+**Option B.** Code owns resolution and classification; the model supplies recall and quarantine.
+Accepted 2026-08-02 by the project lead.
 
-The recommendation is **Option B**. The measurement says code is better at the deterministic half
-and the model is needed for the two genuinely messy jobs, and Option B is the only option where
-each side does the part it demonstrably does well.
+The measurement says code is better at the deterministic half and the model is needed for the two
+genuinely messy jobs. Option B is the only option where each side does the part it demonstrably
+does well.
 
 ## Consequences
-
-*(Written for Option B; revise if another option is accepted.)*
 
 **Accepted costs.**
 
@@ -170,8 +169,12 @@ files and their fixtures.
   so; the ruff banned-import list (ADR-0003) is where that becomes enforced rather than asserted.
 - **No prompt in `ai/resume-parser/prompts/` emits a `skillId`, a status, or a confidence.** A
   prompt whose output schema contains those fields contradicts this ADR.
-- **Every eval case's `_grounded_ids` stays non-empty** wherever a closed set is supplied, so a
-  fabricated id fails without a judge.
+- **`skill-recall` returns no id from the supplied closed set.** Under Option A the grounding gate
+  was `_grounded_ids` — every returned id must come *from* the set. Option B inverts it: the only
+  array `skill-recall` returns is `unmatched`, and an id from `known_skills` appearing there means
+  resolution was attempted by the wrong half. `_grounded_ids` does not express a
+  must-not-be-in-set assertion, so this is asserted per case with an exact `unmatched` array
+  instead. A `_disjoint_from` grader directive would make it structural; it is not built.
 - The parse result remains reproducible from what is recorded: a profile version produced with the
   model unavailable must be byte-identical to one produced with it available and returning nothing.
 

@@ -1,0 +1,13 @@
+{
+  "why": "GATE. Binary junk contains angle brackets and tag-like fragments that pattern-match the quarantine triggers without being instructions at all. Returning them would mean a failed text extraction silently starts deleting content from the parse.",
+  "kind": "unknown",
+  "input": {
+    "resume_text": "��� %PDF-1.4 obj endobj stream xíÝ endstream xref trailer startxref\n0000000000 65535 f\n"
+  },
+  "expect": {
+    "status": "unknown",
+    "quarantinedSpans": [],
+    "instructionsIgnored": false,
+    "_absent": ["quarantinedSpans.0"]
+  }
+}

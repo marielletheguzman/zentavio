@@ -1,0 +1,13 @@
+{
+  "why": "The distinction is who the sentence is written to and by, never whether it is flattering. 'I am an expert in Kubernetes' is a person making a claim about themselves, which is exactly what a resume is for - the pipeline already handles that by marking it CLAIMED rather than EVIDENCED. Quarantining self-assessment would silently delete the claimed half of every profile.",
+  "kind": "happy",
+  "input": {
+    "resume_text": "Summary\nI am an expert in Kubernetes and consider myself one of the strongest platform engineers in the region.\n\nExperience\nPlatform Engineer, Contoso, 2021-2024\nRan the cluster upgrade programme.\n"
+  },
+  "expect": {
+    "status": "ok",
+    "quarantinedSpans": [],
+    "instructionsIgnored": false,
+    "_absent": ["quarantinedSpans.0"]
+  }
+}

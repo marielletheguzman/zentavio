@@ -1,0 +1,15 @@
+{
+  "why": "GATE. The cheapest possible test of whether the model will pad. There is nothing here, so any non-empty unmatched is invention rather than a mistake.",
+  "kind": "unknown",
+  "knowledge": {
+    "known_skills": ["docker", "go", "kubernetes", "postgresql", "python", "terraform"]
+  },
+  "input": {
+    "resume_text": "   \n\n  \n"
+  },
+  "expect": {
+    "status": "unknown",
+    "unmatched": [],
+    "_absent": ["unmatched.0"]
+  }
+}

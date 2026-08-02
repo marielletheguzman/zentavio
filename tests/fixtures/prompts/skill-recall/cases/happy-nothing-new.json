@@ -1,0 +1,14 @@
+{
+  "why": "An empty list is the common case and a real answer. Every skill here is already known, so recall has nothing to add. A model that pads this rather than returning [] would fill the skill-graph backlog with noise, and the backlog is only useful if it is short enough to read.",
+  "kind": "happy",
+  "knowledge": {
+    "known_skills": ["docker", "go", "kubernetes", "postgresql", "python", "terraform"]
+  },
+  "input": {
+    "resume_text": "Experience\nPlatform Engineer, Northwind Systems, 2021-2024\nLed a Kubernetes migration across 40 services.\nWrote Go services and Terraform modules for the shared platform.\n"
+  },
+  "expect": {
+    "status": "ok",
+    "unmatched": []
+  }
+}
