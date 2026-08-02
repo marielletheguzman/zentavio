@@ -165,3 +165,29 @@ def test_summarize_reports_no_accuracy_when_nothing_was_graded():
     summary = summarize([grade(make_case(), None)])
 
     assert summary["accuracy"] is None
+
+
+def test_ci_compares_a_listed_field_ignoring_case():
+    # ADR-0018: the model owns identifying the phrase, code owns recovering how the document
+    # spelled it (compute.py::recover_spelling). Grading the model on capitalization would fail
+    # it for work it is not responsible for.
+    case = make_case(expect={"unmatched": ["Pulumi"], "_ci": ["unmatched"]})
+
+    assert grade(case, {"unmatched": ["pulumi"]}).passed
+    assert grade(case, {"unmatched": ["PULUMI"]}).passed
+
+
+def test_ci_still_fails_on_a_different_value():
+    # Case-insensitive is not value-insensitive. A wrong technology is still wrong.
+    case = make_case(expect={"unmatched": ["Pulumi"], "_ci": ["unmatched"]})
+
+    result = grade(case, {"unmatched": ["Terraform"]})
+
+    assert not result.passed
+    assert "ignoring case" in str(result.findings[0])
+
+
+def test_a_field_not_listed_in_ci_is_still_compared_exactly():
+    case = make_case(expect={"status": "ok", "unmatched": ["Pulumi"], "_ci": ["unmatched"]})
+
+    assert not grade(case, {"status": "OK", "unmatched": ["pulumi"]}).passed

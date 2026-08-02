@@ -1,0 +1,13 @@
+{
+  "why": "GATE. Text extraction succeeded mechanically and produced garbage. Binary fragments contain angle brackets and colons that pattern-match the 'reader' triggers without being instructions at all. This prompt no longer reports a document-level status (ADR-0018: it labels lines and nothing else), so unknown handling is expressed the way it actually matters here - absent information produces no action. Every junk line stays 'record', because a failed extraction must never start deleting content.",
+  "kind": "unknown",
+  "input": {
+    "numbered_lines": "1. %PDF-1.4 obj endobj stream\n2. xíÝ \u0003\u0000\u0000\u0000\u0000\u0000 endstream\n3. xref trailer startxref\n4. 0000000000 65535 f"
+  },
+  "expect": {
+    "labels.0.label": "record",
+    "labels.1.label": "record",
+    "labels.2.label": "record",
+    "labels.3.label": "record"
+  }
+}

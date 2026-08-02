@@ -59,12 +59,28 @@ def _get(obj: Any, dotted: str) -> Any:
     return cur
 
 
-def _check_exact(response: dict, expect: dict) -> list[Finding]:
+def _fold(value: Any) -> Any:
+    """Lower-case strings, and strings inside a list, leaving everything else alone."""
+    if isinstance(value, str):
+        return value.lower()
+    if isinstance(value, list):
+        return [_fold(v) for v in value]
+    return value
+
+
+def _check_exact(response: dict, expect: dict, case_insensitive: set[str]) -> list[Finding]:
     findings = []
     for key, want in expect.items():
         if key.startswith("_"):
             continue
         got = _get(response, key)
+        if key in case_insensitive:
+            # The model owns identifying the thing; code owns recovering how the document spelled
+            # it, because that is a lookup against the source text (ADR-0018). Grading the model on
+            # capitalization would fail it for work it is not responsible for.
+            if _fold(got) != _fold(want):
+                findings.append(Finding(key, want, got, "compared ignoring case"))
+            continue
         if got != want:
             findings.append(Finding(key, want, got))
     return findings
@@ -139,11 +155,12 @@ def grade(case: Case, response: dict | None, error: str | None = None) -> CaseRe
 
     findings += _check_absent(response, expect.pop("_absent", []))
     prose_rules = expect.pop("_prose", None)
+    case_insensitive = set(expect.pop("_ci", []))
     expect.pop("_grounded_ids", None)
     if prose_rules:
         findings += _check_prose(response, prose_rules)
     findings += _check_grounding(response, case)
-    findings += _check_exact(response, expect)
+    findings += _check_exact(response, expect, case_insensitive)
 
     return CaseResult(case, passed=not findings, findings=findings)
 

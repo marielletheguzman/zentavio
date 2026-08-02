@@ -2,13 +2,25 @@
   "why": "Column bleed breaks words across spaces, so 'Dock' and 'Deve loper' are fragments rather than technologies. A fragment filed into the backlog becomes a permanent bogus skill nobody can trace back to a document. Pulumi survives intact and is the one real finding; when in doubt the rule is to leave it out.",
   "kind": "malformed",
   "knowledge": {
-    "known_skills": ["docker", "go", "kubernetes", "postgresql", "python", "terraform"]
+    "known_skills": [
+      "docker",
+      "go",
+      "kubernetes",
+      "postgresql",
+      "python",
+      "terraform"
+    ]
   },
   "input": {
     "resume_text": "Exp erience   Cont act\nBackend Deve loper   +00 000 000\nBuilt and ran the ingest service, provisioned with Pulumi, deployed with Dock\n"
   },
   "expect": {
     "status": "ok",
-    "unmatched": ["Pulumi"]
+    "unmatched": [
+      "Pulumi"
+    ],
+    "_ci": [
+      "unmatched"
+    ]
   }
 }

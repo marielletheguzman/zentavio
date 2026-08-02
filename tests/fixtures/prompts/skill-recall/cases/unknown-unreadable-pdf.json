@@ -2,7 +2,14 @@
   "why": "GATE. Binary junk from a failed PDF text pass contains token sequences that look like tool names. Returning any of them would inject garbage directly into the skill-graph backlog under the appearance of a discovery, and unknown is the honest answer for a document nothing could be read from.",
   "kind": "unknown",
   "knowledge": {
-    "known_skills": ["docker", "go", "kubernetes", "postgresql", "python", "terraform"]
+    "known_skills": [
+      "docker",
+      "go",
+      "kubernetes",
+      "postgresql",
+      "python",
+      "terraform"
+    ]
   },
   "input": {
     "resume_text": "��� %PDF-1.4 obj endobj stream xíÝ endstream xref trailer startxref\n0000000000 65535 f\n"
@@ -10,6 +17,8 @@
   "expect": {
     "status": "unknown",
     "unmatched": [],
-    "_absent": ["unmatched.0"]
+    "_absent": [
+      "unmatched.0"
+    ]
   }
 }

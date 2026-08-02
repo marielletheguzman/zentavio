@@ -166,6 +166,49 @@ def _find_in_line(line: str, index: dict[str, RegisteredSkill]) -> set[str]:
     return found
 
 
+def recover_spelling(text: str, phrase: str) -> str:
+    """Return the document's own capitalization of ``phrase``, or the phrase unchanged.
+
+    ``skill-recall`` reliably identifies which phrase is a technology and unreliably preserves how
+    it was written — it lower-cases product names, and more so when the document also contains an
+    injected block spelling them in lower case. That is a lookup against the source text, and by
+    ADR-0018 a lookup belongs here rather than in a prompt: the model is asked what, code answers
+    how it was spelled.
+
+    Falls back to the phrase as given when it does not occur in the text, which is the honest
+    outcome for a phrase the model paraphrased rather than quoted.
+    """
+    match = re.search(re.escape(phrase), text, flags=re.IGNORECASE)
+    return match.group(0) if match else phrase
+
+
+def number_lines(text: str) -> tuple[tuple[int, str], ...]:
+    """Split a document into numbered non-empty lines, for the quarantine prompt.
+
+    Splitting and numbering are done here rather than by the model because asking a 7B model to
+    *enumerate* lines is where it fails: given the whole document it silently omits the very line
+    an attacker inserted, under every prompt shape tried. Given the lines already numbered, it
+    labels that same line correctly. So code counts and the model judges — which is ADR-0018's
+    division applied to the mechanical step nobody thought was one.
+    """
+    kept = (line.strip() for line in text.splitlines() if line.strip())
+    # Numbered over the kept lines, not over the original ones: a blank line that consumed a number
+    # would leave gaps, and the prompt tells the model that the highest number it can see is how
+    # many entries to return. With gaps that instruction is false, and a short array is exactly how
+    # this output goes wrong.
+    return tuple((i + 1, line) for i, line in enumerate(kept))
+
+
+def spans_from_labels(text: str, labels: dict[int, str]) -> tuple[str, ...]:
+    """Turn per-line labels back into the spans ``parse`` excludes.
+
+    A number the model did not label, or labelled with anything other than ``reader``, keeps its
+    line. That default matters: a truncated or malformed response must lose the protection, never
+    silently delete someone's history.
+    """
+    return tuple(line for number, line in number_lines(text) if labels.get(number) == "reader")
+
+
 def is_quarantined(line: str, quarantined: tuple[str, ...]) -> bool:
     """Whether a line falls inside a span the quarantine step marked as addressed to the reader.
 
