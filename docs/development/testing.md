@@ -121,8 +121,9 @@ Still outstanding from the ADR's follow-up list:
 - **The `integration` project has no tests** and no PostgreSQL container helper. Both need `packages/db`
   and migrations to exist; a helper written now would be a helper for a database that does not exist.
 - **No integration CI job**, for the same reason.
-- **pytest config moves into the uv workspace** when the first `ai/` service exists (ADR-0006). It lives
-  in `pytest.ini` for now, matching how Ruff is pinned in `requirements-dev.txt`.
+- **pytest config stays in `pytest.ini`** rather than moving into the uv workspace. CI runs
+  `uv run --project ai --all-packages --frozen pytest` from the repository root, so `testpaths = ai`
+  still resolves; a second configuration in `ai/pyproject.toml` would be drift waiting to happen.
 - Docker is therefore **not yet** a local prerequisite, despite what the ADR anticipated.
 
 ## Related

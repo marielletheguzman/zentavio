@@ -3,7 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-07-28
 - **Deciders:** project lead
-- **Affects:** `ai/*`, `infra/ci`, `infra/docker`, `requirements-dev.txt`, `.github/workflows/ci.yml`
+- **Affects:** `ai/*`, `infra/ci`, `infra/docker`, `.github/workflows/ci.yml`
 
 ## Context
 
@@ -125,29 +125,30 @@ already list this as blocking follow-up; deferring a third time means it is deci
   `ai/shared` as its first member and `ai/uv.lock` committed. **Members are added when their service
   is written, not in advance** — a member declared before it has a Python file is a dependency set
   nobody has verified. The other six directories join as they are built.
-- **This gap has now cost a red CI run, as predicted.** Adding `pypdf` and `python-docx` to
+- ~~**This gap cost a red CI run, as predicted.**~~ Adding `pypdf` and `python-docx` to
   `ai/resume-parser` (ADR-0016) turned the whole Python job red with `ModuleNotFoundError: No module
-  named 'docx'`, because CI installs `requirements-dev.txt` with pip and never reads `ai/uv.lock`.
-  The stopgap is that two **runtime** dependencies now sit in a dev-tooling file, pinned to what the
-  lockfile resolves. That is the cost of the deferral, and it is paid again by every dependency any
-  `ai/` service adds until the workflow switches.
-- **Partly done: the dev pins are declared in the workspace, but `requirements-dev.txt` still
-  exists.** Deleting it requires `.github/workflows/ci.yml` to stop running
-  `pip install -r requirements-dev.txt` first, so the pins are **duplicated in both files and must
-  be changed together** until then. Both carry a comment saying so.
-- **Blocked: pin the uv version in `.github/workflows/ci.yml` and switch the python job to
-  `uv sync --frozen`.** Not a technical blocker — the repository token lacks the `workflow` OAuth
-  scope, so no change under `.github/workflows/` can be pushed. Unblocked by
-  `gh auth refresh -h github.com -s workflow`. Until then CI installs from `requirements-dev.txt`
-  and the lockfile's guarantee is local-only, which is precisely the conditional guarantee the
-  Compliance section below warns about.
+  named 'docx'`, because CI installed `requirements-dev.txt` with pip and never read `ai/uv.lock`.
+  The stopgap was two **runtime** dependencies sitting in a dev-tooling file. It was paid three
+  times — pypdf, python-docx, then fastapi/pydantic/httpx/uvicorn — before the workflow switched.
+- ~~Pin the uv version in `.github/workflows/ci.yml`, switch the python job to `uv sync --frozen`,
+  and delete `requirements-dev.txt`.~~ Done 2026-08-02. The job now runs
+  `pip install uv==0.9.6`, `uv lock --project ai --check`, then
+  `uv sync --project ai --all-packages --frozen`, and every subsequent step goes through
+  `uv run --project ai --all-packages --frozen`. **`--all-packages` is required and its absence is
+  silent**: without it uv installs the workspace root, which declares no dependencies.
+  `ai/pyproject.toml` and `ai/uv.lock` are now the only declaration of a Python dependency, so the
+  lockfile's guarantee is no longer local-only.
+- **`UV_FROZEN` is not set job-wide.** For `uv lock` it means `--check-exists`, which conflicts with
+  `--check` — `error: the argument '--check' cannot be used with '--check-exists'`. Every step
+  passes `--frozen` explicitly instead.
 - Use `uv` in `infra/docker` for the `ai/*` images — the static binary means no Python bootstrap
   layer.
 - ~~Document the commands in `docs/development/ai-service-guide.md` and
   `docs/development/getting-started.md`, alongside the pnpm equivalents.~~ Done 2026-08-01,
   including the two-workspaces confusion this ADR accepted as a cost.
-- **Partly done: `pnpm py:lock-check` runs `uv lock --check`.** It is not yet a CI step, for the
-  same `workflow` scope reason.
+- ~~`pnpm py:lock-check` runs `uv lock --check`, but is not yet a CI step.~~ Done 2026-08-02 — it is
+  the `Lockfile is current` step, deliberately separate from the install so a drifted lockfile and a
+  dependency that will not install are two different failure signals.
 
 **Reversal cost.** Low, and deliberately kept so. `uv export` emits a standard
 `requirements.txt`, and `pyproject.toml` is a PEP standard rather than a uv format, so moving to

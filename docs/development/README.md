@@ -21,7 +21,7 @@
 
 ```bash
 corepack enable && pnpm install --frozen-lockfile
-pip install -r requirements-dev.txt
+pnpm py:sync                       # uv workspace, --all-packages included
 pnpm lint:all                      # exactly what CI runs
 ```
 

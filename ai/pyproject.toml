@@ -34,10 +34,9 @@ members = ["shared", "resume-parser"]
 # Pinned exactly: a different Ruff version is a different rule set, which would make ruff.toml's
 # statelessness bans (ADR-0003) a coincidence rather than a rule.
 #
-# **These pins are duplicated in `requirements-dev.txt` and must be changed together.** That
-# duplication is temporary and deliberate: CI still installs `requirements-dev.txt` directly, and
-# deleting it before `.github/workflows/ci.yml` switches to `uv sync --frozen` would break every
-# run. Both files carry a comment saying so. See ADR-0006's follow-up list.
+# This is now the only place these are declared. `requirements-dev.txt` was deleted on 2026-08-02
+# when `.github/workflows/ci.yml` switched to `uv sync --project ai --all-packages --frozen`, so a
+# dependency added here reaches CI without being hand-mirrored anywhere.
 dev = [
   "ruff==0.16.0",
   "pytest==9.1.1",

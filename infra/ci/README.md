@@ -40,8 +40,9 @@ halves are separate jobs with separate, legible failure signals.
 - **Least privilege.** Every workflow declares `permissions:` explicitly. `contents: read` unless
   a job genuinely needs to write.
 - **Pinned toolchains.** pnpm comes from `package.json`'s `packageManager` field via corepack;
-  Ruff comes from `requirements-dev.txt`. CI and a developer's machine must run the same rule set,
-  or a green CI run means nothing.
+  uv is pinned by exact version in `ci.yml` and Ruff by `ai/pyproject.toml`'s `dev` group, resolved
+  through `ai/uv.lock`. CI and a developer's machine must run the same rule set, or a green CI run
+  means nothing.
 - **Third-party actions pinned to commit SHAs**, with the human version in a trailing comment.
   A tag like `@v4` is mutable, so a tag pin trusts the publisher continuously rather than once.
   Bump deliberately: resolve the new tag to its SHA, update both the SHA and the comment.

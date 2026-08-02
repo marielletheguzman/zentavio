@@ -64,9 +64,9 @@ workspace at `ai/pyproject.toml` manages the Python services. They are conceptua
 mechanically unrelated — ADR-0006 accepted that confusion as a cost, so it is named rather than
 glossed.
 
-`requirements-dev.txt` still exists and is **superseded**. It survives only because CI has not yet
-switched to `uv sync --frozen`; its pins are duplicated in `ai/pyproject.toml` and must be changed in
-both places until it is deleted.
+`requirements-dev.txt` is **gone** (2026-08-02). CI installs the Python half with
+`uv sync --project ai --all-packages --frozen`, so `ai/pyproject.toml` and `ai/uv.lock` are the only
+declaration of a Python dependency — adding one no longer means mirroring it into a second file.
 
 **Do not `npm install -g pnpm`.** Corepack pins the exact version from `package.json`, so CI and your
 machine cannot drift. If `pnpm` is not on your PATH after `corepack enable`, `corepack pnpm <cmd>` works
