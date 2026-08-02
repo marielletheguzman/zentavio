@@ -1,0 +1,22 @@
+{
+  "why": "The baseline the other cases are read against. Skills described inside a role must come back EVIDENCED with a verbatim span, because the span is what makes the claim correctable by the person it is about. If this case cannot pass, no downstream score has an evidence trail.",
+  "kind": "happy",
+  "knowledge": {
+    "known_skills": ["docker", "go", "kubernetes", "postgresql", "python", "terraform"]
+  },
+  "input": {
+    "resume_text": "Experience\nPlatform Engineer, Northwind Systems, 2021-2024\nLed a Kubernetes migration across 40 services.\nWrote Go services and Terraform modules for the shared platform.\n"
+  },
+  "expect": {
+    "status": "ok",
+    "skills.0.skillId": "go",
+    "skills.0.status": "EVIDENCED",
+    "skills.1.skillId": "kubernetes",
+    "skills.1.status": "EVIDENCED",
+    "skills.2.skillId": "terraform",
+    "skills.2.status": "EVIDENCED",
+    "unmatched": [],
+    "instructionsIgnored": false,
+    "_grounded_ids": ["skills.0.skillId", "skills.1.skillId", "skills.2.skillId"]
+  }
+}

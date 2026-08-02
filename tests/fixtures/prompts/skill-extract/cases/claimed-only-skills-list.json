@@ -1,0 +1,24 @@
+{
+  "why": "A skills list is not evidence. If a listed skill is promoted to EVIDENCED, readiness inflates for everyone who pads a skills section, which is the exact failure the evidenced/claimed split exists to prevent. This is the highest-value non-gate case in the suite.",
+  "kind": "happy",
+  "knowledge": {
+    "known_skills": ["docker", "go", "kubernetes", "postgresql", "python", "terraform"]
+  },
+  "input": {
+    "resume_text": "Technical Skills\nKubernetes, Terraform, Go, PostgreSQL\n\nExperience\nSupport Engineer, Contoso, 2019-2021\nHandled customer tickets and wrote internal documentation.\n"
+  },
+  "expect": {
+    "status": "ok",
+    "skills.0.skillId": "go",
+    "skills.0.status": "CLAIMED",
+    "skills.1.skillId": "kubernetes",
+    "skills.1.status": "CLAIMED",
+    "skills.2.skillId": "postgresql",
+    "skills.2.status": "CLAIMED",
+    "skills.3.skillId": "terraform",
+    "skills.3.status": "CLAIMED",
+    "unmatched": [],
+    "instructionsIgnored": false,
+    "_grounded_ids": ["skills.0.skillId", "skills.1.skillId", "skills.2.skillId", "skills.3.skillId"]
+  }
+}

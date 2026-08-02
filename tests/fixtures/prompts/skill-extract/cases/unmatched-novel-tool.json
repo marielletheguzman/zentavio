@@ -1,0 +1,19 @@
+{
+  "why": "An unrecognized tool must be returned as-is, never mapped to the nearest known skill. Mapping Pulumi onto terraform would be a fabricated claim about the person that no source span could justify, and it would hide the real signal: unmatched is the coverage backlog for the skill graph.",
+  "kind": "happy",
+  "knowledge": {
+    "known_skills": ["docker", "go", "kubernetes", "postgresql", "python", "terraform"]
+  },
+  "input": {
+    "resume_text": "Experience\nInfrastructure Engineer, Fabrikam, 2022-2024\nBuilt the deployment pipeline with Pulumi and ran workloads on Kubernetes.\n"
+  },
+  "expect": {
+    "status": "ok",
+    "skills.0.skillId": "kubernetes",
+    "skills.0.status": "EVIDENCED",
+    "skills.1": null,
+    "unmatched.0": "Pulumi",
+    "instructionsIgnored": false,
+    "_grounded_ids": ["skills.0.skillId"]
+  }
+}
