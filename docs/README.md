@@ -82,10 +82,15 @@ against the plan.
 **Every document in `docs/` is authored — no placeholders remain.**
 
 Filling a placeholder means writing what its purpose line declares — that line is the specification.
-**All eighteen Accepted ADRs are binding** on everything written afterward; read the ones covering a
-boundary before changing it.
+**Every Accepted ADR is binding** on everything written afterward; read the ones covering a boundary
+before changing it. The index is `architecture/decisions/README.md` — a count kept here would be a
+number that goes stale on the next accepted decision.
 
-Documents that describe things **not yet built**, and say so in place: graded prompt evals
-(`prompts/evals.md` — runner exists, needs a model host), deployment (`development/ci-cd.md`), and
-**origin-side immigration rules** (`architecture/immigration.md` — the rule model cannot express them
-yet, which blocks any eligibility verdict for regulated professions).
+Documents that describe things **not yet built**, and say so in place: deployment
+(`development/ci-cd.md`), and **origin-side immigration rules** (`architecture/immigration.md` — the
+rule model cannot express them yet, which blocks any eligibility verdict for regulated professions).
+
+Graded prompt evals (`prompts/evals.md`) are **built and run**, against the pinned model on a local
+Ollama host. What is missing is not the runner but a model host *in CI*, so the graded delta report
+is a required review artifact rather than a mechanised gate (ADR-0009). The offline gate does run on
+every pull request.

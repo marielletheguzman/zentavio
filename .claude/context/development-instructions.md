@@ -136,7 +136,7 @@ and must not be mocked — what a CHECK rejects and what a partial unique index 
 point of those tests, and neither is knowable from a fake, so **Docker is a local prerequisite**
 ([`docs/development/testing.md`](../../docs/development/testing.md)).
 
-**Graded prompt evals do not run in CI** (ADR-0009) — the runner has no model host. The offline gate
+**Graded prompt evals do not run in CI** (ADR-0009) — the CI runner has no model host. The offline gate
 runs on every pull request; the graded delta report is attached to the PR by the author.
 
 This paragraph previously said neither runner was installed and there was no application code. It

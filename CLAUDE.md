@@ -43,7 +43,7 @@ is there instead**, and is equally binding.
 | `packages/` | Shared libraries: `db`, `types`, `auth`, `events`, `config`, `logger`, `i18n`, `ui` |
 | `services/` | Deployable services: `api-gateway`, `ingestion`, `matching`, `notifications`, `billing` |
 | `infra/` | `terraform`, `docker`, `ci`, `monitoring`, `vercel` |
-| `tests/` | `e2e`, `integration`, `fixtures` |
+| `tests/` | `unit` (cross-package contracts and invariants), `integration`, `fixtures`, `e2e` (empty — nothing deployed yet) |
 | `tools/` | `generators`, `scripts` |
 | `docs/` | Source of truth. Architecture, features, database, prompts, roadmap, development |
 | `.claude/context/` | Project-wide truth: vision, glossary, stack, principles, philosophy |
