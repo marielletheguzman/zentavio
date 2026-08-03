@@ -20,6 +20,7 @@ import {
   OidcVerifier,
   type SubjectResolver,
 } from '@zentavio/auth';
+import { DevSubjectResolver } from './auth/dev-subject.resolver.ts';
 import { OidcSubjectResolver } from './auth/oidc-subject.resolver.ts';
 import { SubjectGuard } from './auth/subject.guard.ts';
 import { GapClient } from './gap/gap-client.ts';
@@ -72,10 +73,16 @@ import { DATABASE, GAP_CLIENT, PARSER_CLIENT, SUBJECT_RESOLVER } from './tokens.
         }
 
         if (insecureDevAuth) {
-          return new InsecureDevSubjectResolver({
-            enabled: true,
-            isProduction: nodeEnv === 'production',
-          });
+          // Wrapped so the dev credential provisions its user the way a real one does. Without it,
+          // a header naming an id with no row fails as a foreign key violation several layers down
+          // — a 500 whose cause is invisible from the response.
+          return new DevSubjectResolver(
+            new InsecureDevSubjectResolver({
+              enabled: true,
+              isProduction: nodeEnv === 'production',
+            }),
+            db,
+          );
         }
 
         // Nothing configured: a locked door, not an open one.
