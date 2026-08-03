@@ -109,11 +109,35 @@ class RemainingOut(BaseModel):
     typical_time_to_competence: str | None
 
 
+class CalibrationOut(BaseModel):
+    """What the score assumed, travelling with the score.
+
+    `scorerVersion` says which code ran; this says what that code assumed. Without it a stored
+    score cannot be reproduced from its own recorded output.
+    """
+
+    claimed_credit: float
+    basis: str
+    awaiting: str
+
+
+class ClusterScoreOut(BaseModel):
+    cluster: str
+    score: float
+    weight_share: float
+    requirement_count: int
+
+
 class ReadinessOut(BaseModel):
     """A verdict, a remainder, and a cost — never a bare score."""
 
     status: Literal["ok", "unknown"]
     score: float | None
+    #: The floor and the ceiling. The distance between them is how much of the number rests on
+    #: assertion rather than evidence, which one figure cannot say.
+    score_low: float | None
+    score_high: float | None
+    by_cluster: list[ClusterScoreOut]
     confidence: Literal["high", "medium", "low"]
     remaining: list[RemainingOut]
     #: Every term of the sum, so the arithmetic can be checked by hand rather than trusted.
@@ -124,6 +148,7 @@ class ReadinessOut(BaseModel):
     missing: list[str]
     reason: str | None
     scorer_version: str
+    calibration: CalibrationOut
 
 
 class GapResponse(BaseModel):
@@ -256,6 +281,17 @@ def gap(payload: Annotated[GapRequestBody, Body()]) -> JSONResponse:
             readiness=ReadinessOut(
                 status=readiness.status,  # type: ignore[arg-type]
                 score=readiness.score,
+                score_low=readiness.score_low,
+                score_high=readiness.score_high,
+                by_cluster=[
+                    ClusterScoreOut(
+                        cluster=entry.cluster,
+                        score=entry.score,
+                        weight_share=entry.weight_share,
+                        requirement_count=entry.requirement_count,
+                    )
+                    for entry in readiness.by_cluster
+                ],
                 confidence=readiness.confidence,  # type: ignore[arg-type]
                 remaining=[
                     RemainingOut(
@@ -286,6 +322,11 @@ def gap(payload: Annotated[GapRequestBody, Body()]) -> JSONResponse:
                 missing=list(readiness.missing),
                 reason=readiness.reason,
                 scorer_version=readiness.scorer_version,
+                calibration=CalibrationOut(
+                    claimed_credit=readiness.calibration.claimed_credit,
+                    basis=readiness.calibration.basis,
+                    awaiting=readiness.calibration.awaiting,
+                ),
             ),
         ).model_dump(),
     )

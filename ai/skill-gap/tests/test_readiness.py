@@ -244,3 +244,162 @@ class TestReproducibility:
             edges=base.edges,
         )
         assert readiness_for(shuffled).score == readiness_for(base).score
+
+
+class TestTheBand:
+    """A point estimate implies precision the inputs do not have.
+
+    A claimed skill is the person's word and a transfer edge is a general statement about how
+    competence carries — neither is a measurement. The band is how much of the number rests on
+    those rather than on evidence.
+    """
+
+    def test_evidenced_holds_produce_no_band_at_all(self) -> None:
+        # Nothing is being estimated, so there is nothing to be uncertain about.
+        result = readiness_for(
+            request(requirements=(require("a"), require("b")), held=(held("a"), held("b")))
+        )
+        assert result.score_low == result.score == result.score_high == 1.0
+
+    def test_a_claimed_skill_widens_the_band_around_the_point(self) -> None:
+        result = readiness_for(request(requirements=(require("a"),), held=(held("a", "claimed"),)))
+        # Floor: the claim is hollow. Ceiling: it holds in full. The point sits between.
+        assert result.score_low == 0.0
+        assert result.score == CLAIMED_CREDIT
+        assert result.score_high == 1.0
+
+    def test_a_transfer_edge_widens_the_band_too(self) -> None:
+        result = readiness_for(
+            request(
+                requirements=(require("azure"),),
+                held=(held("aws"),),
+                edges=(edge("aws", "azure", "transfers_to", 0.65),),
+            )
+        )
+        assert result.score_low == 0.0
+        assert result.score == 0.65
+        assert result.score_high == 1.0
+
+    def test_subsumption_is_known_and_does_not_widen_it(self) -> None:
+        # Holding the broader skill is a fact about the profile, not an estimate about the person.
+        result = readiness_for(
+            request(
+                requirements=(require("incident-response"),),
+                held=(held("sre-practices"),),
+                edges=(edge("sre-practices", "incident-response", "subsumes", 0.7),),
+            )
+        )
+        assert result.score_low == result.score_high == 1.0
+
+    def test_the_point_always_sits_inside_the_band(self) -> None:
+        result = readiness_for(
+            request(
+                requirements=(require("a", 0.4), require("b", 0.3), require("c", 0.3)),
+                held=(held("a"), held("b", "claimed")),
+            )
+        )
+        assert result.score_low <= result.score <= result.score_high
+
+    def test_the_band_is_stated_in_words_not_left_to_be_inferred(self) -> None:
+        # Two numbers nobody compares are not a range.
+        result = readiness_for(request(requirements=(require("a"),), held=(held("a", "claimed"),)))
+        assert any("depending on whether" in m for m in result.missing)
+
+    def test_a_missing_requirement_lowers_the_ceiling_too(self) -> None:
+        # The optimistic reading is not "everything is fine": what is absent stays absent.
+        result = readiness_for(
+            request(requirements=(require("a", 0.5), require("b", 0.5)), held=(held("a"),))
+        )
+        assert result.score_high == 0.5
+
+
+class TestClusterBreakdown:
+    def test_each_cluster_scores_separately(self) -> None:
+        # Core and peripheral are different questions, and the blend hides which part is strong.
+        result = readiness_for(
+            request(
+                requirements=(
+                    require("core-a", 0.9, cluster="core"),
+                    require("periph-a", 0.1, cluster="peripheral"),
+                ),
+                held=(held("periph-a"),),
+            )
+        )
+        scores = {c.cluster: c.score for c in result.by_cluster}
+        assert scores == {"core": 0.0, "peripheral": 1.0}
+
+    def test_each_cluster_reports_its_share_of_the_denominator(self) -> None:
+        # A strong score over 7% of the requirement mass must not read as a strong score overall.
+        result = readiness_for(
+            request(
+                requirements=(
+                    require("core-a", 0.9, cluster="core"),
+                    require("periph-a", 0.1, cluster="peripheral"),
+                ),
+                held=(held("periph-a"),),
+            )
+        )
+        shares = {c.cluster: c.weight_share for c in result.by_cluster}
+        assert shares["core"] == 0.9
+        assert shares["peripheral"] == 0.1
+
+    def test_clusters_are_ordered_by_what_actually_drives_the_number(self) -> None:
+        result = readiness_for(
+            request(
+                requirements=(
+                    require("p", 0.1, cluster="peripheral"),
+                    require("c", 0.9, cluster="core"),
+                ),
+                held=(held("unrelated"),),
+            )
+        )
+        assert [c.cluster for c in result.by_cluster] == ["core", "peripheral"]
+
+    def test_cluster_shares_sum_to_the_whole(self) -> None:
+        result = readiness_for(
+            request(
+                requirements=(
+                    require("a", 0.5, cluster="core"),
+                    require("b", 0.3, cluster="supporting"),
+                    require("c", 0.2, cluster="peripheral"),
+                ),
+                held=(held("a"),),
+            )
+        )
+        assert round(sum(c.weight_share for c in result.by_cluster), 4) == 1.0
+
+
+class TestCalibrationTravels:
+    """A score that does not say what it assumed cannot be reproduced from its own output.
+
+    `scorerVersion` records which code ran. It does not record what that code assumed, and two runs
+    of the same version are only comparable if both are knowable.
+    """
+
+    def test_every_score_carries_the_constant_that_shaped_it(self) -> None:
+        result = readiness_for(request(requirements=(require("a"),), held=(held("a", "claimed"),)))
+        assert result.calibration.claimed_credit == CLAIMED_CREDIT
+
+    def test_the_constant_names_where_it_came_from(self) -> None:
+        # Not "0.6 because someone typed it". `ai-matching/SKILL.md` forbids a hidden penalty, and
+        # a 40% haircut with no stated origin is one.
+        result = readiness_for(request(requirements=(require("a"),), held=(held("a"),)))
+        assert "career-intelligence" in result.calibration.basis
+        assert "no recorded outcomes" in result.calibration.basis
+
+    def test_the_constant_names_what_would_replace_it(self) -> None:
+        # A calibration constant with no revisit trigger quietly becomes permanent.
+        result = readiness_for(request(requirements=(require("a"),), held=(held("a"),)))
+        assert "outcomes" in result.calibration.awaiting
+
+    def test_even_an_unknown_result_states_its_calibration(self) -> None:
+        # The unknown paths return no number, but a caller comparing two runs still needs to know
+        # they were computed under the same assumptions.
+        for req in (
+            request(requirements=(), held=(held("a"),)),
+            request(requirements=(require("a"),), held=()),
+            request(requirements=(require("a", None),), held=(held("a"),)),
+        ):
+            result = readiness_for(req)
+            assert result.status == "unknown"
+            assert result.calibration.claimed_credit == CLAIMED_CREDIT

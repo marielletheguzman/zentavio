@@ -88,6 +88,8 @@ export {
   type GapRequestWire,
   type GapResponseWire,
   type GapStatus,
+  type CalibrationWire,
+  type ClusterScoreWire,
   type ReadinessBasis,
   type ReadinessTermWire,
   type ReadinessWire,

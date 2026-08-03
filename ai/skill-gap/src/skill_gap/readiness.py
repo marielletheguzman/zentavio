@@ -33,7 +33,30 @@ from skill_gap.ports import Edge, GapRequest, HeldSkill, RequiredSkill
 
 #: Bumped whenever this arithmetic changes in a way that could move a score. Recorded on every
 #: result: a number whose scorer is unknown cannot be reproduced or re-examined after a bug.
-SCORER_VERSION = "readiness/2026-08-03"
+SCORER_VERSION = "readiness/2026-08-03-3"
+
+#: Where CLAIMED_CREDIT came from, and what would replace it.
+#:
+#: Emitted with every score rather than left in this file. `ai-matching/SKILL.md` forbids a hidden
+#: penalty — "every negative contribution appears in evidence" — and a 40% haircut applied to every
+#: claimed skill is exactly that. Without this, a stored score cannot be reproduced from its own
+#: recorded output: two runs of the same `scorerVersion` are only comparable if the calibration they
+#: used is knowable, and right now it is a module constant nobody can see.
+CLAIMED_CREDIT_BASIS = (
+    "fixed by .claude/skills/career-intelligence/SKILL.md rather than derived from data, "
+    "because no recorded outcomes exist yet to calibrate against"
+)
+
+#: The condition that replaces the constant with a measurement.
+#:
+#: Named rather than left as "revisit later", because a calibration constant with no revisit trigger
+#: quietly becomes permanent. `ai-matching/SKILL.md`: a score is meaningless without a distribution,
+#: and the distribution needs outcomes.
+CLAIMED_CREDIT_AWAITING = (
+    "recorded outcomes in knowledge-engine/outcomes: once enough people with claimed-only "
+    "skills have succeeded or failed at a transition, this becomes an observed rate rather "
+    "than an assumption"
+)
 
 #: What a *claimed* skill is worth against an evidenced one.
 #:
@@ -81,6 +104,37 @@ class RemainingItem:
 
 
 @dataclass(frozen=True)
+class Calibration:
+    """The tuning constants a score depended on, travelling with the score.
+
+    A number is only reproducible if what shaped it is recorded. `scorerVersion` says which code
+    ran; this says what that code assumed.
+    """
+
+    claimed_credit: float
+    basis: str
+    #: What would turn the assumption into a measurement.
+    awaiting: str
+
+
+@dataclass(frozen=True)
+class ClusterScore:
+    """Readiness within one cluster, because the blend hides which part is strong.
+
+    Core and peripheral are different questions. Someone 70% through the core of a track and 0%
+    through its peripherals, and someone with the reverse, can produce the same overall number
+    while being in completely different positions.
+    """
+
+    cluster: str
+    score: float
+    #: What share of the whole denominator this cluster is, so a strong score over 7% of the
+    #: requirement mass is not read as a strong score overall.
+    weight_share: float
+    requirement_count: int
+
+
+@dataclass(frozen=True)
 class Readiness:
     """A verdict, a remainder, and a cost — never a bare score.
 
@@ -91,6 +145,14 @@ class Readiness:
 
     status: str
     score: float | None
+    #: The floor: only evidenced and subsumed holds counted. What is true even if every assertion
+    #: on the profile turns out to be hollow.
+    score_low: float | None
+    #: The ceiling: every claimed skill and every transfer edge counted in full. What is true if
+    #: all of them hold up.
+    score_high: float | None
+    #: Per cluster, because a single blended number hides which part of the track is strong.
+    by_cluster: tuple[ClusterScore, ...]
     confidence: str
     remaining: tuple[RemainingItem, ...]
     terms: tuple[ReadinessTerm, ...]
@@ -104,6 +166,16 @@ class Readiness:
     missing: tuple[str, ...]
     reason: str | None
     scorer_version: str
+    #: What this score assumed, so it can be reproduced and argued with.
+    calibration: Calibration
+
+
+def _calibration() -> Calibration:
+    return Calibration(
+        claimed_credit=CLAIMED_CREDIT,
+        basis=CLAIMED_CREDIT_BASIS,
+        awaiting=CLAIMED_CREDIT_AWAITING,
+    )
 
 
 def _credit_for(
@@ -135,6 +207,24 @@ def _credit_for(
         return transfer[0], "transferred", transfer[1]
 
     return 0.0, "missing", None
+
+
+def _bounds_credit(basis: str, credit: float) -> tuple[float, float]:
+    """The same term read pessimistically and optimistically.
+
+    Only two of the five bases are *known*: an evidenced hold and a subsumed one. The rest are
+    estimates — a claimed skill is the person's word, and a transfer edge is a general statement
+    about how competence carries, not a measurement of how it carried for them.
+
+    So the floor counts only what is known, and the ceiling counts every estimate as if it held in
+    full. The distance between them is exactly how much of the number rests on assertion, which is
+    the thing a single figure cannot say.
+    """
+    if basis in {_EVIDENCED, "subsumed"}:
+        return 1.0, 1.0
+    if basis in {_CLAIMED, "transferred"}:
+        return 0.0, 1.0
+    return 0.0, 0.0
 
 
 def _confidence(held: tuple[HeldSkill, ...], unweighted_count: int, scored_count: int) -> str:
@@ -175,6 +265,9 @@ def compute_readiness(request: GapRequest, gap_items: tuple[GapItem, ...]) -> Re
         return Readiness(
             status="unknown",
             score=None,
+            score_low=None,
+            score_high=None,
+            by_cluster=(),
             confidence="low",
             remaining=(),
             terms=(),
@@ -187,6 +280,7 @@ def compute_readiness(request: GapRequest, gap_items: tuple[GapItem, ...]) -> Re
                 "against. Nothing was inferred to fill the gap."
             ),
             scorer_version=SCORER_VERSION,
+            calibration=_calibration(),
         )
 
     if not request.held:
@@ -196,6 +290,9 @@ def compute_readiness(request: GapRequest, gap_items: tuple[GapItem, ...]) -> Re
         return Readiness(
             status="unknown",
             score=None,
+            score_low=None,
+            score_high=None,
+            by_cluster=(),
             confidence="low",
             remaining=(),
             terms=(),
@@ -208,6 +305,7 @@ def compute_readiness(request: GapRequest, gap_items: tuple[GapItem, ...]) -> Re
                 "number rather than a guess."
             ),
             scorer_version=SCORER_VERSION,
+            calibration=_calibration(),
         )
 
     evidenced = frozenset(s.skill_id for s in request.held if s.status == _EVIDENCED)
@@ -217,6 +315,9 @@ def compute_readiness(request: GapRequest, gap_items: tuple[GapItem, ...]) -> Re
     unweighted: list[str] = []
     numerator = 0.0
     denominator = 0.0
+    numerator_low = 0.0
+    numerator_high = 0.0
+    cluster_totals: dict[str, list[float]] = {}
 
     for requirement in scoped:
         if requirement.weight is None:
@@ -229,6 +330,15 @@ def compute_readiness(request: GapRequest, gap_items: tuple[GapItem, ...]) -> Re
         contribution = requirement.weight * credit
         numerator += contribution
         denominator += requirement.weight
+
+        low_credit, high_credit = _bounds_credit(basis, credit)
+        numerator_low += requirement.weight * low_credit
+        numerator_high += requirement.weight * high_credit
+
+        bucket = cluster_totals.setdefault(requirement.cluster, [0.0, 0.0, 0.0])
+        bucket[0] += contribution
+        bucket[1] += requirement.weight
+        bucket[2] += 1
         terms.append(
             ReadinessTerm(
                 skill_id=requirement.skill_id,
@@ -244,6 +354,9 @@ def compute_readiness(request: GapRequest, gap_items: tuple[GapItem, ...]) -> Re
         return Readiness(
             status="unknown",
             score=None,
+            score_low=None,
+            score_high=None,
+            by_cluster=(),
             confidence="low",
             remaining=(),
             terms=tuple(terms),
@@ -259,9 +372,26 @@ def compute_readiness(request: GapRequest, gap_items: tuple[GapItem, ...]) -> Re
                 "would be arithmetic over nothing."
             ),
             scorer_version=SCORER_VERSION,
+            calibration=_calibration(),
         )
 
     score = round(numerator / denominator, 4)
+    score_low = round(numerator_low / denominator, 4)
+    score_high = round(numerator_high / denominator, 4)
+
+    by_cluster = tuple(
+        ClusterScore(
+            cluster=cluster,
+            score=round(totals[0] / totals[1], 4),
+            weight_share=round(totals[1] / denominator, 4),
+            requirement_count=int(totals[2]),
+        )
+        # Sorted by share of the denominator, so the cluster that actually drives the number reads
+        # first rather than whichever happened to be inserted first.
+        for cluster, totals in sorted(
+            cluster_totals.items(), key=lambda entry: (-entry[1][1], entry[0])
+        )
+    )
 
     remaining = tuple(
         RemainingItem(
@@ -293,10 +423,19 @@ def compute_readiness(request: GapRequest, gap_items: tuple[GapItem, ...]) -> Re
         "market demand, language level and visa eligibility are not modelled yet, so this is "
         "skill readiness rather than whether you would be hired"
     )
+    if score_high - score_low > 0:
+        # Said out loud rather than left implicit in two numbers nobody compares.
+        missing.append(
+            f"between {score_low:.0%} and {score_high:.0%} depending on whether your listed and "
+            "transferred skills hold up in practice — the single figure sits in the middle"
+        )
 
     return Readiness(
         status="ok",
         score=score,
+        score_low=score_low,
+        score_high=score_high,
+        by_cluster=by_cluster,
         confidence=_confidence(request.held, len(unweighted), len(terms)),
         remaining=remaining,
         terms=tuple(terms),
@@ -309,12 +448,17 @@ def compute_readiness(request: GapRequest, gap_items: tuple[GapItem, ...]) -> Re
         missing=tuple(missing),
         reason=None,
         scorer_version=SCORER_VERSION,
+        calibration=_calibration(),
     )
 
 
 __all__ = [
     "CLAIMED_CREDIT",
+    "CLAIMED_CREDIT_AWAITING",
+    "CLAIMED_CREDIT_BASIS",
     "SCORER_VERSION",
+    "Calibration",
+    "ClusterScore",
     "Readiness",
     "ReadinessTerm",
     "RemainingItem",

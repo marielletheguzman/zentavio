@@ -30,6 +30,12 @@ function readiness(overrides: Partial<ReadinessWire> = {}): ReadinessWire {
   return {
     status: 'ok',
     score: 0.62,
+    score_low: 0.5,
+    score_high: 0.8,
+    by_cluster: [
+      { cluster: 'core', score: 0.7, weight_share: 0.6, requirement_count: 4 },
+      { cluster: 'supporting', score: 0.5, weight_share: 0.4, requirement_count: 3 },
+    ],
     confidence: 'medium',
     remaining: [
       {
@@ -58,6 +64,11 @@ function readiness(overrides: Partial<ReadinessWire> = {}): ReadinessWire {
     missing: [],
     reason: null,
     scorer_version: 'readiness/2026-08-03',
+    calibration: {
+      claimed_credit: 0.6,
+      basis: 'fixed by career-intelligence/SKILL.md rather than derived from data',
+      awaiting: 'recorded outcomes in knowledge-engine/outcomes',
+    },
     ...overrides,
   };
 }
@@ -263,5 +274,35 @@ describe('readiness', () => {
     const state = gapViewStateFor(gap());
     if (state.kind !== 'gap') throw new Error('unreachable');
     expect(state.readiness.scorerVersion).toBe('readiness/2026-08-03');
+  });
+});
+
+describe('the readiness band', () => {
+  it('shows the floor and ceiling around the point estimate', () => {
+    const state = gapViewStateFor(gap());
+    if (state.kind !== 'gap') throw new Error('unreachable');
+    expect(state.readiness.band?.lowPercent).toBe(50);
+    expect(state.readiness.band?.highPercent).toBe(80);
+    expect(state.readiness.band?.label).toContain('hold up');
+  });
+
+  it('shows no band when nothing is being estimated', () => {
+    // Every held skill evidenced means there is no assertion to be wrong about. "62% to 62%" would
+    // imply a doubt that does not exist.
+    const state = gapViewStateFor(
+      gap({ readiness: readiness({ score: 0.62, score_low: 0.62, score_high: 0.62 }) }),
+    );
+    if (state.kind !== 'gap') throw new Error('unreachable');
+    expect(state.readiness.band).toBeNull();
+  });
+
+  it('breaks the number down by cluster, strongest driver first', () => {
+    const state = gapViewStateFor(gap());
+    if (state.kind !== 'gap') throw new Error('unreachable');
+    expect(state.readiness.clusters.map((c) => c.label)).toEqual(['Core', 'Supporting']);
+    expect(state.readiness.clusters[0]?.percent).toBe(70);
+    // The share matters as much as the score: 70% of a cluster worth 6% of the track is not a
+    // strong position, and the number alone cannot say that.
+    expect(state.readiness.clusters[0]?.sharePercent).toBe(60);
   });
 });
