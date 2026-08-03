@@ -377,9 +377,7 @@ class TestCalibrationTravels:
     """
 
     def test_every_score_carries_the_constant_that_shaped_it(self) -> None:
-        result = readiness_for(
-            request(requirements=(require("a"),), held=(held("a", "claimed"),))
-        )
+        result = readiness_for(request(requirements=(require("a"),), held=(held("a", "claimed"),)))
         assert result.calibration.claimed_credit == CLAIMED_CREDIT
 
     def test_the_constant_names_where_it_came_from(self) -> None:
