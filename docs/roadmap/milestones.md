@@ -188,8 +188,11 @@ deliberately, because refusing them forever would be a ban rather than an erasur
 Profile → seeded skill graph for the one track → weighted, dependency-ordered gap → each missing skill
 shows why it is required and how far it sits from what the user already has.
 
-**Vertical:** `knowledge-engine/skills-graph` (seeded, sourced edges only) · `ai/skill-gap` ·
-`apps/web` gap surface.
+**Vertical:** `packages/db/seeds/` (seeded, sourced edges only) and the `skills` · `skill_aliases` ·
+`skill_edges` · `career_skills` tables · `ai/skill-gap` · `apps/web` gap surface.
+
+*This line named `knowledge-engine/skills-graph` until 2026-08-03. It was never built there, and
+ADR-0020 settles why: the graph is queried per request, so it lives in the database.*
 
 **Done when:** a skill the graph does not cover returns `unknown` naming what is missing, never a zero;
 every `requires` edge carries its source; the ordering is dependency-driven and reproducible — the same
