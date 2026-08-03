@@ -32,6 +32,10 @@ export default function Home() {
       </p>
 
       <UploadPanel gatewayUrl={GATEWAY_URL} devUserId={SEEDED_TEST_USER} />
+
+      <p>
+        <a href="/gap">See how far you are from a track</a>
+      </p>
     </main>
   );
 }
