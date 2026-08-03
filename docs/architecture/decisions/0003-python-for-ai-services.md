@@ -105,12 +105,20 @@ is TypeScript, and the two communicate over HTTP using contracts defined as JSON
   and to Pydantic models. Neither side hand-writes the other's shapes.
 - Add a CI check failing when generated types are out of date relative to the schema. Without it,
   the primary risk of this ADR is unmitigated.
-- Add contract tests exercising the real HTTP boundary against fixtures, in both directions.
+- ~~Add contract tests exercising the real HTTP boundary against fixtures, in both directions.~~
+  **Done** — `ai/resume-parser/tests/test_contract.py` writes the fixtures from the live app and
+  `packages/types/src/contracts.test.ts` validates them against the hand-written TypeScript types,
+  so a change on either side fails a test in the same pull request. It is the interim guard until
+  the JSON Schema item above lands, not a replacement for it.
 - ~~Establish the Python dependency and lint toolchain for `ai/`.~~ **Done** — Ruff for lint and
   format (ADR-0005), uv workspace for dependencies (ADR-0006).
-- Standardize FastAPI service structure: health endpoints, error envelope matching
-  `.claude/skills/backend-service/SKILL.md`, structured logging with the same correlation id
-  propagated across the boundary.
+- ~~Standardize FastAPI service structure: health endpoints, error envelope matching
+  `.claude/skills/backend-service/SKILL.md`.~~ **Done** — `ai/resume-parser` and `ai/skill-gap`
+  both expose `/health/live` and `/health/ready` and return the shared envelope, including from a
+  middleware that catches anything unhandled: a traceback reaching the client is the likeliest way
+  résumé content escapes.
+- **Still open: structured logging with the same correlation id propagated across the boundary.**
+  Blocked on `packages/logger` (ADR-0008), which does not exist.
 - Confirm no state: `ai/*` services own no tables and no cache of record.
 
 **Reversal cost.** Per service, moderate: porting one Python service to TypeScript means finding
