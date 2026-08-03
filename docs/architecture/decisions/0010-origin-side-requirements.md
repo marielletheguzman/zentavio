@@ -142,9 +142,11 @@ collapses to a yes or a no.
 
 **Follow-up work.**
 
-- Migrate the documents: `docs/database/entities/immigration-rule.md` becomes `requirement.md`;
-  `docs/architecture/immigration.md`, `schema-overview.md`, `relationships.md`, `data-retention.md`, and
-  `.claude/skills/immigration/SKILL.md` follow.
+- ~~Migrate the documents: `docs/database/entities/immigration-rule.md` becomes `requirement.md`;
+  `docs/architecture/immigration.md`, `schema-overview.md`, `relationships.md`,
+  `data-retention.md`, and `.claude/skills/immigration/SKILL.md` follow.~~ **Done** — all five
+  followed, and `requirements` is a live table. The old name survives above and in Related as the
+  record of what was renamed; it is deliberately not a working link.
 - Define the `jsonb` shape per domain, documented in the entity file.
 - Extend the evaluator to the ordered pass above, with the binding constraint named.
 - **A `ph.md` origin reference file**, listing which authority is authoritative for each origin-side

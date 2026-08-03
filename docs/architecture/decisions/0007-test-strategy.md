@@ -101,14 +101,23 @@ need to be fast enough to run constantly, which rules out Option C.
 
 **Follow-up work.**
 
-- `vitest.workspace.ts` defining the `unit` and `integration` projects.
-- `pnpm test`, `test:unit`, `test:integration`, `test:watch`; extend `lint:all` to run `test:unit`.
-- Add both to `.github/workflows/ci.yml` — unit in the `typescript` job, integration as its own job with a
-  PostgreSQL service container.
-- A container helper that gives each integration test a clean schema, and applies migrations from
-  `packages/db` rather than a hand-maintained fixture.
-- `pytest` config in the uv workspace once `ai/` has a service.
-- Update `docs/development/testing.md` and `getting-started.md` to match.
+- ~~`vitest.workspace.ts` defining the `unit` and `integration` projects.~~ **Done**, as
+  `vitest.config.ts` — the workspace file was folded into the config when Vitest merged the two.
+- ~~`pnpm test`, `test:unit`, `test:integration`, `test:watch`; extend `lint:all` to run
+  `test:unit`.~~ **Done.**
+- ~~Add both to `.github/workflows/ci.yml`.~~ **Done** — unit in the `typescript` job, integration
+  as its own job against a `postgres:17-alpine` service container, pinned to the same tag as
+  `infra/docker/docker-compose.dev.yml` so a green run is evidence about the right server.
+- ~~A container helper that gives each integration test a clean schema, and applies migrations
+  from `packages/db`.~~ **Done** — `tests/integration/db/database.ts`, which refuses any database
+  whose name does not end in `_test` before it drops a schema.
+- ~~`pytest` config in the uv workspace once `ai/` has a service.~~ **Resolved differently.** `ai/`
+  has three services and the config stayed in `pytest.ini` at the repository root: CI runs pytest
+  from there, so `testpaths = ai` still resolves, and a second configuration in `ai/pyproject.toml`
+  would be drift waiting to happen.
+- ~~Update `docs/development/testing.md` and `getting-started.md` to match.~~ **Done** — and they
+  had gone stale in the meantime, still claiming the integration project had no tests and no CI
+  job while 139 of them ran on every pull request.
 
 **Reversal cost.** Low. Vitest's API is Jest-compatible, so moving to Jest is mostly configuration.
 Moving to `node:test` would mean rewriting mocks. Nothing about the *strategy* — the invariants, the levels,

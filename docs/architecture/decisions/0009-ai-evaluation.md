@@ -130,7 +130,12 @@ enforce.
 - ~~The `promptVersion` check.~~ **Done** — also catches deletes and moves, which the original wording
   did not anticipate.
 - A PR template section for the delta report.
-- Pin `ZENTAVIO_EVAL_MODEL` in `packages/config` and document the local setup.
+- ~~Pin `ZENTAVIO_EVAL_MODEL` in `packages/config` and document the local setup.~~ **Done** —
+  pinned to `qwen2.5:14b-instruct`, with `docs/development/environment.md` naming the pull. The
+  Python runner duplicates the default because it is stdlib-only, and parity is checked by
+  `ai/shared/evals/tests/test_config_parity.py` rather than trusted. **A caution learned since:**
+  graded runs are not reproducible even at temperature 0 with a fixed seed, so a change is judged
+  on repeated runs rather than a single-case delta.
 - Human review process: a prompt change needs a reviewer who reads the gate results, not only the summary.
 - Dataset management — case files are committed, reviewed like code, and every case states why it exists;
   a case without a `why` is rejected by the loader today.
