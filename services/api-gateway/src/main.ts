@@ -8,7 +8,7 @@
  */
 
 import 'reflect-metadata';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { load, parserSchema } from '@zentavio/config';
 import { DEV_SUBJECT_HEADER } from '@zentavio/auth';
@@ -44,7 +44,17 @@ export async function bootstrap(port: number = DEFAULT_PORT): Promise<void> {
   // will be an httpOnly cookie the browser sends by itself, and a wildcard is not even legal
   // alongside it.
   const { webOrigin } = load(parserSchema);
-  if (webOrigin !== '') {
+  if (webOrigin === '') {
+    // **Say it out loud.** Deny-by-default is right, but a silent denial presents to whoever is
+    // running the stack as "Could not reach the server" in the browser — a message pointing at the
+    // network when the cause is one unset variable. That is the same class of failure this codebase
+    // rejects everywhere else: a configuration problem wearing the costume of an outage.
+    new Logger('Bootstrap').warn(
+      'ZENTAVIO_WEB_ORIGIN is not set, so no CORS headers are sent and every browser request will ' +
+        'be blocked. The API still works for server-to-server callers. Set it to the web app origin ' +
+        '(e.g. http://127.0.0.1:3000) to use apps/web.',
+    );
+  } else {
     app.enableCors({
       origin: webOrigin,
       credentials: true,
