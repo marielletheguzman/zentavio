@@ -8,7 +8,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import type { GapItemWire, GapResponseWire } from '@zentavio/types';
+import type { GapItemWire, GapResponseWire, ReadinessWire } from '@zentavio/types';
 import { gapViewStateFor, summaryFor, type GapBody } from './gap-view.ts';
 
 function item(overrides: Partial<GapItemWire> = {}): GapItemWire {
@@ -22,6 +22,42 @@ function item(overrides: Partial<GapItemWire> = {}): GapItemWire {
     prerequisites: [],
     basis: 'curated',
     support: null,
+    ...overrides,
+  };
+}
+
+function readiness(overrides: Partial<ReadinessWire> = {}): ReadinessWire {
+  return {
+    status: 'ok',
+    score: 0.62,
+    confidence: 'medium',
+    remaining: [
+      {
+        skill_id: 'kubernetes',
+        weight: 0.95,
+        partial: null,
+        partial_from: null,
+        cluster: 'core',
+        position: 1,
+        typical_time_to_competence: null,
+      },
+    ],
+    terms: [
+      {
+        skill_id: 'kubernetes',
+        weight: 0.95,
+        credit: 0,
+        basis: 'missing',
+        source: null,
+        contribution: 0,
+      },
+    ],
+    estimated_time_to_ready: null,
+    time_to_ready_basis: 'not estimated: no time-to-competence data exists yet.',
+    binding_constraint: null,
+    missing: [],
+    reason: null,
+    scorer_version: 'readiness/2026-08-03',
     ...overrides,
   };
 }
@@ -41,6 +77,7 @@ function gap(overrides: Partial<GapResponseWire> = {}): GapBody {
       reason: null,
       scorer_version: 'skill-gap/2026-08-03',
       knowledge_as_of: '2026-08-03T00:00:00Z',
+      readiness: readiness(),
       ...overrides,
     },
   };
@@ -167,5 +204,64 @@ describe('summaryFor', () => {
 
   it('says nothing is missing rather than reporting zero of anything', () => {
     expect(summaryFor([])).toBe('Nothing is missing.');
+  });
+});
+
+describe('readiness', () => {
+  it('renders a number with its remainder, never bare', () => {
+    const state = gapViewStateFor(gap());
+    if (state.kind !== 'gap') throw new Error('unreachable');
+    expect(state.readiness.percent).toBe(62);
+    expect(state.readiness.remainingCount).toBeGreaterThan(0);
+    expect(state.readiness.confidence.label).toBe('Fairly confident');
+  });
+
+  it('rounds to a whole percent, because the inputs are not precise', () => {
+    // 0.6187 implies a precision curated tier-3 weights do not have.
+    const state = gapViewStateFor(gap({ readiness: readiness({ score: 0.6187 }) }));
+    if (state.kind !== 'gap') throw new Error('unreachable');
+    expect(state.readiness.percent).toBe(62);
+  });
+
+  it('refuses to show a number it does not have, rather than showing zero', () => {
+    // "We cannot tell" and "you are not ready" are opposite statements that look identical as an
+    // empty progress bar. This is the distinction the whole surface turns on.
+    const state = gapViewStateFor(
+      gap({
+        readiness: readiness({
+          status: 'unknown',
+          score: null,
+          reason: 'There is no parsed profile to measure.',
+        }),
+      }),
+    );
+    if (state.kind !== 'gap') throw new Error('unreachable');
+    expect(state.readiness.known).toBe(false);
+    expect(state.readiness.percent).toBeNull();
+    expect(state.readiness.reason).toContain('no parsed profile');
+  });
+
+  it('carries what the number does not account for', () => {
+    const state = gapViewStateFor(
+      gap({
+        readiness: readiness({
+          missing: ['market demand is not modelled yet'],
+        }),
+      }),
+    );
+    if (state.kind !== 'gap') throw new Error('unreachable');
+    expect(state.readiness.caveats).toContain('market demand is not modelled yet');
+  });
+
+  it('explains why there is no timeline rather than inventing one', () => {
+    const state = gapViewStateFor(gap());
+    if (state.kind !== 'gap') throw new Error('unreachable');
+    expect(state.readiness.timeBasis).toContain('not estimated');
+  });
+
+  it('shows which scorer produced the number', () => {
+    const state = gapViewStateFor(gap());
+    if (state.kind !== 'gap') throw new Error('unreachable');
+    expect(state.readiness.scorerVersion).toBe('readiness/2026-08-03');
   });
 });

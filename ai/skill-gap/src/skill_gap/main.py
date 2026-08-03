@@ -25,6 +25,7 @@ from pydantic import BaseModel, Field
 
 from skill_gap.compute import SCORER_VERSION, compute_gap
 from skill_gap.ports import Edge, GapRequest, HeldSkill, RequiredSkill
+from skill_gap.readiness import compute_readiness
 
 app = FastAPI(
     title="Zentavio skill gap",
@@ -87,6 +88,44 @@ class HeldOut(BaseModel):
     status: str
 
 
+class ReadinessTermOut(BaseModel):
+    """One requirement's contribution, and why it contributed that much."""
+
+    skill_id: str
+    weight: float
+    credit: float
+    basis: Literal["evidenced", "claimed", "subsumed", "transferred", "missing"]
+    source: str | None
+    contribution: float
+
+
+class RemainingOut(BaseModel):
+    skill_id: str
+    weight: float
+    partial: float | None
+    partial_from: str | None
+    cluster: str
+    position: int
+    typical_time_to_competence: str | None
+
+
+class ReadinessOut(BaseModel):
+    """A verdict, a remainder, and a cost — never a bare score."""
+
+    status: Literal["ok", "unknown"]
+    score: float | None
+    confidence: Literal["high", "medium", "low"]
+    remaining: list[RemainingOut]
+    #: Every term of the sum, so the arithmetic can be checked by hand rather than trusted.
+    terms: list[ReadinessTermOut]
+    estimated_time_to_ready: str | None
+    time_to_ready_basis: str
+    binding_constraint: str | None
+    missing: list[str]
+    reason: str | None
+    scorer_version: str
+
+
 class GapResponse(BaseModel):
     status: Literal["ok", "no_gap", "unknown"]
     target_id: str
@@ -99,6 +138,10 @@ class GapResponse(BaseModel):
     reason: str | None
     scorer_version: str
     knowledge_as_of: str | None
+    #: Computed in the same call from the same inputs, deliberately. Two endpoints could disagree
+    #: about `knowledge_as_of` — a score and a gap describing different moments, both looking
+    #: correct on one screen.
+    readiness: ReadinessOut
 
 
 def _error(
@@ -146,41 +189,42 @@ def gap(payload: Annotated[GapRequestBody, Body()]) -> JSONResponse:
     months learning deserves "we have not modelled this track" over a plausible-looking empty list,
     and neither is an HTTP error.
     """
-    result = compute_gap(
-        GapRequest(
-            target_id=payload.target_id,
-            target_kind=payload.target_kind,
-            requirements=tuple(
-                RequiredSkill(
-                    skill_id=r.skill_id,
-                    weight=r.weight,
-                    cluster=r.cluster,
-                    market_scope=r.market_scope,
-                    basis=r.basis,
-                    support=r.support,
-                )
-                for r in payload.requirements
-            ),
-            held=tuple(
-                HeldSkill(skill_id=h.skill_id, status=h.status, confidence=h.confidence)
-                for h in payload.held
-            ),
-            edges=tuple(
-                Edge(
-                    from_skill_id=e.from_skill_id,
-                    to_skill_id=e.to_skill_id,
-                    edge_type=e.edge_type,
-                    weight=e.weight,
-                    source_url=e.source_url,
-                    source_tier=e.source_tier,
-                )
-                for e in payload.edges
-            ),
-            market=payload.market,
-            knowledge_as_of=payload.knowledge_as_of,
-            unresolved=tuple(payload.unresolved),
-        )
+    gap_request = GapRequest(
+        target_id=payload.target_id,
+        target_kind=payload.target_kind,
+        requirements=tuple(
+            RequiredSkill(
+                skill_id=r.skill_id,
+                weight=r.weight,
+                cluster=r.cluster,
+                market_scope=r.market_scope,
+                basis=r.basis,
+                support=r.support,
+            )
+            for r in payload.requirements
+        ),
+        held=tuple(
+            HeldSkill(skill_id=h.skill_id, status=h.status, confidence=h.confidence)
+            for h in payload.held
+        ),
+        edges=tuple(
+            Edge(
+                from_skill_id=e.from_skill_id,
+                to_skill_id=e.to_skill_id,
+                edge_type=e.edge_type,
+                weight=e.weight,
+                source_url=e.source_url,
+                source_tier=e.source_tier,
+            )
+            for e in payload.edges
+        ),
+        market=payload.market,
+        knowledge_as_of=payload.knowledge_as_of,
+        unresolved=tuple(payload.unresolved),
     )
+
+    result = compute_gap(gap_request)
+    readiness = compute_readiness(gap_request, result.items)
 
     return JSONResponse(
         status_code=status.HTTP_200_OK,
@@ -209,6 +253,40 @@ def gap(payload: Annotated[GapRequestBody, Body()]) -> JSONResponse:
             reason=result.reason,
             scorer_version=result.scorer_version,
             knowledge_as_of=result.knowledge_as_of,
+            readiness=ReadinessOut(
+                status=readiness.status,  # type: ignore[arg-type]
+                score=readiness.score,
+                confidence=readiness.confidence,  # type: ignore[arg-type]
+                remaining=[
+                    RemainingOut(
+                        skill_id=entry.skill_id,
+                        weight=entry.weight,
+                        partial=entry.partial,
+                        partial_from=entry.partial_from,
+                        cluster=entry.cluster,
+                        position=entry.position,
+                        typical_time_to_competence=entry.typical_time_to_competence,
+                    )
+                    for entry in readiness.remaining
+                ],
+                terms=[
+                    ReadinessTermOut(
+                        skill_id=term.skill_id,
+                        weight=term.weight,
+                        credit=term.credit,
+                        basis=term.basis,  # type: ignore[arg-type]
+                        source=term.source,
+                        contribution=term.contribution,
+                    )
+                    for term in readiness.terms
+                ],
+                estimated_time_to_ready=readiness.estimated_time_to_ready,
+                time_to_ready_basis=readiness.time_to_ready_basis,
+                binding_constraint=readiness.binding_constraint,
+                missing=list(readiness.missing),
+                reason=readiness.reason,
+                scorer_version=readiness.scorer_version,
+            ),
         ).model_dump(),
     )
 

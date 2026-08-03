@@ -26,7 +26,7 @@
     "test:py": "uv run --project ai --all-packages pytest",
     "test:unit": "vitest run --project unit",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc -p apps/web/tsconfig.json --noEmit && tsc -p services/api-gateway/tsconfig.build.json --noEmit"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",

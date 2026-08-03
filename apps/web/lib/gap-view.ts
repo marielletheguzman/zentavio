@@ -15,7 +15,7 @@
  *    interpret is a gap they will not close.
  */
 
-import type { GapItemWire, GapResponseWire } from '@zentavio/types';
+import type { GapItemWire, GapResponseWire, ReadinessWire } from '@zentavio/types';
 
 export type GapViewState =
   /** No track chosen yet. Not an error — they have not answered the question. */
@@ -38,6 +38,7 @@ export type GapViewState =
   /** The gap, in dependency order. */
   | {
       readonly kind: 'gap';
+      readonly readiness: ReadinessView;
       readonly items: readonly GapItemView[];
       readonly confidence: ConfidenceView;
       readonly missing: readonly string[];
@@ -45,6 +46,29 @@ export type GapViewState =
       readonly summary: string;
       readonly scorerVersion: string;
     };
+
+/**
+ * The readiness number, or an honest refusal to give one.
+ *
+ * `percent` is `null` whenever the score is — and the surface must render the refusal rather than
+ * a `0%`, because "we cannot tell" and "you are not ready" are opposite statements that look
+ * identical as an empty progress bar.
+ */
+export interface ReadinessView {
+  readonly known: boolean;
+  /** 0..100, rounded. Null when the score is unknown. */
+  readonly percent: number | null;
+  readonly confidence: ConfidenceView;
+  /** Why there is no number, when there is none. */
+  readonly reason: string | null;
+  /** What the number does not account for. Shown beside it, never buried. */
+  readonly caveats: readonly string[];
+  /** Why there is no timeline. Never an invented one. */
+  readonly timeBasis: string;
+  /** How many requirements are still open — the remainder, in one word. */
+  readonly remainingCount: number;
+  readonly scorerVersion: string;
+}
 
 export interface ConfidenceView {
   readonly level: 'high' | 'medium' | 'low';
@@ -104,6 +128,21 @@ const CLUSTER_LABEL: Record<GapItemWire['cluster'], string> = {
 
 export function confidenceView(level: ConfidenceView['level']): ConfidenceView {
   return { level, label: CONFIDENCE_LABEL[level] };
+}
+
+export function readinessView(readiness: ReadinessWire): ReadinessView {
+  return {
+    known: readiness.status === 'ok' && readiness.score !== null,
+    // Rounded to a whole percent on purpose. `0.6187` implies a precision the inputs do not have —
+    // the weights behind it are curated at tier 3.
+    percent: readiness.score === null ? null : Math.round(readiness.score * 100),
+    confidence: confidenceView(readiness.confidence),
+    reason: readiness.reason,
+    caveats: readiness.missing,
+    timeBasis: readiness.time_to_ready_basis,
+    remainingCount: readiness.remaining.length,
+    scorerVersion: readiness.scorer_version,
+  };
 }
 
 function partialView(item: GapItemWire): PartialView | null {
@@ -190,6 +229,7 @@ export function gapViewStateFor(body: GapBody): GapViewState {
   const items = gap.items.map(toItemView);
   return {
     kind: 'gap',
+    readiness: readinessView(gap.readiness),
     items,
     confidence: confidenceView(gap.confidence),
     missing: gap.missing,

@@ -40,6 +40,12 @@ function response(overrides: Partial<ParseResponseWire> = {}): ParseResponseWire
     degraded_sections: [],
     completeness: 0.3,
     parser_version: 'resume-parser/test',
+    // Added when the parser began calling its prompts (ADR-0018). This fixture went stale the day
+    // those fields landed and nothing noticed, because `pnpm typecheck` did not cover apps/.
+    unmatched: [],
+    enrichment: 'unavailable',
+    prompt_versions: {},
+    model: null,
     ...overrides,
   };
 }

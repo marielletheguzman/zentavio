@@ -88,6 +88,10 @@ export {
   type GapRequestWire,
   type GapResponseWire,
   type GapStatus,
+  type ReadinessBasis,
+  type ReadinessTermWire,
+  type ReadinessWire,
+  type RemainingWire,
 } from './skill-gap.ts';
 
 export {

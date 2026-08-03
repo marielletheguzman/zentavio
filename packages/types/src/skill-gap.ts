@@ -42,6 +42,57 @@ export interface GapHeldWire {
   readonly status: string;
 }
 
+/**
+ * How a requirement was credited. `missing` is a real basis, not the absence of one — it is what
+ * makes a zero term inspectable rather than merely absent from the sum.
+ */
+export type ReadinessBasis = 'evidenced' | 'claimed' | 'subsumed' | 'transferred' | 'missing';
+
+export interface ReadinessTermWire {
+  readonly skill_id: string;
+  readonly weight: number;
+  readonly credit: number;
+  readonly basis: ReadinessBasis;
+  /** The held skill that produced the credit, when one did. */
+  readonly source: string | null;
+  /** What this term added to the numerator, so the arithmetic is checkable by hand. */
+  readonly contribution: number;
+}
+
+export interface RemainingWire {
+  readonly skill_id: string;
+  readonly weight: number;
+  readonly partial: number | null;
+  readonly partial_from: string | null;
+  readonly cluster: GapCluster;
+  readonly position: number;
+  /** Null until time-to-competence data exists. Never estimated from nothing. */
+  readonly typical_time_to_competence: string | null;
+}
+
+/**
+ * A verdict, a remainder, and a cost — never a bare score.
+ *
+ * `status: 'unknown'` means the inputs could not support a number. A low score and "we cannot tell"
+ * are different answers, and rendering the second as the first is the failure the product exists to
+ * avoid.
+ */
+export interface ReadinessWire {
+  readonly status: 'ok' | 'unknown';
+  readonly score: number | null;
+  readonly confidence: 'high' | 'medium' | 'low';
+  readonly remaining: readonly RemainingWire[];
+  readonly terms: readonly ReadinessTermWire[];
+  /** Null while no time-to-competence data exists. `time_to_ready_basis` says why. */
+  readonly estimated_time_to_ready: string | null;
+  readonly time_to_ready_basis: string;
+  /** Null while market demand, language and eligibility are unmodelled. */
+  readonly binding_constraint: string | null;
+  readonly missing: readonly string[];
+  readonly reason: string | null;
+  readonly scorer_version: string;
+}
+
 export interface GapResponseWire {
   readonly status: GapStatus;
   readonly target_id: string;
@@ -57,6 +108,12 @@ export interface GapResponseWire {
   /** Which scorer produced this. Stored with any number derived from it. */
   readonly scorer_version: string;
   readonly knowledge_as_of: string | null;
+  /**
+   * Computed in the same call from the same inputs. Two endpoints could disagree about
+   * `knowledge_as_of` — a score and a gap describing different moments, both looking correct on
+   * one screen.
+   */
+  readonly readiness: ReadinessWire;
 }
 
 export interface GapRequestWire {
@@ -91,6 +148,13 @@ export interface GapRequestWire {
 const GAP_STATUSES = new Set<string>(['ok', 'no_gap', 'unknown']);
 const CLUSTERS = new Set<string>(['core', 'supporting', 'differentiating', 'peripheral']);
 const CONFIDENCES = new Set<string>(['high', 'medium', 'low']);
+const READINESS_BASES = new Set<string>([
+  'evidenced',
+  'claimed',
+  'subsumed',
+  'transferred',
+  'missing',
+]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -118,6 +182,51 @@ function isGapItem(value: unknown): value is GapItemWire {
   // number in this system is not allowed to be.
   if (partial !== null && typeof value['partial_from'] !== 'string') return false;
   if (partial === null && value['partial_from'] !== null) return false;
+
+  return true;
+}
+
+function isReadinessTerm(value: unknown): value is ReadinessTermWire {
+  if (!isRecord(value)) return false;
+  if (typeof value['skill_id'] !== 'string' || value['skill_id'] === '') return false;
+  if (typeof value['weight'] !== 'number') return false;
+  if (typeof value['credit'] !== 'number' || value['credit'] < 0 || value['credit'] > 1) return false;
+  if (typeof value['basis'] !== 'string' || !READINESS_BASES.has(value['basis'])) return false;
+  if (typeof value['contribution'] !== 'number') return false;
+  if (value['source'] !== null && typeof value['source'] !== 'string') return false;
+
+  // A non-zero credit with no source is a claim with no evidence. `missing` is the only basis
+  // allowed to have neither.
+  if (value['credit'] > 0 && value['source'] === null) return false;
+  return true;
+}
+
+function isReadiness(value: unknown): value is ReadinessWire {
+  if (!isRecord(value)) return false;
+  if (value['status'] !== 'ok' && value['status'] !== 'unknown') return false;
+  if (typeof value['confidence'] !== 'string' || !CONFIDENCES.has(value['confidence'])) return false;
+  if (typeof value['time_to_ready_basis'] !== 'string' || value['time_to_ready_basis'] === '') {
+    return false;
+  }
+  if (typeof value['scorer_version'] !== 'string' || value['scorer_version'] === '') return false;
+  if (!isStringArray(value['missing'])) return false;
+  if (!Array.isArray(value['terms']) || !value['terms'].every(isReadinessTerm)) return false;
+  if (!Array.isArray(value['remaining'])) return false;
+
+  const score = value['score'];
+  if (score !== null && (typeof score !== 'number' || score < 0 || score > 1)) return false;
+
+  // The rule the whole feature turns on: a score must never arrive without a status that admits
+  // it could be absent, and `unknown` must never arrive carrying a number.
+  if (value['status'] === 'unknown' && score !== null) return false;
+  if (value['status'] === 'ok' && score === null) return false;
+
+  // A readiness number with no remainder is a vanity metric
+  // (`.claude/context/career-philosophy.md`). A perfect score is the one case with nothing left.
+  if (value['status'] === 'ok' && value['remaining'].length === 0 && score !== 1) return false;
+
+  // An unknown that does not say why leaves the UI nothing to show.
+  if (value['status'] === 'unknown' && typeof value['reason'] !== 'string') return false;
 
   return true;
 }
@@ -156,6 +265,8 @@ export function isGapResponse(value: unknown): value is GapResponseWire {
   // A non-ok status with no reason leaves the UI nothing to show, which is exactly what the
   // honest-unknown rule exists to prevent.
   if (value['status'] !== 'ok' && value['reason'] === null) return false;
+
+  if (!isReadiness(value['readiness'])) return false;
 
   // Positions must be dense and start at 1, or "step 3 of 5" is a lie.
   const positions = value['items'].map((item) => (item as GapItemWire).position);
