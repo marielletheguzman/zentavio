@@ -63,12 +63,15 @@ Full rules: the `documentation` skill (`.claude/skills/documentation/SKILL.md`) 
 
 ## Current state
 
-The repository is a documentation-first skeleton — no application code yet, beyond the boundary
-enforcement in `eslint.config.mjs` and `ruff.toml`.
+**Documentation is complete; M1 is built.** This block said "no application code yet" for several
+milestones after that stopped being true. The code now covers a résumé upload through to a readiness
+score — see [`development/getting-started.md`](development/getting-started.md) for what is built and
+what is still a placeholder, and [`roadmap/milestones.md`](roadmap/milestones.md) for where that sits
+against the plan.
 
 | Area | Authored | Status |
 |---|---|---|
-| `architecture/` (incl. `decisions/`) | 18 / 18 | complete — ADRs 0001–0006 Accepted and binding |
+| `architecture/` (incl. `decisions/`) | 18 / 18 | complete — **ADRs 0001–0018 Accepted** and binding |
 | `database/` | 14 / 14 | complete |
 | `prompts/` | 9 / 9 | complete |
 | `development/` | 11 / 11 | complete |
@@ -79,8 +82,8 @@ enforcement in `eslint.config.mjs` and `ruff.toml`.
 **Every document in `docs/` is authored — no placeholders remain.**
 
 Filling a placeholder means writing what its purpose line declares — that line is the specification.
-The six Accepted ADRs are binding on everything written afterward; read them before changing a
-boundary they cover.
+**All eighteen Accepted ADRs are binding** on everything written afterward; read the ones covering a
+boundary before changing it.
 
 Documents that describe things **not yet built**, and say so in place: graded prompt evals
 (`prompts/evals.md` — runner exists, needs a model host), deployment (`development/ci-cd.md`), and
