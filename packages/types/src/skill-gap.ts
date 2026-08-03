@@ -77,6 +77,21 @@ export interface RemainingWire {
  * are different answers, and rendering the second as the first is the failure the product exists to
  * avoid.
  */
+/**
+ * The tuning constants a score depended on.
+ *
+ * `scorer_version` says which code ran; this says what that code assumed. `ai-matching/SKILL.md`
+ * forbids a hidden penalty — "every negative contribution appears in evidence" — and a 40% haircut
+ * on every claimed skill is exactly that, so it is emitted rather than left in a module.
+ */
+export interface CalibrationWire {
+  readonly claimed_credit: number;
+  /** Where the value came from. */
+  readonly basis: string;
+  /** What would turn the assumption into a measurement. */
+  readonly awaiting: string;
+}
+
 export interface ClusterScoreWire {
   readonly cluster: GapCluster;
   readonly score: number;
@@ -111,6 +126,8 @@ export interface ReadinessWire {
   readonly missing: readonly string[];
   readonly reason: string | null;
   readonly scorer_version: string;
+  /** What this score assumed, so it can be reproduced and argued with. */
+  readonly calibration: CalibrationWire;
 }
 
 export interface GapResponseWire {
@@ -241,6 +258,19 @@ function isReadiness(value: unknown): value is ReadinessWire {
   if (low !== null && (typeof low !== 'number' || low < 0 || low > 1)) return false;
   if (high !== null && (typeof high !== 'number' || high < 0 || high > 1)) return false;
   if (!Array.isArray(value['by_cluster'])) return false;
+
+  // A score that does not say what it assumed cannot be reproduced from its own output.
+  const calibration = value['calibration'];
+  if (!isRecord(calibration)) return false;
+  if (
+    typeof calibration['claimed_credit'] !== 'number' ||
+    calibration['claimed_credit'] < 0 ||
+    calibration['claimed_credit'] > 1
+  ) {
+    return false;
+  }
+  if (typeof calibration['basis'] !== 'string' || calibration['basis'] === '') return false;
+  if (typeof calibration['awaiting'] !== 'string' || calibration['awaiting'] === '') return false;
 
   // The point estimate must sit inside its own band, or the three numbers are not describing one
   // thing and the surface would render a contradiction.

@@ -367,3 +367,41 @@ class TestClusterBreakdown:
             )
         )
         assert round(sum(c.weight_share for c in result.by_cluster), 4) == 1.0
+
+
+class TestCalibrationTravels:
+    """A score that does not say what it assumed cannot be reproduced from its own output.
+
+    `scorerVersion` records which code ran. It does not record what that code assumed, and two runs
+    of the same version are only comparable if both are knowable.
+    """
+
+    def test_every_score_carries_the_constant_that_shaped_it(self) -> None:
+        result = readiness_for(
+            request(requirements=(require("a"),), held=(held("a", "claimed"),))
+        )
+        assert result.calibration.claimed_credit == CLAIMED_CREDIT
+
+    def test_the_constant_names_where_it_came_from(self) -> None:
+        # Not "0.6 because someone typed it". `ai-matching/SKILL.md` forbids a hidden penalty, and
+        # a 40% haircut with no stated origin is one.
+        result = readiness_for(request(requirements=(require("a"),), held=(held("a"),)))
+        assert "career-intelligence" in result.calibration.basis
+        assert "no recorded outcomes" in result.calibration.basis
+
+    def test_the_constant_names_what_would_replace_it(self) -> None:
+        # A calibration constant with no revisit trigger quietly becomes permanent.
+        result = readiness_for(request(requirements=(require("a"),), held=(held("a"),)))
+        assert "outcomes" in result.calibration.awaiting
+
+    def test_even_an_unknown_result_states_its_calibration(self) -> None:
+        # The unknown paths return no number, but a caller comparing two runs still needs to know
+        # they were computed under the same assumptions.
+        for req in (
+            request(requirements=(), held=(held("a"),)),
+            request(requirements=(require("a"),), held=()),
+            request(requirements=(require("a", None),), held=(held("a"),)),
+        ):
+            result = readiness_for(req)
+            assert result.status == "unknown"
+            assert result.calibration.claimed_credit == CLAIMED_CREDIT

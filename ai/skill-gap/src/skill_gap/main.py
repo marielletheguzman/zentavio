@@ -109,6 +109,18 @@ class RemainingOut(BaseModel):
     typical_time_to_competence: str | None
 
 
+class CalibrationOut(BaseModel):
+    """What the score assumed, travelling with the score.
+
+    `scorerVersion` says which code ran; this says what that code assumed. Without it a stored
+    score cannot be reproduced from its own recorded output.
+    """
+
+    claimed_credit: float
+    basis: str
+    awaiting: str
+
+
 class ClusterScoreOut(BaseModel):
     cluster: str
     score: float
@@ -136,6 +148,7 @@ class ReadinessOut(BaseModel):
     missing: list[str]
     reason: str | None
     scorer_version: str
+    calibration: CalibrationOut
 
 
 class GapResponse(BaseModel):
@@ -309,6 +322,11 @@ def gap(payload: Annotated[GapRequestBody, Body()]) -> JSONResponse:
                 missing=list(readiness.missing),
                 reason=readiness.reason,
                 scorer_version=readiness.scorer_version,
+                calibration=CalibrationOut(
+                    claimed_credit=readiness.calibration.claimed_credit,
+                    basis=readiness.calibration.basis,
+                    awaiting=readiness.calibration.awaiting,
+                ),
             ),
         ).model_dump(),
     )

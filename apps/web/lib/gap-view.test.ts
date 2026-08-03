@@ -64,6 +64,11 @@ function readiness(overrides: Partial<ReadinessWire> = {}): ReadinessWire {
     missing: [],
     reason: null,
     scorer_version: 'readiness/2026-08-03',
+    calibration: {
+      claimed_credit: 0.6,
+      basis: 'fixed by career-intelligence/SKILL.md rather than derived from data',
+      awaiting: 'recorded outcomes in knowledge-engine/outcomes',
+    },
     ...overrides,
   };
 }

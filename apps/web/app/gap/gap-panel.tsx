@@ -308,6 +308,12 @@ function ReadinessBlock({ readiness }: { readiness: ReadinessView }) {
         <small>{readiness.timeBasis}</small>
       </p>
 
+      {/* The assumption behind the number, stated where the number is. A penalty nobody can see
+          is a hidden penalty, whatever the module comment says. */}
+      <p>
+        <small>{readiness.assumption}</small>
+      </p>
+
       {readiness.caveats.length > 0 ? (
         <details>
           <summary>What this number does not account for ({readiness.caveats.length})</summary>

@@ -90,6 +90,33 @@ point  15%      band  13% .. 16%
   Peripheral        0%  of a part worth  7% (5 reqs)
 ```
 
+## The calibration travels with the score
+
+`CLAIMED_CREDIT = 0.6` is the one tuning constant in the arithmetic, and it is **not** derived from
+data — no recorded outcomes exist to calibrate against. That makes it an assumption, and
+`ai-matching/SKILL.md` forbids a hidden penalty: *"every negative contribution appears in
+evidence"*. A 40% haircut on every listed-but-undescribed skill is exactly one.
+
+So every result carries `calibration`, on the wire and on the screen:
+
+```text
+A skill you listed but did not describe counts for 60% of one you did — fixed by
+career-intelligence/SKILL.md rather than derived from data, because no recorded outcomes exist yet
+to calibrate against. It becomes a measurement once there are recorded outcomes in
+knowledge-engine/outcomes.
+```
+
+Two reasons it is emitted rather than left in this module:
+
+- **`scorer_version` records which code ran, not what it assumed.** Two runs of the same version
+  are only comparable if both calibrations are knowable, so a stored score that omits this cannot
+  be reproduced from its own output.
+- **A constant with no revisit trigger quietly becomes permanent.** `awaiting` names the condition
+  that replaces the assumption with a measurement.
+
+The value itself is deliberately unchanged. Moving it without outcome data would substitute one
+guess for another, which is worse than an acknowledged assumption.
+
 ## What readiness refuses to do
 
 - **No bare score.** The remainder, confidence, every term's basis, and the scorer version travel

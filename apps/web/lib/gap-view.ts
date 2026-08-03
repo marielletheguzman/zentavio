@@ -74,6 +74,14 @@ export interface ReadinessView {
   readonly caveats: readonly string[];
   /** Why there is no timeline. Never an invented one. */
   readonly timeBasis: string;
+  /**
+   * What the number assumed, in words.
+   *
+   * A 40% haircut on every listed-but-undescribed skill is a real penalty, and
+   * `ai-matching/SKILL.md` forbids hiding one. Shown beside the number rather than left in a
+   * module nobody reading the screen can see.
+   */
+  readonly assumption: string;
   /** How many requirements are still open — the remainder, in one word. */
   readonly remainingCount: number;
   readonly scorerVersion: string;
@@ -196,6 +204,11 @@ export function readinessView(readiness: ReadinessWire): ReadinessView {
     reason: readiness.reason,
     caveats: readiness.missing,
     timeBasis: readiness.time_to_ready_basis,
+    assumption: `A skill you listed but did not describe counts for ${String(
+      Math.round(readiness.calibration.claimed_credit * 100),
+    )}% of one you did — ${readiness.calibration.basis}. It becomes a measurement once there are ${
+      readiness.calibration.awaiting
+    }.`,
     remainingCount: readiness.remaining.length,
     scorerVersion: readiness.scorer_version,
   };

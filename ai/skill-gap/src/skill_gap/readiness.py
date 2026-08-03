@@ -33,7 +33,30 @@ from skill_gap.ports import Edge, GapRequest, HeldSkill, RequiredSkill
 
 #: Bumped whenever this arithmetic changes in a way that could move a score. Recorded on every
 #: result: a number whose scorer is unknown cannot be reproduced or re-examined after a bug.
-SCORER_VERSION = "readiness/2026-08-03-2"
+SCORER_VERSION = "readiness/2026-08-03-3"
+
+#: Where CLAIMED_CREDIT came from, and what would replace it.
+#:
+#: Emitted with every score rather than left in this file. `ai-matching/SKILL.md` forbids a hidden
+#: penalty — "every negative contribution appears in evidence" — and a 40% haircut applied to every
+#: claimed skill is exactly that. Without this, a stored score cannot be reproduced from its own
+#: recorded output: two runs of the same `scorerVersion` are only comparable if the calibration they
+#: used is knowable, and right now it is a module constant nobody can see.
+CLAIMED_CREDIT_BASIS = (
+    "fixed by .claude/skills/career-intelligence/SKILL.md rather than derived from data, "
+    "because no recorded outcomes exist yet to calibrate against"
+)
+
+#: The condition that replaces the constant with a measurement.
+#:
+#: Named rather than left as "revisit later", because a calibration constant with no revisit trigger
+#: quietly becomes permanent. `ai-matching/SKILL.md`: a score is meaningless without a distribution,
+#: and the distribution needs outcomes.
+CLAIMED_CREDIT_AWAITING = (
+    "recorded outcomes in knowledge-engine/outcomes: once enough people with claimed-only "
+    "skills have succeeded or failed at a transition, this becomes an observed rate rather "
+    "than an assumption"
+)
 
 #: What a *claimed* skill is worth against an evidenced one.
 #:
@@ -78,6 +101,20 @@ class RemainingItem:
     position: int
     #: Deliberately absent until there is data to fill it. See `time_to_ready_basis`.
     typical_time_to_competence: str | None = None
+
+
+@dataclass(frozen=True)
+class Calibration:
+    """The tuning constants a score depended on, travelling with the score.
+
+    A number is only reproducible if what shaped it is recorded. `scorerVersion` says which code
+    ran; this says what that code assumed.
+    """
+
+    claimed_credit: float
+    basis: str
+    #: What would turn the assumption into a measurement.
+    awaiting: str
 
 
 @dataclass(frozen=True)
@@ -129,6 +166,16 @@ class Readiness:
     missing: tuple[str, ...]
     reason: str | None
     scorer_version: str
+    #: What this score assumed, so it can be reproduced and argued with.
+    calibration: Calibration
+
+
+def _calibration() -> Calibration:
+    return Calibration(
+        claimed_credit=CLAIMED_CREDIT,
+        basis=CLAIMED_CREDIT_BASIS,
+        awaiting=CLAIMED_CREDIT_AWAITING,
+    )
 
 
 def _credit_for(
@@ -233,6 +280,7 @@ def compute_readiness(request: GapRequest, gap_items: tuple[GapItem, ...]) -> Re
                 "against. Nothing was inferred to fill the gap."
             ),
             scorer_version=SCORER_VERSION,
+            calibration=_calibration(),
         )
 
     if not request.held:
@@ -257,6 +305,7 @@ def compute_readiness(request: GapRequest, gap_items: tuple[GapItem, ...]) -> Re
                 "number rather than a guess."
             ),
             scorer_version=SCORER_VERSION,
+            calibration=_calibration(),
         )
 
     evidenced = frozenset(s.skill_id for s in request.held if s.status == _EVIDENCED)
@@ -323,6 +372,7 @@ def compute_readiness(request: GapRequest, gap_items: tuple[GapItem, ...]) -> Re
                 "would be arithmetic over nothing."
             ),
             scorer_version=SCORER_VERSION,
+            calibration=_calibration(),
         )
 
     score = round(numerator / denominator, 4)
@@ -398,12 +448,16 @@ def compute_readiness(request: GapRequest, gap_items: tuple[GapItem, ...]) -> Re
         missing=tuple(missing),
         reason=None,
         scorer_version=SCORER_VERSION,
+        calibration=_calibration(),
     )
 
 
 __all__ = [
     "CLAIMED_CREDIT",
+    "CLAIMED_CREDIT_AWAITING",
+    "CLAIMED_CREDIT_BASIS",
     "SCORER_VERSION",
+    "Calibration",
     "ClusterScore",
     "Readiness",
     "ReadinessTerm",
