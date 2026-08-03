@@ -130,9 +130,18 @@ the instrumentation layer (ADR-0008); nothing is instrumented yet**, and the bac
 `pnpm lint:all` before merging. New features need unit tests, integration tests where applicable, and
 their documentation updated in the same change.
 
-**Vitest and pytest are the chosen runners (ADR-0007), and neither is installed yet** — there are no
-application tests because there is no application code
+**Vitest and pytest are the runners (ADR-0007), both installed and blocking in CI.** Unit and
+integration are separate Vitest projects; `pytest` covers `ai/`. Integration needs a real PostgreSQL
+and must not be mocked — what a CHECK rejects and what a partial unique index permits is the whole
+point of those tests, and neither is knowable from a fake, so **Docker is a local prerequisite**
 ([`docs/development/testing.md`](../../docs/development/testing.md)).
+
+**Graded prompt evals do not run in CI** (ADR-0009) — the runner has no model host. The offline gate
+runs on every pull request; the graded delta report is attached to the PR by the author.
+
+This paragraph previously said neither runner was installed and there was no application code. It
+was wrong for several milestones, and it is the kind of thing an agent reads and believes before
+looking at anything.
 
 ## Documentation
 
@@ -140,8 +149,10 @@ When behaviour changes, update the directory that owns it — `docs/features/`,
 `docs/roadmap/`, `docs/database/` — in the **same change**. One home per fact; link rather than
 restate.
 
-**Never document a future idea as a completed feature.** `docs/features/README.md` carries an explicit
-status legend for exactly this reason, and everything in it is currently `specified`.
+**Never document a future idea as a completed feature** — and never leave a built one marked
+unbuilt. `docs/features/README.md` carries an explicit status legend for exactly this reason.
+`resume-parsing` and `skill-gap-analysis` are `partial`, with each document naming which parts; the
+rest are `specified`.
 
 ## Reviewing AI-generated work
 

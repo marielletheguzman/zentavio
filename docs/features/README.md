@@ -9,8 +9,8 @@ Every feature answers a user question. A feature that answers none is not a Zent
 
 | Feature | The user asks | Status |
 |---|---|---|
-| [resume-parsing](resume-parsing.md) | What does the platform think I can do? | specified |
-| [skill-gap-analysis](skill-gap-analysis.md) | What am I missing, and what matters most? | specified |
+| [resume-parsing](resume-parsing.md) | What does the platform think I can do? | **partial** |
+| [skill-gap-analysis](skill-gap-analysis.md) | What am I missing, and what matters most? | **partial** |
 | [learning-paths](learning-paths.md) | What should I learn, in what order, how long? | specified |
 | [job-matching](job-matching.md) | Which of these jobs is worth my time? | specified |
 | [migration-friendly-jobs](migration-friendly-jobs.md) | Which jobs can I actually take, and will the employer help? | specified |
@@ -30,8 +30,20 @@ Every feature answers a user question. A feature that answers none is not a Zent
 | **built** | implemented, tested, and matching this document |
 | **deferred** | intentionally not being built yet, with the reason recorded |
 
-Everything is **specified**. There is no application code yet — the documentation, the ADRs, and the
-boundary enforcement come first so every feature inherits them (`../README.md`).
+**Two are `partial`; the rest are `specified`.** This block said "everything is specified, there is
+no application code yet" for several milestones after that stopped being true, which is the failure
+the legend exists to prevent — a catalog nobody trusts is worse than no catalog.
+
+**`resume-parsing` — partial.** Built: PDF/DOCX/text extraction, deterministic segmentation and
+resolution against a closed skill set, the evidenced/claimed split with a verbatim source span,
+versioned profiles, the correction path, erasure, and two model-backed steps behind
+`instruction-quarantine` and `skill-recall` (ADR-0018). Not built: `experience-extract`,
+`education-extract`, `language-extract`, and role/employer extraction beyond titles.
+
+**`skill-gap-analysis` — partial.** Built: market scoping, `subsumes` collapsing, `transfers_to`
+partial credit, dependency ordering, the honest `unknown`, readiness with its remainder and band,
+and the gap surface. Not built: posting targets (`job_posting_skills` does not exist), seniority-step
+targets, and the prose explanation.
 
 ## The chain
 
