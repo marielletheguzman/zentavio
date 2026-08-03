@@ -6,13 +6,31 @@ viability — using structured knowledge rather than keyword matching.
 
 ## Current state
 
-The repository is a **documentation-first skeleton**. Almost every file is a placeholder.
-There is no application code yet. This is deliberate: architecture, conventions, and the
-skill ecosystem are established before implementation so every feature inherits them.
+**M1 is built and runs end to end.** A résumé uploads, becomes a versioned profile with a
+verbatim source span on every claim, is correctable, and can be compared against a career
+track to produce a dependency-ordered gap and a readiness score with its remainder. Two
+surfaces in `apps/web` render it. 11 tables, ~720 tests, CI blocking on `main`.
 
-When you implement something, you are usually filling in a placeholder that already
-declares its own purpose. Read the placeholder's `> **Purpose:**` line first — it is a
-binding contract for what belongs in that file.
+| Built | Still a placeholder |
+|---|---|
+| `packages/db`, `config`, `types`, `auth` | `logger`, `events`, `i18n`, `ui` |
+| `services/api-gateway` | `matching`, `ingestion`, `notifications`, `billing` |
+| `ai/resume-parser`, `ai/skill-gap`, `ai/shared` | `career-roadmap`, `embeddings`, `interview-prep`, `learning-paths` |
+| `apps/web` — upload and gap | `apps/admin`, `apps/mobile` |
+| `knowledge-engine/` — seeded skill graph only | everything else under it, `connectors/` |
+
+Not built at all: connectors, outcome recording, any deployed environment. ADR-0015's
+Supabase project is decided but not provisioned; ADR-0017's authentication is implemented
+but needs a provider, so the dev header is a stand-in refused in production.
+
+**This section was wrong for several milestones** — it claimed there was no application
+code while the above existed. If you find it disagreeing with the tree again, the tree
+wins and this is a bug to fix in the same change.
+
+When you implement something in a directory still marked a placeholder, you are filling in
+a file that already declares its own purpose. Read its `> **Purpose:**` line first — it is
+a binding contract for what belongs there. **A README under a built package describes what
+is there instead**, and is equally binding.
 
 ## Repository map
 
