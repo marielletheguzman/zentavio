@@ -52,3 +52,51 @@ because a default weight is an invented market fact. `confidence` is always stat
 Every result carries `scorer_version` and `knowledge_as_of`. Ordering carries a total-order
 tiebreak — weight descending, then skill id — so the answer does not depend on the order rows
 happened to arrive in from a database. There is a test for that specifically.
+
+## Readiness, and why it is three numbers rather than one
+
+```text
+readiness = sum(weight(r) * credit(r)) / sum(weight(r))
+credit: 1.0 evidenced · 0.6 claimed · transfer-edge weight · 0 otherwise
+```
+
+**A point estimate implies precision the inputs do not have.** Only two of the five bases are
+*known* — an evidenced hold and a subsumed one. A claimed skill is the person's word, and a
+transfer edge is a general statement about how competence carries, not a measurement of how it
+carried for them. So the score travels as a band:
+
+| | Counts |
+|---|---|
+| `score_low` | evidenced and subsumed only — true even if every assertion is hollow |
+| `score` | the formula above |
+| `score_high` | every claimed skill and transfer edge in full |
+
+**The width is the point.** Nothing estimated means no band at all, and the surface renders no
+range rather than "62% to 62%", which would imply a doubt that does not exist.
+
+**`by_cluster` exists because the blend hides which part is strong.** Someone 70% through the core
+of a track and 0% through its peripherals, and someone with the reverse, can produce the same
+overall number while being in completely different positions. Each cluster reports its own score
+*and its share of the denominator*, because 70% of a part worth 7% of the track is not a strong
+position and the score alone cannot say so.
+
+Real numbers, against the seeded track with three evidenced skills and one claimed:
+
+```text
+point  15%      band  13% .. 16%
+  Supporting       20%  of a part worth 52% (15 reqs)
+  Core             14%  of a part worth 33% (7 reqs)
+  Differentiating   0%  of a part worth  8% (3 reqs)
+  Peripheral        0%  of a part worth  7% (5 reqs)
+```
+
+## What readiness refuses to do
+
+- **No bare score.** The remainder, confidence, every term's basis, and the scorer version travel
+  with it or it is not emitted.
+- **No invented timeline.** `estimated_time_to_ready` is null and says why. There is no
+  time-to-competence data, and optimistic timelines are the most damaging thing a career platform
+  can produce.
+- **No asserted binding constraint.** Market demand, language and eligibility are unmodelled.
+- **No number for an empty profile.** `unknown` plus the input that would resolve it — a zero reads
+  as "you are not ready" when the truth is "we have not been told anything about you".

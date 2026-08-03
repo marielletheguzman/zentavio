@@ -77,9 +77,29 @@ export interface RemainingWire {
  * are different answers, and rendering the second as the first is the failure the product exists to
  * avoid.
  */
+export interface ClusterScoreWire {
+  readonly cluster: GapCluster;
+  readonly score: number;
+  /** This cluster's share of the whole denominator. */
+  readonly weight_share: number;
+  readonly requirement_count: number;
+}
+
 export interface ReadinessWire {
   readonly status: 'ok' | 'unknown';
   readonly score: number | null;
+  /**
+   * The floor and the ceiling.
+   *
+   * `score_low` counts only evidenced and subsumed holds — what is true even if every assertion on
+   * the profile is hollow. `score_high` counts every claimed skill and transfer edge in full. The
+   * distance between them is how much of the number rests on assertion rather than evidence, which
+   * a single figure cannot express.
+   */
+  readonly score_low: number | null;
+  readonly score_high: number | null;
+  /** Per cluster, because a blended number hides which part of the track is strong. */
+  readonly by_cluster: readonly ClusterScoreWire[];
   readonly confidence: 'high' | 'medium' | 'low';
   readonly remaining: readonly RemainingWire[];
   readonly terms: readonly ReadinessTermWire[];
@@ -215,6 +235,18 @@ function isReadiness(value: unknown): value is ReadinessWire {
 
   const score = value['score'];
   if (score !== null && (typeof score !== 'number' || score < 0 || score > 1)) return false;
+
+  const low = value['score_low'];
+  const high = value['score_high'];
+  if (low !== null && (typeof low !== 'number' || low < 0 || low > 1)) return false;
+  if (high !== null && (typeof high !== 'number' || high < 0 || high > 1)) return false;
+  if (!Array.isArray(value['by_cluster'])) return false;
+
+  // The point estimate must sit inside its own band, or the three numbers are not describing one
+  // thing and the surface would render a contradiction.
+  if (typeof score === 'number' && typeof low === 'number' && typeof high === 'number') {
+    if (!(low <= score && score <= high)) return false;
+  }
 
   // The rule the whole feature turns on: a score must never arrive without a status that admits
   // it could be absent, and `unknown` must never arrive carrying a number.

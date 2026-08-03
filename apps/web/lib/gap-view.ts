@@ -58,6 +58,15 @@ export interface ReadinessView {
   readonly known: boolean;
   /** 0..100, rounded. Null when the score is unknown. */
   readonly percent: number | null;
+  /**
+   * The floor and ceiling as whole percents, and the sentence that explains them.
+   *
+   * `null` when the band has no width — every held skill was evidenced, so nothing is being
+   * estimated and a range would imply doubt that does not exist.
+   */
+  readonly band: ReadinessBandView | null;
+  /** Per cluster, strongest driver of the number first. */
+  readonly clusters: readonly ClusterView[];
   readonly confidence: ConfidenceView;
   /** Why there is no number, when there is none. */
   readonly reason: string | null;
@@ -68,6 +77,21 @@ export interface ReadinessView {
   /** How many requirements are still open — the remainder, in one word. */
   readonly remainingCount: number;
   readonly scorerVersion: string;
+}
+
+export interface ReadinessBandView {
+  readonly lowPercent: number;
+  readonly highPercent: number;
+  readonly label: string;
+}
+
+export interface ClusterView {
+  readonly cluster: string;
+  readonly label: string;
+  readonly percent: number;
+  /** How much of the whole number this cluster accounts for. */
+  readonly sharePercent: number;
+  readonly requirementCount: number;
 }
 
 export interface ConfidenceView {
@@ -130,8 +154,40 @@ export function confidenceView(level: ConfidenceView['level']): ConfidenceView {
   return { level, label: CONFIDENCE_LABEL[level] };
 }
 
+const CLUSTER_HEADING: Record<string, string> = {
+  core: 'Core',
+  supporting: 'Supporting',
+  differentiating: 'Differentiating',
+  peripheral: 'Peripheral',
+};
+
+function bandView(readiness: ReadinessWire): ReadinessBandView | null {
+  const { score_low: low, score_high: high } = readiness;
+  if (low === null || high === null) return null;
+
+  const lowPercent = Math.round(low * 100);
+  const highPercent = Math.round(high * 100);
+  // No width means nothing is being estimated — every held skill was evidenced. Showing "62% to
+  // 62%" would imply a doubt that does not exist.
+  if (lowPercent === highPercent) return null;
+
+  return {
+    lowPercent,
+    highPercent,
+    label: `between ${String(lowPercent)}% and ${String(highPercent)}%, depending on whether your listed and transferred skills hold up`,
+  };
+}
+
 export function readinessView(readiness: ReadinessWire): ReadinessView {
   return {
+    band: bandView(readiness),
+    clusters: readiness.by_cluster.map((entry) => ({
+      cluster: entry.cluster,
+      label: CLUSTER_HEADING[entry.cluster] ?? entry.cluster,
+      percent: Math.round(entry.score * 100),
+      sharePercent: Math.round(entry.weight_share * 100),
+      requirementCount: entry.requirement_count,
+    })),
     known: readiness.status === 'ok' && readiness.score !== null,
     // Rounded to a whole percent on purpose. `0.6187` implies a precision the inputs do not have —
     // the weights behind it are curated at tier 3.

@@ -259,6 +259,37 @@ function ReadinessBlock({ readiness }: { readiness: ReadinessView }) {
             <strong>{readiness.percent}%</strong> of what this track asks for,{' '}
             <ConfidenceNote confidence={readiness.confidence} />.
           </p>
+
+          {/* The band, when there is one. A single figure treats a listed skill and a transfer
+              edge as measured quantities; they are estimates, and the width is how much of the
+              number rests on them. */}
+          {readiness.band === null ? null : <p>{readiness.band.label}.</p>}
+
+          {readiness.clusters.length > 0 ? (
+            /* Core and peripheral are different questions. 70% of a cluster worth 6% of the track
+               is not a strong position, so the share is shown beside the score. */
+            <table>
+              <caption>Where that number comes from</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Part of the track</th>
+                  <th scope="col">You have</th>
+                  <th scope="col">Share of the total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {readiness.clusters.map((cluster) => (
+                  <tr key={cluster.cluster}>
+                    <th scope="row">
+                      {cluster.label} ({cluster.requirementCount})
+                    </th>
+                    <td>{cluster.percent}%</td>
+                    <td>{cluster.sharePercent}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : null}
           <p>
             {readiness.remainingCount} thing{readiness.remainingCount === 1 ? '' : 's'} still to
             close — listed below, in the order you would close them.
