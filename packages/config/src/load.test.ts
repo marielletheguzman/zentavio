@@ -230,6 +230,7 @@ describe('the Zentavio schema', () => {
       'ZENTAVIO_PARSER_MODEL',
       'ZENTAVIO_RESUME_PARSER_URL',
       'ZENTAVIO_SKILL_GAP_URL',
+      'ZENTAVIO_WEB_ORIGIN',
     ]);
   });
 });

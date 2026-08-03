@@ -84,6 +84,18 @@ OLLAMA_HOST=http://127.0.0.1:11434      # default
 ZENTAVIO_EVAL_MODEL=qwen2.5:14b-instruct
 ```
 
+The gateway also needs `ZENTAVIO_WEB_ORIGIN` before a browser can call it at all:
+
+```bash
+ZENTAVIO_WEB_ORIGIN=http://127.0.0.1:3000
+```
+
+**Unset means no CORS headers, so every request from `apps/web` is blocked by the browser.** That is
+deliberate — the same deny-by-default posture as authentication — but it is invisible from a
+server-side test, because `fetch` in Node does not enforce the same-origin policy. It is never `*`:
+this API is authenticated, and a wildcard origin on an authenticated API is what lets any page a
+user visits act as them.
+
 The gateway also needs `ZENTAVIO_SKILL_GAP_URL` (e.g. `http://127.0.0.1:8002`). No default, for
 the same reason as the parser URL: a gap computed by something other than the service you meant is
 indistinguishable from a correct one.
