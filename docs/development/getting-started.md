@@ -148,12 +148,38 @@ Then delete it: `rm -rf packages/db/src`.
 | ESLint errors on a new top-level directory | `boundaries/no-unknown-files` — add it to `boundaries/elements` in `eslint.config.mjs`, deliberately |
 | Lockfile conflict after a pull | `pnpm install --frozen-lockfile`; never hand-merge `pnpm-lock.yaml` |
 
-## What does not exist yet
+## What exists, and what does not
 
-Named so nobody hunts for them: no dev server, no seed data, no HTTP API, no UI, no deployed
-environment, and no `migrate` command (migrations are applied programmatically — see
-`packages/db/README.md`). The schema covers `requirements` and `immigration_pathways` only.
-Sequence in [`../roadmap/phases.md`](../roadmap/phases.md).
+This section went stale for several milestones and claimed there was no HTTP API, no UI, no seed
+data and no `migrate` command while all four existed. It is the first page a contributor reads, so
+it is worth keeping honest.
+
+**Runs today, end to end:** a résumé uploads through `services/api-gateway` to `ai/resume-parser`,
+becomes a versioned profile with a source span on every claim, is correctable, and can be compared
+against a career track by `ai/skill-gap` to produce an ordered gap and a readiness score. Two pages
+in `apps/web` render it.
+
+```bash
+pnpm migrate     # apply migrations
+pnpm seed        # 30 skills, 107 aliases, one career, the graph — idempotent
+```
+
+| Built | Placeholder |
+|---|---|
+| `packages/db`, `config`, `types`, `auth` | `logger`, `events`, `i18n`, `ui` |
+| `services/api-gateway` | `matching`, `ingestion`, `notifications`, `billing` |
+| `ai/resume-parser`, `ai/skill-gap`, `ai/shared` | `career-roadmap`, `embeddings`, `interview-prep`, `learning-paths` |
+| `apps/web` — upload and gap surfaces | `apps/admin`, `apps/mobile` |
+
+**Genuinely absent, named so nobody hunts for them:** no deployed environment (ADR-0015's Supabase
+project is decided but not provisioned), no real authentication in use (ADR-0017 is implemented but
+needs a provider — the dev header is a stand-in refused in production), no connectors, no
+knowledge-engine, and no outcome recording. Sequence in
+[`../roadmap/phases.md`](../roadmap/phases.md).
+
+**The schema is 11 tables**, not the two this section used to claim: `requirements`,
+`immigration_pathways`, `users`, `careers`, `skills`, `skill_aliases`, `user_profiles`,
+`profile_skills`, `skill_edges`, `career_skills`, `user_targets`.
 
 ## The database
 

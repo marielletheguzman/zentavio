@@ -116,15 +116,27 @@ person's immigration status, salary, or contact details, even scrubbed
 **ADR-0007 (Accepted): Vitest for TypeScript, `pytest` for `ai/`.** Configured in `vitest.config.ts`
 (`unit` and `integration` projects) and `pytest.ini`.
 
-Still outstanding from the ADR's follow-up list:
+Settled from the ADR's follow-up list:
 
-- **The `integration` project has no tests** and no PostgreSQL container helper. Both need `packages/db`
-  and migrations to exist; a helper written now would be a helper for a database that does not exist.
-- **No integration CI job**, for the same reason.
+- ~~The `integration` project has no tests and no PostgreSQL container helper.~~ It has **11 files
+  and 139 tests**, and `tests/integration/db/database.ts` is the helper. They arrived with
+  `packages/db` and the migrations, as the ADR expected.
+- ~~No integration CI job.~~ `Integration tests (PostgreSQL)` runs on every pull request against a
+  `postgres:17-alpine` service container, pinned to the same tag as
+  `infra/docker/docker-compose.dev.yml` — a CI database on a different major than the developer's
+  would make a green run evidence about the wrong server.
+- **Docker IS a local prerequisite.** The integration suite needs a real PostgreSQL, and this
+  document forbids mocking it: what a CHECK actually rejects and what a partial unique index
+  actually permits is the whole point of those tests, and neither is knowable from a fake.
+
+Still outstanding:
+
 - **pytest config stays in `pytest.ini`** rather than moving into the uv workspace. CI runs
   `uv run --project ai --all-packages --frozen pytest` from the repository root, so `testpaths = ai`
   still resolves; a second configuration in `ai/pyproject.toml` would be drift waiting to happen.
-- Docker is therefore **not yet** a local prerequisite, despite what the ADR anticipated.
+- **Graded prompt evals do not run in CI** (ADR-0009): the runner has no model host. The offline
+  gate — fixture integrity, all six required case kinds, no prompt without fixtures — runs on every
+  pull request, and the graded delta report is attached to the PR by the author instead.
 
 ## Related
 
