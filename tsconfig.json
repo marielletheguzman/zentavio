@@ -14,6 +14,19 @@
     "checkJs": false,
     "types": ["node"]
   },
+  // `services/**` and `apps/**` are deliberately NOT here, and each has a reason.
+  //
+  // `services/*` compile with their own `tsconfig.build.json` (ADR-0014 needs decorators and
+  // parameter properties, which the base config's `erasableSyntaxOnly` forbids). Pulling them in
+  // here would typecheck them under rules they are exempt from.
+  //
+  // `apps/web` is Next.js and needs its own `jsx`, `lib`, and plugin settings.
+  //
+  // Both are now typechecked by `pnpm typecheck`, which invokes `tsc -p` against each project in
+  // turn rather than pulling them in here. That is the fix for a real hole: until 2026-08-03 the
+  // script covered only this config, so `ParseResponseWire` gained four fields while
+  // `apps/web/lib/parse-view.test.ts` kept the old shape across two merged changes with CI green
+  // throughout. `tsc -p` rather than `pnpm --filter` because pnpm is not always on PATH.
   "include": [
     "tools/**/*.ts",
     "tools/**/*.mjs",

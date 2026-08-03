@@ -15,7 +15,13 @@
  */
 
 import { useId, useState } from 'react';
-import { gapViewStateFor, type GapBody, type GapItemView, type GapViewState } from '../../lib/gap-view.ts';
+import {
+  gapViewStateFor,
+  type GapBody,
+  type GapItemView,
+  type GapViewState,
+  type ReadinessView,
+} from '../../lib/gap-view.ts';
 
 /**
  * The development credential header.
@@ -205,6 +211,8 @@ function GapBody({ state, onRetry }: { state: GapViewState; onRetry: () => void 
     case 'gap':
       return (
         <div>
+          <ReadinessBlock readiness={state.readiness} />
+
           <p>{state.summary}</p>
           <p>
             <ConfidenceNote confidence={state.confidence} />
@@ -235,6 +243,56 @@ function GapBody({ state, onRetry }: { state: GapViewState; onRetry: () => void 
         </div>
       );
   }
+}
+
+function ReadinessBlock({ readiness }: { readiness: ReadinessView }) {
+  return (
+    <section aria-labelledby="readiness-heading">
+      <h3 id="readiness-heading">How ready you are</h3>
+
+      {readiness.known ? (
+        <>
+          {/* The number and its remainder in one breath. A readiness score without what is still
+              missing is a vanity metric (`.claude/context/career-philosophy.md`), so the two are
+              never separated by a layout that could hide one. */}
+          <p>
+            <strong>{readiness.percent}%</strong> of what this track asks for,{' '}
+            <ConfidenceNote confidence={readiness.confidence} />.
+          </p>
+          <p>
+            {readiness.remainingCount} thing{readiness.remainingCount === 1 ? '' : 's'} still to
+            close — listed below, in the order you would close them.
+          </p>
+        </>
+      ) : (
+        /* Not a 0% bar. "We cannot tell" and "you are not ready" are opposite statements, and an
+           empty progress bar says the second while meaning the first. */
+        <p>{readiness.reason ?? 'There is not enough here to give you a number yet.'}</p>
+      )}
+
+      {/* Never an invented timeline. `career-philosophy.md`: optimistic timelines are the most
+          damaging thing a career platform can produce, because people reorganise their lives
+          around them. */}
+      <p>
+        <small>{readiness.timeBasis}</small>
+      </p>
+
+      {readiness.caveats.length > 0 ? (
+        <details>
+          <summary>What this number does not account for ({readiness.caveats.length})</summary>
+          <ul>
+            {readiness.caveats.map((entry) => (
+              <li key={entry}>{entry}</li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
+
+      <p>
+        <small>Scored by {readiness.scorerVersion}.</small>
+      </p>
+    </section>
+  );
 }
 
 function ConfidenceNote({ confidence }: { confidence: { level: string; label: string } }) {
