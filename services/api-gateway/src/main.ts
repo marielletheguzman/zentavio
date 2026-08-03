@@ -10,6 +10,8 @@
 import 'reflect-metadata';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { load, parserSchema } from '@zentavio/config';
+import { DEV_SUBJECT_HEADER } from '@zentavio/auth';
 import { AppModule } from './app.module.ts';
 import { ErrorEnvelopeFilter } from './http/error-envelope.ts';
 
@@ -29,6 +31,29 @@ export async function bootstrap(port: number = DEFAULT_PORT): Promise<void> {
   );
 
   app.useGlobalFilters(new ErrorEnvelopeFilter());
+
+  // **Without this the browser cannot call the gateway at all**, and every check that used a
+  // server-side fetch missed it: node does not enforce the same-origin policy, so the whole web
+  // surface passed end-to-end verification while being unusable in a browser.
+  //
+  // Deny by default. An unset origin sends no CORS headers, which is the same posture as
+  // authentication — nothing configured means no, not everything.
+  //
+  // Never `*`. This API is authenticated, and a wildcard origin on an authenticated API is what
+  // lets any page a user happens to visit act as them. `credentials` is on because a real session
+  // will be an httpOnly cookie the browser sends by itself, and a wildcard is not even legal
+  // alongside it.
+  const { webOrigin } = load(parserSchema);
+  if (webOrigin !== '') {
+    app.enableCors({
+      origin: webOrigin,
+      credentials: true,
+      methods: ['GET', 'POST', 'OPTIONS'],
+      // The dev credential travels as a header, so a preflight fails without it named here. It
+      // disappears with the header itself when a real session lands (ADR-0017).
+      allowedHeaders: ['content-type', DEV_SUBJECT_HEADER],
+    });
+  }
 
   // So a rolling deploy drains in-flight uploads instead of dropping a résumé mid-parse.
   app.enableShutdownHooks();

@@ -129,6 +129,19 @@ export const parserSchema = {
     type: 'url',
     description: 'Base URL of the résumé parser service, e.g. http://127.0.0.1:8001',
   },
+  webOrigin: {
+    env: 'ZENTAVIO_WEB_ORIGIN',
+    type: 'string',
+    // **No default, and the absence is a closed door.** With this unset the gateway sends no CORS
+    // headers, so no browser can call it — the same posture as authentication, where nothing
+    // configured means deny rather than allow.
+    //
+    // Never `*`. This API is authenticated, and a wildcard origin on an authenticated API is the
+    // hole that lets any page a user visits act as them.
+    default: '',
+    description:
+      "Origin allowed to call the gateway from a browser, e.g. http://127.0.0.1:3000. Empty disables CORS entirely",
+  },
   skillGapUrl: {
     env: 'ZENTAVIO_SKILL_GAP_URL',
     type: 'url',
