@@ -119,7 +119,11 @@ means two different things cannot be aggregated.
 The `outcomes` table also has foreign keys to `applications` and `companies`, neither of which
 exists, so it cannot be migrated as documented yet.
 
-So M1a records **no** outcomes, and that is a deliberate gap rather than an oversight. Resolving it
+**Resolved by ADR-0019 (Accepted 2026-08-03): outcome recording begins at M2.** M1a records none,
+and that is now a decision rather than a gap. The original wording is kept below because it is the
+reasoning the ADR was written against.
+
+Resolving it
 needs a decision: add a profile-lifecycle `kind`, add a separate table for profile events, or accept
 that outcomes begin at M2 when there is an application to attach them to. Erasure — the other half of
 this step — **is** implemented, because it could not wait: retrofitted privacy is a breach already
@@ -129,7 +133,8 @@ shipped.
 than an empty profile; every extracted skill shows its source span; a correction persists and is
 attributed to the user rather than overwriting the parser's claim; retention and deletion for résumés
 work **in this slice**, because this is where résumés first exist and retrofitted privacy is a breach
-already shipped; outcome recording is wired here, before anything reads it.
+already shipped. **Outcome recording is not wired here** — ADR-0019 moves it to M2, where
+`applications` exist to attach it to.
 
 **Cuttable:** DOCX (PDF alone is a real answer), role/employer extraction beyond titles, any styling.
 **Not cuttable:** source spans, the evidenced/claimed distinction, the correction path, retention.
@@ -317,8 +322,9 @@ predicting.
 - M3 is a **gate**, not a feature: it validates the plugin claim before three more countries depend on it.
 - M5 is blocked by an ADR, not by effort. Unblocking it is a decision, and it should be made early
   because it affects the schema.
-- M7 and M9 are gated on **data accumulating**, so outcome capture ships in M1 even though nothing reads
-  it until much later.
+- M7 and M9 are gated on **data accumulating**, so outcome capture ships as early as it can hold —
+  **M2**, not M1 (ADR-0019). Calibration data cannot be backfilled, so the window opens the moment
+  the first prediction has a checkable result, which is an application.
 
 ## Related
 

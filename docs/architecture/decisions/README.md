@@ -30,7 +30,9 @@ already ruled out and how the rule is enforced.
 | [0014](0014-typescript-runner.md) | Node native type stripping with `.ts` specifiers; no runner dependency | Accepted | 2026-07-31 |
 | [0015](0015-hosted-postgresql.md) | Supabase as the managed PostgreSQL provider — and as nothing else | Accepted | 2026-08-01 |
 | [0016](0016-document-text-extraction.md) | `pypdf` + `python-docx` for résumé text extraction, behind a port | Accepted | 2026-08-01 |
-| [0017](0017-authentication.md) | How a person proves who they are | **Proposed** | 2026-08-01 |
+| [0017](0017-authentication.md) | How a person proves who they are | Accepted | 2026-08-01 |
+| [0018](0018-skill-extraction-division-of-labour.md) | The model adds recall; code owns resolution and classification | Accepted | 2026-08-02 |
+| [0019](0019-outcome-recording-begins-at-m2.md) | Outcome recording begins at M2 | Accepted | 2026-08-03 |
 
 **0010 is Accepted, and the rename is done** — `immigration_rules` is now `requirements`, with `domain`,
 `imposed_by`, and `authority`. Regulated professions remain blocked on **data**, not schema: nursing,

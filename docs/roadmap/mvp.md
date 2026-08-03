@@ -46,7 +46,7 @@ follow as data, not code.
 | Migration-friendly filtering | Germany only: sponsorship status (four-valued), relocation support, pathway visibility (`docs/features/migration-friendly-jobs.md`) |
 | AI memory | long-term profile memory with source, status, and confidence; session memory discarded (`.claude/context/ai-memory.md`) |
 | Dashboard | one surface answering "what should I do next?" with evidence reachable |
-| Outcomes | recorded from day one, even though nothing reads them yet |
+| Outcomes | recorded from the first day there is something to record — **M2** (ADR-0019) |
 
 ## Explicitly out of scope
 
@@ -91,7 +91,9 @@ Cut coverage — fewer tracks, fewer sources, manual ingest — before touching 
 - Missing knowledge produces an honest `unknown` naming what is needed.
 - DE rules are tier-1 sourced, dated, versioned, with a refresh window.
 - Docs match what was built; invariant tests pass (determinism, evidence, provenance, unknown).
-- Outcomes are being recorded.
+- Outcomes are being recorded **from M2**, when `applications` exist to attach them to (ADR-0019).
+  M1 records none: every row in that table carries the prediction it is checking, and M1 produces
+  no prediction with a result.
 
 ## Scope confirmed
 
