@@ -78,6 +78,26 @@ that. An open-ended rule from a future source would use the supersede path and b
 are not. Closing that would mean a `daterange` exclusion constraint, which is a schema decision
 rather than something to add quietly.
 
+## Archival comes before storage
+
+`archiveSource` stores the source document and records it; `planIngest` then carries the resulting
+`document_id` onto every rule. **Object first, then row** (ADR-0021), and the reason is asymmetry:
+an orphaned object is waste that a lifecycle sweep finds, while an orphaned row is a citation that
+resolves to nothing — which looks like evidence right up until someone tries to read it.
+
+A connector still persists nothing. It says what its source *is* via `archivable()`, returning bytes
+and a content type; this service stores them.
+
+**`isOriginal` is recorded because not every archive is the published document.** `de-aufenthg`
+returns the statute's own HTML, so `isOriginal: true`. `de-bundesanzeiger` returns text extracted
+from a PDF — which is what the parser reads, but weaker evidence: the extraction is exactly where
+that source's known defect lives (digits split by spaces, turning 50 700 into 700), and someone
+re-reading the archive cannot see a defect that happened before the archive. Counting that gap is
+the point of the flag.
+
+A failed archive is **reported, not thrown**. The caller decides what it means — a warning today, a
+rejection once the enforcement phase lands.
+
 ## Still missing
 
 No scheduler. `de.eu-blue-card` is seeded by `pnpm seed` (`packages/db/src/immigration-pathways.ts`)

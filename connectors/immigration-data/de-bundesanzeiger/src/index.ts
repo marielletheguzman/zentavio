@@ -33,6 +33,7 @@ import {
   type Page,
   type SearchQuery,
   type ValidationIssue,
+  type ArchivableSource,
   type ValidationResult,
 } from '@zentavio/connectors-core';
 import type { MonetaryValue, SourcedRequirement } from '@zentavio/types';
@@ -251,6 +252,32 @@ export class BundesanzeigerConnector implements Connector<BekanntmachungRaw, rea
     }
 
     return { issues };
+  }
+
+  /**
+   * What we read, which is **not** the published document.
+   *
+   * The Bundesanzeiger publishes a PDF; the raw payload carries text extracted from it, because
+   * that is what the parser needs. Archiving the extraction is honest about what was parsed, but
+   * it is **weaker evidence than the PDF**: the extraction is exactly where this source's known
+   * defect lives — digits split by spaces, turning 50 700 into 700 — and a re-reader of the
+   * archive cannot see a defect that happened before the archive.
+   *
+   * `isOriginal: false` records that gap so it is countable. Closing it means carrying the PDF
+   * bytes on the raw payload, which is follow-up work and not this phase.
+   */
+  archivable(raw: BekanntmachungRaw): ArchivableSource {
+    const year = parseBekanntmachung(raw.documentText)?.year ?? new Date(raw.fetchedAt).getUTCFullYear();
+
+    return {
+      bytes: new TextEncoder().encode(raw.documentText),
+      contentType: 'text/plain; charset=utf-8',
+      slug: raw.publicationId,
+      jurisdiction: 'DE',
+      year,
+      extension: 'txt',
+      isOriginal: false,
+    };
   }
 
   async healthCheck(): Promise<HealthStatus> {

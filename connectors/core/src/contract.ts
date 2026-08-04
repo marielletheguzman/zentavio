@@ -123,6 +123,31 @@ export interface HealthStatus {
   readonly detail?: string;
 }
 
+/**
+ * The source document a raw payload came from, ready to archive (ADR-0021).
+ *
+ * A connector knows what its source *is* and what type it has; ingestion knows how to store it.
+ * Splitting it that way keeps the rule that a connector persists nothing while still letting the
+ * archive hold the actual document rather than our envelope around it.
+ */
+export interface ArchivableSource {
+  readonly bytes: Uint8Array;
+  readonly contentType: string;
+  /** Feeds the deterministic object key. Lower-cased and slugged by the caller. */
+  readonly slug: string;
+  readonly jurisdiction: string;
+  readonly year: number;
+  readonly extension: string;
+  /**
+   * True when these bytes are the document as published; false when they are something derived
+   * from it — extracted text, a re-encoding.
+   *
+   * **A derived copy is weaker evidence**, because a parse defect in the extraction is invisible
+   * to anyone re-reading the archive. Recorded rather than hidden so the gap is countable.
+   */
+  readonly isOriginal: boolean;
+}
+
 export interface Connector<TRaw, TNormalized> {
   readonly meta: ConnectorMeta;
 
@@ -148,6 +173,15 @@ export interface Connector<TRaw, TNormalized> {
 
   /** Cheap upstream liveness. No credential burned, no full page fetched. */
   healthCheck(): Promise<HealthStatus>;
+
+  /**
+   * The bytes to archive for this payload, and what they are.
+   *
+   * Optional: a source with nothing archivable — a pure API returning JSON we already keep — omits
+   * it, and ingestion records no document. **Still not persistence**: this returns the bytes, it
+   * does not store them.
+   */
+  archivable?(raw: TRaw): ArchivableSource | null;
 }
 
 /** True when nothing in the result blocks ingestion. Warnings do not block. */
