@@ -139,9 +139,11 @@ export function UploadPanel({ gatewayUrl, devUserId }: { gatewayUrl: string; dev
     <section aria-labelledby="upload-heading">
       <h2 id="upload-heading">Upload your résumé</h2>
 
-      <form ref={formRef} onSubmit={onSubmit}>
-        <label htmlFor={fileInputId}>Résumé file (PDF or DOCX)</label>
-        <input id={fileInputId} name="file" type="file" accept={ACCEPTED} required />
+      <form className="card controls" ref={formRef} onSubmit={onSubmit}>
+        <div>
+          <label htmlFor={fileInputId}>Résumé file (PDF or DOCX)</label>
+          <input id={fileInputId} name="file" type="file" accept={ACCEPTED} required />
+        </div>
         <button type="submit" disabled={state.kind === 'loading'}>
           {state.kind === 'loading' ? 'Reading…' : 'Upload'}
         </button>
@@ -182,7 +184,7 @@ function StateView({ state, onRetry, onCorrect, correcting }: StateViewProps) {
     case 'empty':
       // Says why it is empty and offers the next action, rather than "No results".
       return (
-        <p>
+        <p className="hint">
           No profile yet. Upload a résumé and we will show what we read from it — and what we could
           not.
         </p>
@@ -200,7 +202,7 @@ function StateView({ state, onRetry, onCorrect, correcting }: StateViewProps) {
 
     case 'error':
       return (
-        <div role="alert">
+        <div className="card notice notice-error" role="alert">
           <h3>That did not work</h3>
           <p>{state.message}</p>
           {state.retryable ? (
@@ -216,7 +218,7 @@ function StateView({ state, onRetry, onCorrect, correcting }: StateViewProps) {
     case 'unknown':
       // A first-class state with a designed treatment — not an empty cell, and never a zero.
       return (
-        <div className="unknown">
+        <div className="card unknown">
           <h3>We could not read this document</h3>
           <p>{state.reason}</p>
           <p>Nothing was guessed, and nothing was saved.</p>
@@ -225,7 +227,7 @@ function StateView({ state, onRetry, onCorrect, correcting }: StateViewProps) {
 
     case 'partial':
       return (
-        <div>
+        <div className="card">
           <h3>Partly read</h3>
           {/* What loaded is shown; what did not is named; the page stays usable. */}
           <p className="caveat">{state.reason}</p>
@@ -240,7 +242,7 @@ function StateView({ state, onRetry, onCorrect, correcting }: StateViewProps) {
 
     case 'success':
       return (
-        <div>
+        <div className="card">
           <h3>What we read</h3>
           <SkillList
             skills={state.skills}

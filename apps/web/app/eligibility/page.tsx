@@ -39,6 +39,11 @@ export default function EligibilityPage() {
         // is variable input and hydrates differently from the server's HTML.
         today={new Date().toISOString().slice(0, 10)}
       />
+
+      {/* Every page ends in a next action. When readiness is what binds, the gap is where you go. */}
+      <nav className="next-action">
+        <a href="/gap">See how far you are from the work itself</a>
+      </nav>
     </main>
   );
 }

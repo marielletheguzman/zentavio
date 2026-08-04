@@ -1,0 +1,10 @@
+{
+  "name": "@zentavio/ui",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The design-token layer every surface styles against.",
+  "type": "module",
+  "exports": {
+    "./tokens.css": "./src/tokens.css"
+  }
+}

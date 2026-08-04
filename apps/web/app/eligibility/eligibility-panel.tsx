@@ -144,33 +144,51 @@ export function EligibilityPanel({
     <section aria-labelledby="eligibility-heading">
       <h2 id="eligibility-heading">Germany — EU Blue Card</h2>
 
-      <div>
-        <label htmlFor={asOfId}>Evaluate the rules as they stood on</label>
-        <input
-          id={asOfId}
-          type="date"
-          value={asOf}
-          onChange={(event) => {
-            setAsOf(event.target.value);
-          }}
-        />
-        <p>
+      <div className="card">
+        <div className="controls">
+          <div>
+            <label htmlFor={asOfId}>Evaluate the rules as they stood on</label>
+            <input
+              id={asOfId}
+              type="date"
+              value={asOf}
+              onChange={(event) => {
+                setAsOf(event.target.value);
+              }}
+            />
+          </div>
+          <button type="button" onClick={() => void evaluate(asOf)}>
+            Check eligibility
+          </button>
+        </div>
+        <p className="hint">
           Immigration rules change. An answer is only meaningful against a date, so this one is
           shown on every result rather than assumed.
         </p>
-        <button type="button" onClick={() => void evaluate(asOf)}>
-          Check eligibility
-        </button>
       </div>
 
       {state.kind === 'idle' && (
-        <p>Choose a date and check. Nothing is submitted until you do.</p>
+        <p className="hint">Choose a date and check. Nothing is submitted until you do.</p>
       )}
 
-      {state.kind === 'loading' && <p role="status">Checking the rules on file…</p>}
+      {state.kind === 'loading' && (
+        // A skeleton in the shape of the verdict — headline, the two axes, the rule list — so
+        // nothing on the page moves when the answer arrives.
+        <>
+          <p role="status">Checking the rules on file…</p>
+          <div className="skeleton" aria-hidden="true">
+            <div className="skeleton-row" />
+            <div className="axes">
+              <div className="skeleton-row" />
+              <div className="skeleton-row" />
+            </div>
+            <div className="skeleton-row" />
+          </div>
+        </>
+      )}
 
       {state.kind === 'error' && (
-        <div role="alert">
+        <div className="card notice notice-error" role="alert">
           <p>{state.message}</p>
           {state.retryable && (
             <button type="button" onClick={() => void evaluate(asOf)}>
@@ -181,7 +199,7 @@ export function EligibilityPanel({
       )}
 
       {state.kind === 'no-employability' && (
-        <div>
+        <div className="card">
           <h3>We can check the rules, but not your readiness yet</h3>
           <p>
             Whether this is worth pursuing depends on both. Upload a résumé and choose a track, and
@@ -191,45 +209,74 @@ export function EligibilityPanel({
       )}
 
       {state.kind === 'viability' && (
-        <div>
-          <h3>{state.headline}</h3>
+        <div className="card">
+          <h3 className="verdict-headline">{state.headline}</h3>
           {/* The service's own sentence. Not reworded here — the reasoning belongs to the layer
               that did the reasoning. */}
-          <p>{state.bindingReason}</p>
+          <p className="binding-reason">{state.bindingReason}</p>
 
           <h4>Where you stand</h4>
-          <dl>
-            <dt>The rules</dt>
-            <dd>{state.eligibility.headline}</dd>
+          {/*
+            Two axes side by side, and the one that binds carries a heavier border. The border is
+            never the only signal: the axis that binds also says so in words, because a border
+            weight is invisible to a screen reader and to anyone who cannot see the difference.
+          */}
+          <dl className="axes">
+            <div className={state.binding === 'eligibility' ? 'axis axis-binding' : 'axis'}>
+              <dt className="axis-label">The rules</dt>
+              <dd className="axis-value">{state.eligibility.headline}</dd>
+              {state.binding === 'eligibility' && <p className="axis-label">This is what binds.</p>}
+            </div>
 
-            <dt>Your readiness</dt>
-            <dd>
-              {state.readiness === null ? (
-                'Not enough on file to say yet.'
-              ) : (
-                <>
-                  {/* A range, never one number. The width is how much rests on what you have told
-                      us rather than what we can see. */}
-                  between {state.readiness.low}% and {state.readiness.high}%
-                  {state.readiness.missing > 0 && ` — ${String(state.readiness.missing)} skill(s) still missing`}
-                </>
+            <div className={state.binding === 'employability' ? 'axis axis-binding' : 'axis'}>
+              <dt className="axis-label">Your readiness</dt>
+              <dd className="axis-value">
+                {state.readiness === null ? (
+                  'Not enough on file to say yet.'
+                ) : (
+                  <>
+                    {/* A range, never one number. The width is how much rests on what you have told
+                        us rather than what we can see. */}
+                    between <span className="numeric">{state.readiness.low}%</span> and{' '}
+                    <span className="numeric">{state.readiness.high}%</span>
+                    {state.readiness.missing > 0 && ` — ${String(state.readiness.missing)} skill(s) still missing`}
+                  </>
+                )}
+              </dd>
+              {state.readiness !== null && (
+                // The band drawn as the range it is. Decorative only — the same figures are stated
+                // above in words, so nothing is lost when this cannot be seen.
+                <div className="band" aria-hidden="true">
+                  <div
+                    className="band-range"
+                    style={{
+                      left: `${String(state.readiness.low)}%`,
+                      width: `${String(Math.max(state.readiness.high - state.readiness.low, 1))}%`,
+                    }}
+                  />
+                </div>
               )}
-            </dd>
+              {state.binding === 'employability' && (
+                <p className="axis-label">This is what binds.</p>
+              )}
+            </div>
           </dl>
 
           {state.questions.length > 0 && (
             <div>
               {state.questions.map((question) => (
-                <div key={question.key}>
-                  <label htmlFor={question.key}>{question.prompt}</label>
-                  <input
-                    id={question.key}
-                    inputMode="decimal"
-                    value={answers[question.key] ?? ''}
-                    onChange={(event) => {
-                      setAnswers((previous) => ({ ...previous, [question.key]: event.target.value }));
-                    }}
-                  />
+                <div className="question" key={question.key}>
+                  <div>
+                    <label htmlFor={question.key}>{question.prompt}</label>
+                    <input
+                      id={question.key}
+                      inputMode="decimal"
+                      value={answers[question.key] ?? ''}
+                      onChange={(event) => {
+                        setAnswers((previous) => ({ ...previous, [question.key]: event.target.value }));
+                      }}
+                    />
+                  </div>
                   <button type="button" onClick={() => void submitAnswer(question.key)}>
                     Save and re-check
                   </button>
@@ -238,26 +285,40 @@ export function EligibilityPanel({
             </div>
           )}
 
-          {note !== null && <p role="status">{note}</p>}
+          {note !== null && (
+            <p className="hint" role="status">
+              {note}
+            </p>
+          )}
 
           {state.eligibility.blockers.length > 0 && (
             <div>
               <h4>What blocks this</h4>
-              <ul>
+              <ul className="requirements">
                 {state.eligibility.blockers.map((blocker) => (
-                  <li key={blocker}>{blocker}</li>
+                  <li className="requirement requirement-not_met" key={blocker}>
+                    {blocker}
+                  </li>
                 ))}
               </ul>
             </div>
           )}
 
           <h4>Every rule we checked</h4>
-          <ul>
+          <ul className="requirements">
             {state.eligibility.requirements.map((requirement) => (
-              <li key={requirement.requirementId}>
-                <strong>{requirement.label}</strong> — {requirement.requirementId}
-                {requirement.detail !== null && <p>{requirement.detail}</p>}
-                <p>
+              // The status is a border colour AND a border *style* AND the word in `label` —
+              // "Not answered yet" is a dashed edge, not a paler version of a decided rule.
+              <li
+                className={`requirement requirement-${requirement.result}`}
+                key={requirement.requirementId}
+              >
+                <span className="requirement-label">{requirement.label}</span>{' '}
+                <span className="requirement-id">{requirement.requirementId}</span>
+                {requirement.detail !== null && (
+                  <p className="requirement-detail">{requirement.detail}</p>
+                )}
+                <p className="requirement-source">
                   Decided by {requirement.authority}, in effect from {requirement.effectiveFrom}.{' '}
                   <a href={requirement.sourceUrl} rel="noreferrer noopener" target="_blank">
                     Read the source
@@ -268,19 +329,22 @@ export function EligibilityPanel({
           </ul>
 
           {state.eligibility.notes.length > 0 && (
-            <ul>
+            <ul className="notes">
               {state.eligibility.notes.map((noteText) => (
                 <li key={noteText}>{noteText}</li>
               ))}
             </ul>
           )}
 
-          <p>
-            As of {state.asOf}. Confidence: {state.eligibility.confidence}.
-          </p>
-          {/* Verbatim. Never reworded, never shortened — it is what keeps this information
-              rather than advice. */}
-          <p>{state.disclaimer}</p>
+          <div className="provenance">
+            <p>
+              As of <span className="numeric">{state.asOf}</span>. Confidence:{' '}
+              {state.eligibility.confidence}.
+            </p>
+            {/* Verbatim. Never reworded, never shortened — it is what keeps this information
+                rather than advice. */}
+            <p>{state.disclaimer}</p>
+          </div>
         </div>
       )}
     </section>

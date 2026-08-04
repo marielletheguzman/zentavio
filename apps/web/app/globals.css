@@ -1,53 +1,548 @@
 /*
- * Minimal styling, deliberately.
+ * The design pass (`.claude/context/ui-guidelines.md`).
  *
- * Polish is the roadmap's third legitimate cut (`.claude/skills/roadmap/SKILL.md`), and Tailwind
- * plus the packages/ui token layer is its own piece of work. What is NOT cut is anything the
- * ui-guidelines call correctness: low confidence looks visibly different rather than dimmer, and
- * nothing is conveyed by colour alone — every distinction here is also carried in words.
+ * Tokens live in `packages/ui/src/tokens.css` and are imported, not duplicated. Everything here is
+ * layout built from them — nothing off the 4px scale, no colour that is not a token, no meaning
+ * carried by hue alone.
+ *
+ * **No Tailwind, no shadcn.** `packages/ui`'s purpose line promises a shadcn component library,
+ * which needs Tailwind — a new framework, and CLAUDE.md requires an ADR before one enters the
+ * stack. This pass builds the token layer the guidelines point at and leaves that decision open.
  */
 
-:root { color-scheme: light dark; }
+@import '@zentavio/ui/tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
 body {
-  font-family: system-ui, sans-serif;
-  line-height: 1.5;
-  margin: 0 auto;
-  max-width: 48rem;
-  padding: 2rem 1rem;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  /* 16px minimum for body text; anything smaller is a caption, not prose. */
+  font-size: var(--text-base);
+  line-height: 1.6;
+  margin: 0;
+  padding: var(--space-8) var(--space-4);
 }
 
-.skip-link { position: absolute; left: -9999px; }
-.skip-link:focus { position: static; }
+main {
+  margin: 0 auto;
+  max-width: var(--measure);
+}
 
-:focus-visible { outline: 3px solid currentColor; outline-offset: 2px; }
+/* Prose stays narrower than the shell — a 1280px line of text is unreadable. */
+main > p,
+main > h1 {
+  max-width: 44rem;
+}
 
-.skills { list-style: none; padding: 0; }
+/*
+ * One margin reset, before the rhythm rule below.
+ *
+ * Order matters and it bit once already: `p { margin: 0 }` and `main > * + *` have the same
+ * specificity, so whichever comes last wins. With the reset second, every paragraph on the page
+ * lost its spacing.
+ */
+h1,
+h2,
+h3,
+h4,
+p,
+dl,
+dd,
+ul,
+ol {
+  line-height: 1.25;
+  margin: 0;
+}
+
+p,
+ul,
+ol {
+  line-height: 1.6;
+}
+
+h1 {
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+}
+
+h3 {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+h4 {
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Vertical rhythm between sections is one step larger than within them. */
+main > * + * {
+  margin-top: var(--space-6);
+}
+
+/* A heading inside a card opens a new block and needs the air a new block gets. */
+.card h3:not(:first-child),
+.card h4 {
+  margin-top: var(--space-6);
+}
+
+/* …and the thing the heading introduces sits close to it, not adrift. */
+.card h4 + * {
+  margin-top: var(--space-3);
+}
+
+a {
+  color: var(--accent);
+}
+
+/* ── controls ───────────────────────────────────────────────────────────── */
+
+button {
+  background: var(--accent);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--accent-contrast);
+  cursor: pointer;
+  font: inherit;
+  font-weight: var(--weight-medium);
+  padding: var(--space-2) var(--space-4);
+}
+
+button:hover {
+  filter: brightness(1.08);
+}
+
+button.secondary {
+  background: transparent;
+  border-color: var(--border-strong);
+  color: var(--fg);
+}
+
+input {
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  /* Inputs match their buttons. */
+  border-radius: var(--radius-md);
+  color: var(--fg);
+  font: inherit;
+  padding: var(--space-2) var(--space-3);
+}
+
+/* Labels always visible — a placeholder is not a label. */
+label {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  margin-bottom: var(--space-1);
+}
+
+/* Every control keyboard-reachable with a visible ring, in both themes. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  left: -9999px;
+  position: absolute;
+}
+
+.skip-link:focus {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  left: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  position: fixed;
+  top: var(--space-4);
+  z-index: 1;
+}
+
+/* ── cards: a card is a claim ───────────────────────────────────────────── */
+
+.card {
+  background: var(--bg-raised);
+  /* Borders over shadows. Shadow is not a hierarchy tool. */
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+}
+
+.card + .card {
+  margin-top: var(--space-4);
+}
+
+.controls {
+  align-items: flex-end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.hint {
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  margin-top: var(--space-2);
+  max-width: 44rem;
+}
+
+/* ── the verdict ────────────────────────────────────────────────────────── */
+
+.verdict-headline {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.01em;
+}
+
+/* The binding constraint is the primary output, so it reads as the answer. */
+.binding-reason {
+  border-left: 3px solid var(--accent);
+  font-size: var(--text-lg);
+  margin-top: var(--space-3);
+  max-width: 44rem;
+  padding-left: var(--space-4);
+}
+
+.axes {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  margin-top: var(--space-6);
+}
+
+.axis {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.axis-label {
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.axis-value {
+  font-size: var(--text-lg);
+  margin-top: var(--space-1);
+}
+
+/* Compared numbers are tabular — misaligned digits read as sloppiness. */
+.numeric {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The axis that binds, marked by a border as well as by the words above it. */
+.axis-binding {
+  border-color: var(--accent);
+  border-width: 2px;
+}
+
+/* ── the readiness band: a range, never a single figure ─────────────────── */
+
+.band {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  height: 0.5rem;
+  margin-top: var(--space-3);
+  overflow: hidden;
+  position: relative;
+}
+
+.band-range {
+  background: var(--accent);
+  height: 100%;
+  position: absolute;
+}
+
+/* ── requirements ───────────────────────────────────────────────────────── */
+
+.requirements {
+  display: grid;
+  gap: var(--space-2);
+  list-style: none;
+  margin-top: var(--space-3);
+  padding: 0;
+}
+
+.requirement {
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+}
+
+.requirement-met {
+  border-left-color: var(--positive);
+}
+
+.requirement-not_met {
+  border-left-color: var(--negative);
+}
+
+/*
+ * Unanswered is dashed, not a paler solid.
+ *
+ * The guidelines call the lighter-tint version a correctness bug: it reads as "the same thing,
+ * quieter" when it means "we have not established this". The label "Not answered yet" carries it
+ * in words too — nothing rests on colour or shape alone.
+ */
+.requirement-undetermined {
+  border-left-color: var(--caution);
+  border-left-style: var(--shape-uncertain);
+}
+
+.requirement-label {
+  font-weight: var(--weight-semibold);
+}
+
+.requirement-id {
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+}
+
+.requirement-detail {
+  margin-top: var(--space-1);
+}
+
+.requirement-source {
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  margin-top: var(--space-2);
+}
+
+/* ── the ordered gap: steps, in the order you would close them ──────────── */
+
+.steps {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding-left: var(--space-6);
+}
+
+.step {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+/* Order is the meaning here, so the numbers are the one thing that must not drift. */
+.steps ::marker {
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── skills, as the résumé surface reads them ───────────────────────────── */
+
+.skills {
+  display: grid;
+  gap: var(--space-2);
+  list-style: none;
+  margin-top: var(--space-3);
+  padding: 0;
+}
 
 .skill {
-  border: 1px solid;
-  border-radius: 0.375rem;
-  margin-bottom: 0.5rem;
-  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-left-color: var(--positive);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
 }
 
-/* Not a lighter tint of the same badge — a different shape, plus the words "Low confidence". */
-.skill-low { border-style: dashed; border-left-width: 4px; }
+/*
+ * Low confidence is a dashed border, not a paler one. Same rule as `.requirement-undetermined`,
+ * and the words "Low confidence" are next to it — nothing rests on the shape alone either.
+ */
+.skill-low {
+  border-left-color: var(--caution);
+  border-style: var(--shape-uncertain);
+}
 
-.skill-name { font-weight: 600; margin-right: 0.5rem; }
-.skill-status, .skill-confidence { font-size: 0.875rem; margin-right: 0.5rem; }
+.skill-name {
+  font-weight: var(--weight-semibold);
+  margin-right: var(--space-2);
+}
 
-.unknown { border: 2px solid; border-radius: 0.375rem; padding: 1rem; }
-.caveat { font-style: italic; }
+.skill-status,
+.skill-confidence {
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  margin-right: var(--space-2);
+}
 
-blockquote { border-left: 3px solid; margin: 0.5rem 0 0; padding-left: 0.75rem; }
+/* Unknown is a designed state, not an empty cell. Strong border, no colour meaning. */
+.unknown {
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
 
-/* Matches the final layout so nothing shifts when results arrive. */
-.skeleton { list-style: none; padding: 0; }
+.caveat {
+  font-style: italic;
+}
+
+/* Evidence, quoted verbatim from the source document. */
+blockquote {
+  border-left: 3px solid var(--border-strong);
+  color: var(--fg-muted);
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-3);
+}
+
+details {
+  margin-top: var(--space-2);
+}
+
+summary {
+  color: var(--fg-muted);
+  cursor: pointer;
+  font-size: var(--text-sm);
+}
+
+/* ── comparison tables ──────────────────────────────────────────────────── */
+
+table {
+  border-collapse: collapse;
+  margin-top: var(--space-3);
+  width: 100%;
+}
+
+caption {
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-2);
+  text-align: left;
+}
+
+th,
+td {
+  border-bottom: 1px solid var(--border);
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+}
+
+/* Compared figures are tabular. Misaligned digits are read as noise, not as data. */
+td {
+  font-variant-numeric: tabular-nums;
+}
+
+thead th {
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+/* ── asking for what is missing ─────────────────────────────────────────── */
+
+.question {
+  align-items: flex-end;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+}
+
+.question label {
+  max-width: 32rem;
+}
+
+/* ── states ─────────────────────────────────────────────────────────────── */
+
+/* A skeleton matching the final layout, so nothing shifts on arrival. */
+.skeleton {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
 .skeleton-row {
-  background: currentColor;
-  border-radius: 0.375rem;
-  height: 4.5rem;
-  margin-bottom: 0.5rem;
-  opacity: 0.12;
+  background: var(--fg);
+  border-radius: var(--radius-md);
+  height: 3.5rem;
+  opacity: 0.08;
+}
+
+.notice {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.notice-error {
+  border-color: var(--negative);
+}
+
+.notes {
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  margin-top: var(--space-4);
+  padding-left: var(--space-4);
+}
+
+.provenance {
+  border-top: 1px solid var(--border);
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+}
+
+.provenance p + p {
+  margin-top: var(--space-1);
+}
+
+/* Where a page ends. Never a dead end — the guidelines require a next action on every screen. */
+.next-action {
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-top: var(--space-8);
+  padding-top: var(--space-4);
+}
+
+/* Motion only to show a relationship, and never against the user's wishes. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Responsive to 320px: the axes collapse, the controls wrap, nothing is cut off. */
+@media (max-width: 30rem) {
+  body {
+    padding: var(--space-4) var(--space-3);
+  }
+
+  h1 {
+    font-size: var(--text-2xl);
+  }
+
+  .card {
+    padding: var(--space-4);
+  }
 }

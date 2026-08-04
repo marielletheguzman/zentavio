@@ -33,9 +33,12 @@ export default function Home() {
 
       <UploadPanel gatewayUrl={GATEWAY_URL} devUserId={SEEDED_TEST_USER} />
 
-      <p>
+      {/* Every page ends in a next action. Both of them, because after a résumé the honest answer
+          is that there are two questions and neither is subordinate to the other. */}
+      <nav className="next-action">
         <a href="/gap">See how far you are from a track</a>
-      </p>
+        <a href="/eligibility">Check whether you could work in Germany</a>
+      </nav>
     </main>
   );
 }
