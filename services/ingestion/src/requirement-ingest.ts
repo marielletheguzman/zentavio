@@ -62,7 +62,11 @@ export interface IngestPlan {
  * `id` is deliberately absent: the caller supplies a UUIDv7 at write time. Generating it here
  * would make `planIngest` impure and every golden-file test unstable.
  */
-export function toRow(requirement: SourcedRequirement, id: string): NewRequirement {
+export function toRow(
+  requirement: SourcedRequirement,
+  id: string,
+  documentId: string | null = null,
+): NewRequirement {
   return {
     id,
     requirement_id: requirement.requirementId,
@@ -89,6 +93,9 @@ export function toRow(requirement: SourcedRequirement, id: string): NewRequireme
     contested: requirement.contested,
     contested_note: requirement.contestedNote ?? null,
     refresh_after: requirement.refreshAfter,
+    // Null until the source is archived. Nullable by design until ADR-0021's enforcement phase:
+    // the rules stored before archival existed are backfilled, not deleted.
+    document_id: documentId,
   };
 }
 
@@ -108,6 +115,13 @@ export function planIngest(
   normalized: readonly SourcedRequirement[],
   existing: readonly ExistingRequirement[],
   idsFor: (requirementId: string) => string,
+  /**
+   * The archived source these rules came from, when there is one.
+   *
+   * Passed in rather than fetched, so `planIngest` stays pure — archiving is I/O and belongs to
+   * the caller (`archiveSource`).
+   */
+  documentId: string | null = null,
 ): IngestPlan {
   const currentByRequirementId = new Map(
     existing.filter((row) => row.effectiveTo === null).map((row) => [row.requirementId, row]),
@@ -134,7 +148,7 @@ export function planIngest(
       continue;
     }
 
-    const row = toRow(requirement, idsFor(requirement.requirementId));
+    const row = toRow(requirement, idsFor(requirement.requirementId), documentId);
     const current = currentByRequirementId.get(requirement.requirementId);
 
     if (current === undefined) {

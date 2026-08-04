@@ -28,6 +28,7 @@ import {
   type Page,
   type SearchQuery,
   type ValidationIssue,
+  type ArchivableSource,
   type ValidationResult,
 } from '@zentavio/connectors-core';
 import type { SourcedRequirement } from '@zentavio/types';
@@ -225,6 +226,26 @@ export class AufenthgConnector implements Connector<StatuteRaw, readonly Sourced
     }
 
     return { issues };
+  }
+
+  /**
+   * The page as served. **This is the original**: the statute is published as HTML, so archiving
+   * these bytes archives the document itself rather than something derived from it.
+   */
+  archivable(raw: StatuteRaw): ArchivableSource {
+    return {
+      // Encoded back to bytes exactly as read. The page is ISO-8859-1, and the raw payload holds
+      // it decoded — re-encoding as UTF-8 changes the bytes, so the archive records what we
+      // *parsed* rather than the octets on the wire. Noted rather than silently accepted; keeping
+      // the original octets means carrying them on the payload, which is follow-up.
+      bytes: new TextEncoder().encode(raw.html),
+      contentType: 'text/html; charset=utf-8',
+      slug: raw.documentId,
+      jurisdiction: 'DE',
+      year: Number(EFFECTIVE_FROM.slice(0, 4)),
+      extension: 'html',
+      isOriginal: true,
+    };
   }
 
   async healthCheck(): Promise<HealthStatus> {

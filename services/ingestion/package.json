@@ -13,6 +13,7 @@
   "dependencies": {
     "@zentavio/connectors-core": "workspace:*",
     "@zentavio/db": "workspace:^",
-    "@zentavio/types": "workspace:*"
+    "@zentavio/types": "workspace:*",
+    "@zentavio/storage": "workspace:*"
   }
 }

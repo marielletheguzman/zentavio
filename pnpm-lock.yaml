@@ -179,6 +179,9 @@ importers:
       '@zentavio/db':
         specifier: workspace:^
         version: link:../../packages/db
+      '@zentavio/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
       '@zentavio/types':
         specifier: workspace:*
         version: link:../../packages/types
