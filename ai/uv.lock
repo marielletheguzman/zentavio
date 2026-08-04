@@ -475,6 +475,18 @@ source = { editable = "shared" }
 name = "zentavio-career-roadmap"
 version = "0.0.0"
 source = { editable = "career-roadmap" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "pydantic" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", specifier = "==0.121.2" },
+    { name = "pydantic", specifier = "==2.12.4" },
+    { name = "uvicorn", specifier = "==0.38.0" },
+]
 
 [[package]]
 name = "zentavio-resume-parser"

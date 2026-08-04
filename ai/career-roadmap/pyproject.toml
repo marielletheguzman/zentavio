@@ -1,16 +1,21 @@
 # The career-roadmap service (ADR-0003, ADR-0006 workspace member).
 #
-# **No runtime dependencies at all yet.** Eligibility is deterministic comparison over rows the
-# caller supplies (docs/architecture/immigration.md) — no model client, no database driver, no
-# document library. If that list ever grows, check first that the new dependency is not doing work
-# `eligibility.py` should be doing.
+# **No model client and no database driver.** Eligibility is deterministic comparison over rows the
+# caller supplies (docs/architecture/immigration.md); the gateway owns the database. FastAPI and
+# uvicorn are here because a service without an ASGI server is a framework, not a process — the gap
+# that hid behind TestClient until the stack was run for real. If this list grows again, check first
+# that the new dependency is not doing work `eligibility.py` should be doing.
 
 [project]
 name = "zentavio-career-roadmap"
 version = "0.0.0"
 description = "Eligibility evaluation over retrieved requirements, and relocation viability."
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+  "fastapi==0.121.2",
+  "pydantic==2.12.4",
+  "uvicorn==0.38.0",
+]
 
 [build-system]
 requires = ["hatchling"]
