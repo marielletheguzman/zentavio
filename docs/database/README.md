@@ -65,6 +65,8 @@ Detail in `schema-overview.md`. Confusing the classes is the expensive mistake h
 | [`connector-source.md`](entities/connector-source.md) | world | sources, runs, quarantine, raw payloads |
 | [`application.md`](entities/application.md) | person | `applications`, `application_events`, `practice_sessions` |
 | [`user-memory.md`](entities/user-memory.md) | person | certifications, AI preferences, generated documents |
+| [`person-fact.md`](entities/person-fact.md) | person | `person_fact_kinds`, `person_facts` — what a requirement asks for, and the versioned answers |
+| [`company.md`](entities/company.md) | world | `companies`, `company_aliases` — employer identity and alias resolution |
 | [`employer-sponsorship.md`](entities/employer-sponsorship.md) | world + derived | sponsorship facts and the employer migration score |
 | [`match.md`](entities/match.md) | derived | `matches` and its sibling score tables |
 | [`outcome.md`](entities/outcome.md) | special | `outcomes` — detached on erasure, never deleted |
