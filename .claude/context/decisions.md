@@ -90,6 +90,7 @@ An ADR is numbered sequentially and never renumbered.
 | [0018](../../docs/architecture/decisions/0018-skill-extraction-division-of-labour.md) | The model adds recall; code owns resolution and classification | Accepted |
 | [0019](../../docs/architecture/decisions/0019-outcome-recording-begins-at-m2.md) | Outcome recording begins at M2 | Accepted |
 | [0020](../../docs/architecture/decisions/0020-knowledge-substrate-location.md) | Structured knowledge lives in `packages/db`; `knowledge-engine/` curates it | Accepted |
+| [0021](../../docs/architecture/decisions/0021-object-storage.md) | Source documents in S3-compatible object storage (R2), behind a port | **Proposed** |
 
 0001–0004 define the boundaries every skill and context file assumes: one repository, sources as
 plugins, a polyglot contract at the `ai/` boundary, and a vector store that is an index rather
