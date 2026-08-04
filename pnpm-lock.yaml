@@ -114,6 +114,8 @@ importers:
         specifier: ^8.22.0
         version: 8.22.0
 
+  packages/storage: {}
+
   packages/types: {}
 
   services/api-gateway:
