@@ -311,6 +311,44 @@ export interface CareerSkillsTable {
 
 export type UserTargetStatusColumn = 'active' | 'achieved' | 'abandoned';
 
+export type CompanyStatusColumn = 'active' | 'defunct' | 'merged';
+
+/**
+ * Employer identity. **Identity only** — sponsorship, scores, and interview process each live in
+ * their own table (`docs/database/entities/company.md`).
+ */
+export interface CompaniesTable {
+  id: string;
+  slug: string;
+  /** As the company writes it. Display only, never a matching key. */
+  canonical_name: string;
+  legal_name: string | null;
+  /** Host only — `google.com`, never a URL and never `www.`-prefixed. */
+  primary_domain: string | null;
+  country_code: string | null;
+  status: Generated<CompanyStatusColumn>;
+  /** Set when `status` is `merged`. The row is kept and points forward, never rewritten. */
+  merged_into: string | null;
+  source_tier: number;
+  source_url: string | null;
+  retrieved_at: Timestamp | null;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+  deleted_at: Timestamp | null;
+}
+
+export interface CompanyAliasesTable {
+  id: string;
+  company_id: string;
+  /** As written by the source. */
+  alias: string;
+  /** Produced by `normalizeCompanyAlias` and by nothing else. */
+  normalized: string;
+  source_tier: number;
+  created_at: Generated<Timestamp>;
+  deleted_at: Timestamp | null;
+}
+
 export type PersonFactValueType =
   | 'monetary'
   | 'integer'
@@ -399,6 +437,8 @@ export interface Database {
   skill_edges: SkillEdgesTable;
   career_skills: CareerSkillsTable;
   user_targets: UserTargetsTable;
+  companies: CompaniesTable;
+  company_aliases: CompanyAliasesTable;
   person_fact_kinds: PersonFactKindsTable;
   person_facts: PersonFactsTable;
   schema_migrations: SchemaMigrationsTable;
