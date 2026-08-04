@@ -1,0 +1,13 @@
+{
+  "name": "@zentavio/storage",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The DocumentStore port. No provider SDK escapes its implementation (ADR-0021).",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}
