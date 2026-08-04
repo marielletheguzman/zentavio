@@ -71,7 +71,7 @@ against the plan.
 
 | Area | Authored | Status |
 |---|---|---|
-| `architecture/` (incl. `decisions/`) | 18 / 18 | complete — **ADRs 0001–0018 Accepted** and binding |
+| `architecture/` (incl. `decisions/`) | complete | ADR status lives in `architecture/decisions/README.md`, deliberately not here |
 | `database/` | 14 / 14 | complete |
 | `prompts/` | 9 / 9 | complete |
 | `development/` | 11 / 11 | complete |
@@ -87,8 +87,10 @@ before changing it. The index is `architecture/decisions/README.md` — a count 
 number that goes stale on the next accepted decision.
 
 Documents that describe things **not yet built**, and say so in place: deployment
-(`development/ci-cd.md`), and **origin-side immigration rules** (`architecture/immigration.md` — the
-rule model cannot express them yet, which blocks any eligibility verdict for regulated professions).
+(`development/ci-cd.md`), **object storage** (`architecture/object-storage.md` — the requirements are
+settled, ADR-0021 selects the implementation and is Proposed), and **origin-side immigration rules**
+(`architecture/immigration.md` — the rule model *does* express them via `imposed_by`; what is missing
+is ingested data, which is what blocks an eligibility verdict for regulated professions).
 
 Graded prompt evals (`prompts/evals.md`) are **built and run**, against the pinned model on a local
 Ollama host. What is missing is not the runner but a model host *in CI*, so the graded delta report
