@@ -135,9 +135,11 @@ implementation.** Business logic depends on `DocumentStore`, never on an SDK typ
 
 **Follow-up work.**
 
-1. A `documents` table — `id`, `object_key`, `provider`, `bucket`, `mime_type`, `size_bytes`,
-   `sha256`, `source_url`, `retrieved_at`, `version`, `created_at`. Metadata only; PostgreSQL holds
-   no binary.
+1. A `documents` table, per `docs/architecture/object-storage.md` — `id`, `object_key`, `provider`,
+   `bucket`, `mime_type`, `size_bytes`, `sha256`, `source_url`, `retrieved_at`, `archived_at`,
+   `version`. Metadata only; PostgreSQL holds no binary. `retrieved_at` and `archived_at` are
+   separate columns because a fetch that succeeded and an archive that succeeded are two events, and
+   a gap between them is the failure the table exists to make visible.
 2. `requirements.source_document` becomes `document_id uuid` referencing it. The existing migration
    is applied and checksummed, so this is a **new** migration, not an edit.
 3. A `DocumentStore` port in `packages/` with an R2/S3 implementation and a MinIO-backed local one.
@@ -175,6 +177,7 @@ possible.
 
 ## Related
 
+- **`docs/architecture/object-storage.md`** — the requirements specification this decision satisfies
 - ADR-0015 — Supabase "and nothing else", which is why this is a separate provider
 - ADR-0010 — the `requirements` table and its provenance columns
 - ADR-0004 — the vector store as an index, not a system of record; same port-shaped treatment
