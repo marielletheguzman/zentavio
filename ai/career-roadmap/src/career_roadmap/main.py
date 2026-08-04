@@ -22,6 +22,7 @@ from datetime import date
 from typing import Annotated, Any, Literal
 
 from fastapi import Body, FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
@@ -32,6 +33,7 @@ from career_roadmap.eligibility import (
     Verdict,
     evaluate_pathway,
 )
+from career_roadmap.viability import AsOfMismatchError, Employability, compose
 
 #: Bumped when the evaluator's output changes for the same input. A stored verdict records this, so
 #: "why did this answer change?" is answerable without guessing.
@@ -159,10 +161,9 @@ def _to_response(verdict: Verdict) -> EvaluateResponse:
     )
 
 
-@app.post("/evaluate", response_model=EvaluateResponse)
-def evaluate(payload: Annotated[EvaluateRequest, Body()]) -> EvaluateResponse:
-    """Evaluate a pathway. Always a 200 — every eligibility outcome is an answer."""
-    verdict = evaluate_pathway(
+def _evaluate(payload: EvaluateRequest) -> Verdict:
+    """Shared by both routes, so viability cannot drift from what `/evaluate` returns."""
+    return evaluate_pathway(
         payload.pathway_id,
         [
             Requirement(
@@ -187,7 +188,91 @@ def evaluate(payload: Annotated[EvaluateRequest, Body()]) -> EvaluateResponse:
         payload.as_of,
         licence_gated=payload.licence_gated,
     )
-    return _to_response(verdict)
+
+
+@app.post("/evaluate", response_model=EvaluateResponse)
+def evaluate(payload: Annotated[EvaluateRequest, Body()]) -> EvaluateResponse:
+    """Evaluate a pathway. Always a 200 — every eligibility outcome is an answer."""
+    return _to_response(_evaluate(payload))
+
+
+class EmployabilityInput(BaseModel):
+    """The readiness half, supplied by the caller.
+
+    This service does not call `ai/skill-gap`: the gateway computes both halves and hands them
+    over, which is what keeps `ai/` stateless and stops two workspace members depending on each
+    other.
+    """
+
+    status: Literal["ok", "no_gap", "unknown"]
+    #: The band, never a midpoint — its width is how much rests on assertion.
+    score_low: float | None = None
+    score_high: float | None = None
+    missing_count: int = 0
+    reason: str | None = None
+    #: Must equal the eligibility `as_of`. A pair describing two moments is not a verdict.
+    as_of: date
+
+
+class ViabilityRequest(EvaluateRequest):
+    employability: EmployabilityInput
+
+
+class ViabilityResponse(BaseModel):
+    """Two axes and the one that binds. **Deliberately has no score field** (ADR-0022)."""
+
+    pathway_id: str | None
+    eligibility: EvaluateResponse
+    employability: EmployabilityInput
+    binding: Literal["eligibility", "employability", "recognition", "unmodelled", "none"]
+    binding_reason: str
+    as_of: str
+    disclaimer: str
+    evaluator_version: str
+
+
+@app.post("/viability", response_model=ViabilityResponse)
+def viability(payload: Annotated[ViabilityRequest, Body()]) -> ViabilityResponse:
+    """Eligibility and employability, with the binding constraint named.
+
+    A 422 when the two halves describe different dates — that is a caller mistake, not an
+    eligibility outcome, and answering it would produce a verdict about no particular moment.
+    """
+    verdict = _evaluate(payload)
+
+    try:
+        paired = compose(
+            verdict,
+            Employability(
+                status=payload.employability.status,
+                score_low=payload.employability.score_low,
+                score_high=payload.employability.score_high,
+                missing_count=payload.employability.missing_count,
+                reason=payload.employability.reason,
+            ),
+            employability_as_of=payload.employability.as_of.isoformat(),
+        )
+    except AsOfMismatchError as mismatch:
+        raise RequestValidationError(
+            [
+                {
+                    "loc": ("body", "employability", "as_of"),
+                    "msg": str(mismatch),
+                    "type": "value_error",
+                }
+            ]
+        ) from mismatch
+
+    return ViabilityResponse(
+        pathway_id=paired.pathway_id,
+        eligibility=_to_response(verdict),
+        employability=payload.employability,
+        binding=paired.binding,
+        binding_reason=paired.binding_reason,
+        as_of=paired.as_of,
+        disclaimer=paired.disclaimer,
+        evaluator_version=EVALUATOR_VERSION,
+    )
 
 
 @app.get("/health/live")

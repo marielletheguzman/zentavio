@@ -215,6 +215,51 @@ export function isEligibilityResponse(value: unknown): value is EligibilityRespo
   return true;
 }
 
+/** The two axes and the one that binds (ADR-0022). **Deliberately has no score field.** */
+export interface ViabilityResponseWire {
+  readonly pathway_id: string | null;
+  readonly eligibility: EligibilityResponseWire;
+  readonly employability: Readonly<Record<string, unknown>>;
+  readonly binding: 'eligibility' | 'employability' | 'recognition' | 'unmodelled' | 'none';
+  readonly binding_reason: string;
+  readonly as_of: string;
+  readonly disclaimer: string;
+  readonly evaluator_version: string;
+}
+
+const BINDING_CONSTRAINTS: readonly string[] = [
+  'eligibility',
+  'employability',
+  'recognition',
+  'unmodelled',
+  'none',
+];
+
+/**
+ * Validate a viability response.
+ *
+ * Checks the binding constraint against the closed set, because an unrecognised value would render
+ * as a verdict nobody designed a sentence for — and checks that no composite score field appeared,
+ * since ADR-0022 forbids one and a service that started emitting it should fail loudly here.
+ */
+export function isViabilityResponse(value: unknown): value is ViabilityResponseWire {
+  if (typeof value !== 'object' || value === null) return false;
+  const wire = value as Record<string, unknown>;
+
+  if (typeof wire['binding'] !== 'string' || !BINDING_CONSTRAINTS.includes(wire['binding'])) return false;
+  if (typeof wire['binding_reason'] !== 'string' || wire['binding_reason'] === '') return false;
+  if (typeof wire['as_of'] !== 'string' || wire['as_of'] === '') return false;
+  if (typeof wire['disclaimer'] !== 'string' || wire['disclaimer'] === '') return false;
+  if (!isEligibilityResponse(wire['eligibility'])) return false;
+
+  // ADR-0022: no composite score, anywhere.
+  for (const forbidden of ['score', 'viability_score', 'composite', 'rating']) {
+    if (forbidden in wire) return false;
+  }
+
+  return true;
+}
+
 /**
  * `undetermined` dominates. One unknown requirement means the verdict is undetermined even if
  * everything else is met — it never rounds toward the friendlier answer.
