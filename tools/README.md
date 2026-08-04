@@ -2,4 +2,9 @@
 
 > **Purpose:** Developer tooling, scripts, and code generators.
 
-_Structure placeholder — no implementation yet._
+| Directory | State |
+|---|---|
+| `scripts` | the boundary-disable audit that CI runs |
+| `generators` | empty |
+
+Nothing here ships. A tool that the product needs at runtime belongs in `packages/`.

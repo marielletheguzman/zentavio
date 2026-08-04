@@ -174,10 +174,12 @@ pull request. That enforces:
 - every fixture set covers all six required kinds
 - every case file is valid, and states why it exists
 
-**Not in CI:** graded runs, because the runner has no model host. **ADR-0009 (Accepted)** settles the
-approach: the author runs graded evals locally against the pinned model and **attaches the delta report to
-the pull request**, which is a required review artifact rather than a mechanised gate. A self-hosted runner
-with Ollama follows when there is a second contributor or the first paying user.
+**Not in CI:** graded runs, because the **CI** runner has no model host. The eval runner itself has
+one — graded runs against the pinned model are how prompts get changed here, and no prompt change
+lands without one. **ADR-0009 (Accepted)** settles the approach: the author runs graded evals locally
+and **attaches the delta report to the pull request**, which is a required review artifact rather
+than a mechanised gate. A self-hosted runner with Ollama follows when there is a second contributor
+or the first paying user.
 
 **The `promptVersion` check is implemented and runs in CI** (`pnpm check:prompt-versions`,
 `ai/shared/evals/check_prompt_versions.py`). It fails a change that:

@@ -134,7 +134,7 @@ Still outstanding:
 - **pytest config stays in `pytest.ini`** rather than moving into the uv workspace. CI runs
   `uv run --project ai --all-packages --frozen pytest` from the repository root, so `testpaths = ai`
   still resolves; a second configuration in `ai/pyproject.toml` would be drift waiting to happen.
-- **Graded prompt evals do not run in CI** (ADR-0009): the runner has no model host. The offline
+- **Graded prompt evals do not run in CI** (ADR-0009): the CI runner has no model host. The offline
   gate — fixture integrity, all six required case kinds, no prompt without fixtures — runs on every
   pull request, and the graded delta report is attached to the PR by the author instead.
 
