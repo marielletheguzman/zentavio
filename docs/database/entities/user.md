@@ -37,8 +37,11 @@ CREATE UNIQUE INDEX uq_users__auth_subject ON users (auth_provider, auth_subject
 for one human, with password reset and account recovery both ambiguous. That guarantee has to live in
 the database; an application-level check is a convention with a race condition.
 
-It is a functional index rather than a `citext` column because `citext` is an extension, and the
-hosting target is undecided. The cost of this choice is one convention — **every lookup filters
+It is a functional index rather than a `citext` column because `citext` is an extension, and at the
+time of ADR-0013 the hosting target was undecided. **ADR-0015 has since chosen Supabase and does not
+reopen this** — a managed provider is exactly the case a core-PostgreSQL-only schema was meant to
+survive, and `users-constraints.test.ts` asserts no extension beyond `plpgsql` so `citext` cannot
+reappear quietly. The cost of this choice is one convention — **every lookup filters
 `lower(email) = lower($1)`** — and its failure mode is the safe one: a forgotten `lower()` means a
 user cannot find their account, which is visible immediately. It can never produce a duplicate,
 because uniqueness is enforced at write regardless of how the query was written.
@@ -275,9 +278,18 @@ general profile read.
 Step 5 is the one boundary stated to the user rather than implied: aggregates already computed have no
 path back to the individual and are not withdrawn.
 
-**Open:** step 1 says to clear identifying columns, but `email` is `NOT NULL`. What an erased row's
-email becomes — a per-id sentinel, a nullable column, or something else — is undecided, and ADR-0013
-deliberately did not settle it. It must be settled before erasure is implemented.
+**Settled, and implemented.** Step 1 says to clear identifying columns, but `email` is `NOT NULL`.
+Of the options once open — a per-id sentinel, a nullable column, or something else — erasure uses
+the **per-id sentinel**: `packages/db/src/repositories/erasure.ts` writes
+`'erased+' || id || '@invalid'`, so the row stays valid and `uq_users__email` stays satisfiable.
+
+The per-id part is the whole point and is easy to lose in a refactor. A shared constant like
+`erased@invalid` would collide the moment a *second* account is erased — a failure that arrives
+under a legal deadline, on a path nobody exercises twice. `tests/integration/db/erasure.test.ts`
+erases two users in one test for exactly that reason.
+
+This paragraph read **"Open: … undecided … must be settled before erasure is implemented"** until
+2026-08-04, well after erasure shipped and answered it.
 
 ## Invariants
 
