@@ -6,7 +6,8 @@ _Structure placeholder — no implementation yet._ Thirteen READMEs, zero implem
 2026-07-28.
 
 **It does not store anything, and that is the decision rather than the backlog** (ADR-0020,
-Proposed). Structured knowledge is stored in `packages/db` — schema, seeds, repositories — because a
+Accepted — binding). Structured knowledge is stored in `packages/db` — schema, seeds, repositories —
+because a
 skill graph queried on every gap request has to be in the database. What belongs here is what earns
 a fact the right to be stored: ingest and reconciliation, source tier and provenance, conflict
 resolution, outcome collection and aggregation.
