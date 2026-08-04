@@ -20,6 +20,7 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { Pool } from 'pg';
 import { databaseSchema, load } from '@zentavio/config';
+import { IMMIGRATION_PATHWAYS } from './immigration-pathways.ts';
 import { PERSON_FACT_KINDS } from './person-fact-kinds.ts';
 import { uuidv7 } from './uuid.ts';
 
@@ -270,6 +271,8 @@ export interface SeedPlan {
   readonly edgesInserted: number;
   /** Fact kinds inserted or refreshed. Upserted, so this counts rows touched. */
   readonly factKindsUpserted: number;
+  /** Immigration pathways inserted. Requirements cannot be stored without their pathway. */
+  readonly pathwaysInserted: number;
 }
 
 interface RunOptions {
@@ -338,7 +341,8 @@ export async function run(options: RunOptions): Promise<number> {
         `${String(plan.aliasesInserted)} alias(es), ` +
         `${String(plan.careerSkillsInserted)} requirement(s), ` +
         `${String(plan.edgesInserted)} edge(s), ` +
-        `${String(plan.factKindsUpserted)} fact kind(s).`,
+        `${String(plan.factKindsUpserted)} fact kind(s), ` +
+        `${String(plan.pathwaysInserted)} pathway(s).`,
     );
     if (dryRun) out('Nothing was written. Re-run without --dry-run to apply.');
     return EXIT.OK;
@@ -370,6 +374,7 @@ export async function applySeed(
   let careerSkillsInserted = 0;
   let edgesInserted = 0;
   let factKindsUpserted = 0;
+  let pathwaysInserted = 0;
 
   try {
     await client.query('BEGIN');
@@ -509,6 +514,31 @@ export async function applySeed(
       factKindsUpserted += result.rowCount ?? 0;
     }
 
+    // Immigration pathways. Seeded rather than ingested because `requirements.pathway_id` is a
+    // foreign key onto this table — the first real requirement insert fails without the row.
+    //
+    // Insert-only on conflict: this row's fields are tier-1 statements from a statute, and an
+    // upsert would silently overwrite a curated `official_sources` list with whatever the code
+    // happened to hold. Changing a pathway is a deliberate edit, not a side effect of re-seeding.
+    for (const pathway of IMMIGRATION_PATHWAYS) {
+      const result = await client.query(
+        `INSERT INTO immigration_pathways (id, pathway_id, jurisdiction, name, description, official_sources)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (pathway_id) DO NOTHING`,
+        [
+          uuidv7(),
+          pathway.pathwayId,
+          pathway.jurisdiction,
+          pathway.name,
+          pathway.description,
+          JSON.stringify(
+            pathway.officialSources.map((s) => ({ url: s.url, authoritative_for: s.authoritativeFor })),
+          ),
+        ],
+      );
+      pathwaysInserted += result.rowCount ?? 0;
+    }
+
     if (options.dryRun === true) {
       await client.query('ROLLBACK');
     } else {
@@ -533,6 +563,7 @@ export async function applySeed(
     careerSkillsInserted,
     edgesInserted,
     factKindsUpserted,
+    pathwaysInserted,
   };
 }
 

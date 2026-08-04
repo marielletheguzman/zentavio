@@ -167,9 +167,18 @@ importers:
       '@zentavio/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@zentavio/connector-de-bundesanzeiger':
+        specifier: workspace:*
+        version: link:../../connectors/immigration-data/de-bundesanzeiger
       '@zentavio/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@zentavio/ingestion':
+        specifier: workspace:*
+        version: link:../../services/ingestion
+      kysely:
+        specifier: ^0.29.4
+        version: 0.29.4
 
   tests/unit:
     dependencies:
