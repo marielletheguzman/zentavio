@@ -147,6 +147,18 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0
 
+  services/ingestion:
+    dependencies:
+      '@zentavio/connectors-core':
+        specifier: workspace:*
+        version: link:../../connectors/core
+      '@zentavio/db':
+        specifier: workspace:^
+        version: link:../../packages/db
+      '@zentavio/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+
   tests/integration:
     dependencies:
       '@zentavio/auth':
