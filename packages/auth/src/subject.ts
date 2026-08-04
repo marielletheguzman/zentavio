@@ -5,9 +5,10 @@
  * `services/api-gateway` is the only component that authenticates — everything behind it receives an
  * already-authenticated subject.
  *
- * **The mechanism is undecided (ADR-0017).** This file is the seam that makes that survivable: the
- * port exists now, so routes can stop reading a user id out of the request body today, and choosing
- * a provider later replaces one implementation instead of touching every controller.
+ * **The mechanism is ADR-0017 (Accepted), and no provider is configured yet.** This file is the seam
+ * that makes that survivable: the port already carries the decision, so routes never read a user id
+ * out of the request body, and wiring a provider replaces one implementation instead of touching
+ * every controller.
  *
  * The hole this closes is not theoretical. Until now `userId` arrived in the request body, so any
  * caller could read and correct any person's profile — with a résumé behind it.
@@ -67,8 +68,8 @@ export const DEV_SUBJECT_HEADER = 'x-zentavio-dev-user';
 /**
  * Trusts a header. **Not authentication.**
  *
- * This exists so M1a is demonstrable while ADR-0017 is open, and it is written to be impossible to
- * enable by accident:
+ * This exists so the stack is demonstrable before a provider is configured, and it is written to be
+ * impossible to enable by accident:
  *
  * - it must be constructed with `enabled: true`, which the composition root only passes when an
  *   explicitly-named config flag is set
@@ -77,8 +78,10 @@ export const DEV_SUBJECT_HEADER = 'x-zentavio-dev-user';
  * - every subject it produces is marked `insecure-dev`, so it is visible in any log that records how
  *   a request was authenticated
  *
- * It is a stand-in for a decision, not a shortcut around one. When ADR-0017 is Accepted this class
- * is deleted, not extended.
+ * It is a stand-in for a provider, not a shortcut around the decision — ADR-0017 is Accepted, and
+ * `OidcVerifier` in this package is what it chose. **When a provider is configured this class is
+ * deleted, not extended.** That is the trigger: acceptance of the ADR is not, or this file would
+ * already be gone.
  */
 export class InsecureDevSubjectResolver implements SubjectResolver {
   readonly #enabled: boolean;

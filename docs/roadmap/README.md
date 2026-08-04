@@ -8,7 +8,7 @@
 |---|---|
 | [`vision.md`](vision.md) | any design decision — users, destinations, and the five-question design test |
 | [`mvp.md`](mvp.md) | scoping the first slice, or arguing about what to cut |
-| [`mvp-scope-options.md`](mvp-scope-options.md) | deciding the MVP feature scope and career track — awaiting approval |
+| [`mvp-scope-options.md`](mvp-scope-options.md) | asking why the MVP scope is what it is — **decided 2026-07-28**, kept for the reasoning and the rejected options. Canonical scope is `mvp.md` |
 | [`phases.md`](phases.md) | planning what comes next, and its entry/exit criteria |
 | [`milestones.md`](milestones.md) | checking whether something is actually done |
 | [`backlog.md`](backlog.md) | proposing an item, or looking for what was already rejected |
