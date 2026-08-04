@@ -23,12 +23,13 @@ cannot be done by an agent: **accepting the ADR** and **provisioning the R2 acco
 
 ## Phase 0 — Accept ADR-0021
 
-**Nothing below may start first.** ADR-0021 is `Proposed`, and `.claude/context/decisions.md` says
-Proposed means "under discussion, not binding". `decision-gate.md` is blunter: *"Implementing around
-an undecided question is how the decision gets made silently by whoever typed first — which is
-exactly what an ADR exists to prevent."*
+**Done — ADR-0021 was Accepted on 2026-08-04.** Phases 1–6 are unblocked.
 
-Building the port and the table would settle the provider by momentum. Acceptance is the gate.
+This was a gate rather than a formality. `.claude/context/decisions.md` says Proposed means "under
+discussion, not binding", and `decision-gate.md` is blunter: *"Implementing around an undecided
+question is how the decision gets made silently by whoever typed first — which is exactly what an
+ADR exists to prevent."* Building the port and the table first would have settled the provider by
+momentum.
 
 **Owner: project lead. Not automatable.**
 

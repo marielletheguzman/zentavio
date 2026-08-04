@@ -88,7 +88,8 @@ number that goes stale on the next accepted decision.
 
 Documents that describe things **not yet built**, and say so in place: deployment
 (`development/ci-cd.md`), **object storage** (`architecture/object-storage.md` — the requirements are
-settled, ADR-0021 selects the implementation and is Proposed), and **origin-side immigration rules**
+settled, ADR-0021 is Accepted and selects the implementation; no storage code exists yet), and
+**origin-side immigration rules**
 (`architecture/immigration.md` — the rule model *does* express them via `imposed_by`; what is missing
 is ingested data, which is what blocks an eligibility verdict for regulated professions).
 
