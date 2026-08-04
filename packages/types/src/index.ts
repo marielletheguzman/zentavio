@@ -54,6 +54,8 @@ export {
 export {
   DOMAIN_EVALUATION_ORDER,
   REQUIREMENT_DOMAINS,
+  REQUIREMENT_EVALUATIONS,
+  REQUIREMENT_KINDS,
   REQUIREMENT_RESULTS,
   aggregateStatus,
   firstBindingDomain,
@@ -62,8 +64,12 @@ export {
   type EligibilityVerdict,
   type EvaluatedRequirement,
   type ImposedBy,
+  type MonetaryValue,
   type RequirementDomain,
+  type RequirementEvaluation,
+  type RequirementKind,
   type RequirementResult,
+  type SourcedRequirement,
 } from './requirement.ts';
 
 export {

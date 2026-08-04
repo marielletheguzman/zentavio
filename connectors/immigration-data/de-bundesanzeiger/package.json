@@ -1,0 +1,17 @@
+{
+  "name": "@zentavio/connector-de-bundesanzeiger",
+  "version": "0.0.0",
+  "private": true,
+  "description": "BMI Bekanntmachung to § 18g AufenthG — the annual EU Blue Card minimum salaries.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zentavio/connectors-core": "workspace:*",
+    "@zentavio/types": "workspace:*"
+  }
+}
