@@ -1,6 +1,6 @@
 # ADR 0020: Structured knowledge lives in `packages/db`; `knowledge-engine/` is where it is curated
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-08-03
 - **Deciders:** project lead
 - **Affects:** `knowledge-engine/`, `packages/db`, `CLAUDE.md`, `docs/architecture/knowledge-engine.md`,
@@ -122,3 +122,23 @@ the directory layout disagree, the layering rule is the one with a test.
 tier today (`packages/db/seeds/README.md`), and storing knowledge next to application tables makes
 that discipline easier to drop, not harder. The `source_tier` column is the guard, and it is
 `NOT NULL`.
+
+## Compliance
+
+**The rejected option is already unbuildable, and that is the enforcement.**
+`eslint.config.mjs`'s `boundaries/element-types` graph disallows `package → knowledge`
+("packages/\* must not import from apps/, services/, connectors/, or knowledge-engine/ — ADR-0001").
+A loader in `packages/db` reading seed data from `knowledge-engine/` — Option A's shape — fails
+`pnpm lint`, which runs under the required `CI` check. The same graph permits `knowledge → package`,
+so the accepted shape (curation writing through `packages/db`) passes. Reviewers do not have to
+adjudicate this; the build does.
+
+**What the build does not catch, and a reviewer must.** Nothing stops seed data being *added* under
+`knowledge-engine/` with a loader that also lives there — that direction is legal. So the check on a
+PR touching `knowledge-engine/` is: does this hold anything read on a request path? Schema,
+migrations, seed rows, and repositories belong in `packages/db`. Ingest, reconciliation, source-tier
+resolution, provenance, and outcome aggregation belong here.
+
+**The provenance guard is a constraint, not a convention.** `source_tier` is `NOT NULL`, and
+`tests/integration/db/seed.test.ts` asserts that every seeded skill and every graph edge is tier 3
+`curated`. A knowledge row that overclaims its source fails CI rather than review.

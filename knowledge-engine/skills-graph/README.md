@@ -4,7 +4,7 @@
 
 _Structure placeholder — no implementation yet, and deliberately so._
 
-**The skill graph already exists, elsewhere** (ADR-0020, Proposed):
+**The skill graph already exists, elsewhere** (ADR-0020, Accepted — binding):
 
 ```text
 packages/db/seeds/cloud-platform-engineering.json   30 skills, 83 aliases, 34 sourced edges, 1 career

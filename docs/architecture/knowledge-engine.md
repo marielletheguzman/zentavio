@@ -22,7 +22,7 @@ cites it as truth. This is the most consequential rule in the layer.
 
 ## Where it is stored
 
-**This layer curates; `packages/db` stores** (ADR-0020, Proposed). The tables are PostgreSQL because
+**This layer curates; `packages/db` stores** (ADR-0020, Accepted). The tables are PostgreSQL because
 knowledge is queried per request — `skillGraph()` is a SQL query on the gap path, not a file read.
 What this layer owns is everything that decides whether a fact is fit to store: source tier,
 provenance, dating, conflict resolution, reconciliation, idempotent ingest.
