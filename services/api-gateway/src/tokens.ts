@@ -14,3 +14,4 @@ export const DATABASE = Symbol('DATABASE');
 export const PARSER_CLIENT = Symbol('PARSER_CLIENT');
 export const SUBJECT_RESOLVER = Symbol('SUBJECT_RESOLVER');
 export const GAP_CLIENT = Symbol('GAP_CLIENT');
+export const ELIGIBILITY_CLIENT = Symbol('ELIGIBILITY_CLIENT');
