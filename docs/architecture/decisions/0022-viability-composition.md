@@ -1,6 +1,7 @@
 # ADR-0022: Viability is two axes with the binding one named, not a single score
 
-- **Status:** Proposed
+- **Status:** Accepted
+- **Accepted:** 2026-08-04
 - **Date:** 2026-08-04
 - **Deciders:** project lead
 - **Affects:** `ai/career-roadmap`, `ai/skill-gap`, `services/api-gateway`, `apps/web`,
