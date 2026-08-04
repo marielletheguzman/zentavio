@@ -95,3 +95,13 @@ export type {
   UserStatusColumn,
   UsersTable,
 } from './schema.ts';
+
+export {
+  UnknownFactKindError,
+  currentFacts,
+  factKinds,
+  recordFact,
+  type NewPersonFact,
+  type PersonFactRow,
+  type RecordFactOptions,
+} from './repositories/person-facts.ts';
