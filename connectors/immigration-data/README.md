@@ -8,7 +8,7 @@ here is still a placeholder.
 | Source | Covers | State |
 |---|---|---|
 | [`de-bundesanzeiger/`](de-bundesanzeiger/README.md) | the BMI Bekanntmachung to § 18g AufenthG — Germany's annual EU Blue Card minimum gross salaries | **built** |
-| `de-aufenthg` | § 18g itself — the qualifying percentages, ISCO-08 groups, and minimum employment duration | not built |
+| [`de-aufenthg/`](de-aufenthg/README.md) | § 18g itself — the qualification condition, the ISCO-08 groups attracting the reduced threshold, and the minimum employment duration | **built** |
 
 ## Germany's Blue Card rule needs both, and only one exists
 
@@ -16,9 +16,12 @@ here is still a placeholder.
 applies to; it never states a euro figure. § 18g Abs. 7 obliges the Bundesministerium des Innern to
 announce the concrete amounts in the Bundesanzeiger by 31 December of the preceding year.
 
-`de-bundesanzeiger` owns the second half. The first half — the statute — is **not ingested**, so
-eligibility today checks the salary thresholds and nothing else in § 18g. Combining the two is the
-knowledge engine's job; a connector reports what its own source says.
+`de-bundesanzeiger` owns the second half; `de-aufenthg` owns the first. Combining them is the
+knowledge engine's job — a connector reports what its own source says.
+
+**Coverage is still partial and says so.** § 19f's rejection grounds and § 18g Abs. 2's experience
+route are not modelled, because they cannot be read safely from the page. Each connector's README
+names what it leaves out rather than letting the omission look like coverage.
 
 ## Tier 1 only
 

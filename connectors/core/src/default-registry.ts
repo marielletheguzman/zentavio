@@ -11,6 +11,7 @@
  * nothing else. Any other file in that diff means ADR-0002 was violated.
  */
 
+import { AufenthgConnector, type AufenthgDeps } from '@zentavio/connector-de-aufenthg';
 import { BundesanzeigerConnector, type BundesanzeigerDeps } from '@zentavio/connector-de-bundesanzeiger';
 
 import { ConnectorRegistry } from './registry.ts';
@@ -22,6 +23,7 @@ import { ConnectorRegistry } from './registry.ts';
  */
 export interface ConnectorDeps {
   readonly deBundesanzeiger: BundesanzeigerDeps;
+  readonly deAufenthg: AufenthgDeps;
 }
 
 /**
@@ -29,5 +31,7 @@ export interface ConnectorDeps {
  * share mutable state and a test can compose a registry with stubbed sources.
  */
 export function createRegistry(deps: ConnectorDeps): ConnectorRegistry {
-  return new ConnectorRegistry().register(new BundesanzeigerConnector(deps.deBundesanzeiger));
+  return new ConnectorRegistry()
+    .register(new BundesanzeigerConnector(deps.deBundesanzeiger))
+    .register(new AufenthgConnector(deps.deAufenthg));
 }

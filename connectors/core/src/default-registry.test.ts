@@ -7,6 +7,10 @@ const stubDeps = {
     knownPublications: ['BAnz AT 18.12.2025 B3'],
     fetchDocument: async () => null,
   },
+  deAufenthg: {
+    knownDocuments: ['AufenthG-18g'],
+    fetchDocument: async () => null,
+  },
 };
 
 describe('createRegistry', () => {
@@ -14,6 +18,8 @@ describe('createRegistry', () => {
     const registry = createRegistry(stubDeps);
 
     expect(registry.ids()).toContain('de-bundesanzeiger');
+    // Germany's Blue Card rule is two sources: the statute and the annual announcement.
+    expect(registry.ids()).toContain('de-aufenthg');
     expect(registry.byKind('immigration').map((c) => c.meta.id)).toContain('de-bundesanzeiger');
     expect(registry.byRegion('DE').map((c) => c.meta.id)).toContain('de-bundesanzeiger');
   });
