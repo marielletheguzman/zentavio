@@ -178,6 +178,8 @@ possible.
 ## Related
 
 - **`docs/architecture/object-storage.md`** — the requirements specification this decision satisfies
+- **`docs/architecture/object-storage-rollout.md`** — the order this is introduced in, and what is
+  gated on the project lead rather than on an agent
 - ADR-0015 — Supabase "and nothing else", which is why this is a separate provider
 - ADR-0010 — the `requirements` table and its provenance columns
 - ADR-0004 — the vector store as an index, not a system of record; same port-shaped treatment
