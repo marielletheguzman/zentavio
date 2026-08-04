@@ -16,3 +16,5 @@ export {
 } from './document-store.ts';
 
 export { MemoryDocumentStore, sha256Of } from './memory-store.ts';
+
+export { S3DocumentStore, type S3DocumentStoreOptions } from './s3-store.ts';

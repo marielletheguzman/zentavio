@@ -30,6 +30,19 @@ const qdrantOutsidePort = {
     'The Qdrant client is imported only inside knowledge-engine/vector-store, behind the port — ADR-0004.',
 };
 
+/**
+ * The S3 client lives behind one port (ADR-0021). Applied everywhere except
+ * `packages/storage/src/s3-store.ts`, which is the implementation.
+ *
+ * This is what makes "no provider SDK escapes the port" a build error rather than a review
+ * comment — and it is the property that lets Cloudflare R2 be replaced by configuration.
+ */
+const awsSdkOutsidePort = {
+  group: ['@aws-sdk/*', 'aws-sdk'],
+  message:
+    'The S3 client is imported only inside packages/storage, behind the DocumentStore port — ADR-0021.',
+};
+
 /** Packages that may never be imported anywhere in the TypeScript tree. */
 const bannedRuntimeDeps = [
   {
@@ -246,9 +259,15 @@ export default tseslint.config(
   // ADR-0004: this restriction is what makes the "reversal cost is low" claim true.
   {
     files: ['**/*.{ts,tsx,mts,cts}'],
-    ignores: ['knowledge-engine/vector-store/**'],
+    ignores: ['knowledge-engine/vector-store/**', 'packages/storage/src/s3-store.ts'],
     rules: {
-      'no-restricted-imports': ['error', { patterns: [...bannedRuntimeDeps, qdrantOutsidePort] }],
+      // NOTE: `no-restricted-syntax` and `no-restricted-imports` options REPLACE rather than merge
+      // across flat-config blocks, so both port exceptions are listed in this one block. Splitting
+      // them into two would silently switch the first off for the second's files.
+      'no-restricted-imports': [
+        'error',
+        { patterns: [...bannedRuntimeDeps, qdrantOutsidePort, awsSdkOutsidePort] },
+      ],
     },
   },
 

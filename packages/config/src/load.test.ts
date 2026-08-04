@@ -182,6 +182,10 @@ describe('the Zentavio schema', () => {
       ZENTAVIO_RESUME_PARSER_URL: 'http://127.0.0.1:8001',
       ZENTAVIO_SKILL_GAP_URL: 'http://127.0.0.1:8002',
       ZENTAVIO_CAREER_ROADMAP_URL: 'http://127.0.0.1:8003',
+      ZENTAVIO_STORAGE_ENDPOINT: 'http://127.0.0.1:9000',
+      ZENTAVIO_STORAGE_BUCKET: 'zentavio-documents',
+      ZENTAVIO_STORAGE_ACCESS_KEY_ID: 'zentavio',
+      ZENTAVIO_STORAGE_SECRET_ACCESS_KEY: 'zentavio_dev_secret',
     });
     expect(config.ollamaHost).toBe('http://127.0.0.1:11434');
     expect(config.databaseMaxConnections).toBe(10);
@@ -207,6 +211,10 @@ describe('the Zentavio schema', () => {
       ZENTAVIO_RESUME_PARSER_URL: 'http://127.0.0.1:8001',
       ZENTAVIO_SKILL_GAP_URL: 'http://127.0.0.1:8002',
       ZENTAVIO_CAREER_ROADMAP_URL: 'http://127.0.0.1:8003',
+      ZENTAVIO_STORAGE_ENDPOINT: 'http://127.0.0.1:9000',
+      ZENTAVIO_STORAGE_BUCKET: 'zentavio-documents',
+      ZENTAVIO_STORAGE_ACCESS_KEY_ID: 'zentavio',
+      ZENTAVIO_STORAGE_SECRET_ACCESS_KEY: 'zentavio_dev_secret',
     });
     expect(config.ollamaHost).toBe('http://127.0.0.1:11434');
     expect(config.evalModel).toBe('qwen2.5:14b-instruct');
@@ -236,6 +244,14 @@ describe('the Zentavio schema', () => {
       'ZENTAVIO_PARSER_MODEL',
       'ZENTAVIO_RESUME_PARSER_URL',
       'ZENTAVIO_SKILL_GAP_URL',
+      // ADR-0021: one shape for both providers. R2 and MinIO differ by endpoint and credentials,
+      // not by code, which is the portability property the ADR turns on.
+      'ZENTAVIO_STORAGE_ACCESS_KEY_ID',
+      'ZENTAVIO_STORAGE_BUCKET',
+      'ZENTAVIO_STORAGE_ENDPOINT',
+      'ZENTAVIO_STORAGE_PROVIDER',
+      'ZENTAVIO_STORAGE_REGION',
+      'ZENTAVIO_STORAGE_SECRET_ACCESS_KEY',
       'ZENTAVIO_WEB_ORIGIN',
     ]);
   });
