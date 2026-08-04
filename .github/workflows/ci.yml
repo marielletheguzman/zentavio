@@ -89,6 +89,12 @@ jobs:
           --health-timeout 5s
           --health-retries 20
 
+      # MinIO is NOT a service container. GitHub Actions `services:` cannot pass a `command:`, and
+      # the MinIO image needs `server /data` — without it the container starts, serves nothing, and
+      # reports unhealthy. It is brought up from the compose file in a step below instead, which
+      # also means CI and local development run the *same definition* rather than two that can
+      # drift.
+
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
@@ -96,12 +102,25 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Start MinIO
+        # The same compose service local development uses, so CI and a developer's machine cannot
+        # drift on the object store the way two separate definitions would. `--wait` blocks on the
+        # healthcheck, so the suite cannot race the boot.
+        run: docker compose -f infra/docker/docker-compose.dev.yml up -d --wait minio
+
       - name: Integration tests
         env:
           # The name ends in _test, which tests/integration/db/database.ts requires before
           # it will drop a schema. The credential is disposable and lives only in this
           # ephemeral service container.
           ZENTAVIO_TEST_DATABASE_URL: postgres://zentavio:zentavio_ci@localhost:5432/zentavio_test
+          # ADR-0021. The suite creates its own bucket per run, so nothing is provisioned here.
+          # Credentials match the compose file because that is the service being used — they are
+          # disposable and reachable only from this runner.
+          ZENTAVIO_STORAGE_ENDPOINT: http://127.0.0.1:9000
+          ZENTAVIO_STORAGE_BUCKET: zentavio-documents
+          ZENTAVIO_STORAGE_ACCESS_KEY_ID: zentavio
+          ZENTAVIO_STORAGE_SECRET_ACCESS_KEY: zentavio_dev_secret
         run: pnpm test:integration
 
   # ── Python: ai/ statelessness ───────────────────────────────────────────────

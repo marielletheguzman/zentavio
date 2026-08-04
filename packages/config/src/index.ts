@@ -32,6 +32,7 @@ export {
   evalSchema,
   oidcSchema,
   parserSchema,
+  storageSchema,
   testDatabaseSchema,
   zentavioSchema,
   type ZentavioConfig,

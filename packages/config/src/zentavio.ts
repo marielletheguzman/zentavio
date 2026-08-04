@@ -162,6 +162,57 @@ export const parserSchema = {
 } as const satisfies Schema;
 
 /**
+ * Object storage (ADR-0021).
+ *
+ * **One shape for both environments.** Production is Cloudflare R2 and development is MinIO; they
+ * differ by endpoint and credentials, not by code, which is the portability property ADR-0021
+ * turns on. A second schema per provider would put the branch back.
+ *
+ * No defaults on the endpoint or the credentials, for the reason every other service URL has none:
+ * a plausible-but-wrong default writes archived evidence to the wrong bucket, and nothing about the
+ * data would say so.
+ */
+export const storageSchema = {
+  storageEndpoint: {
+    env: 'ZENTAVIO_STORAGE_ENDPOINT',
+    type: 'url',
+    description: 'S3-compatible endpoint, e.g. http://127.0.0.1:9000 for MinIO',
+  },
+  storageRegion: {
+    env: 'ZENTAVIO_STORAGE_REGION',
+    type: 'string',
+    // R2 ignores it; the SDK requires one. `auto` is R2's documented value and MinIO accepts it.
+    default: 'auto',
+    description: 'Region for the S3 client. `auto` for Cloudflare R2',
+  },
+  storageBucket: {
+    env: 'ZENTAVIO_STORAGE_BUCKET',
+    type: 'string',
+    description: 'Bucket holding archived source documents',
+  },
+  storageAccessKeyId: {
+    env: 'ZENTAVIO_STORAGE_ACCESS_KEY_ID',
+    type: 'string',
+    secret: true,
+    description: 'Access key for the storage endpoint',
+  },
+  storageSecretAccessKey: {
+    env: 'ZENTAVIO_STORAGE_SECRET_ACCESS_KEY',
+    type: 'string',
+    secret: true,
+    description: 'Secret key for the storage endpoint',
+  },
+  storageProvider: {
+    env: 'ZENTAVIO_STORAGE_PROVIDER',
+    type: 'string',
+    // Recorded on every stored document, so a row says which provider actually holds the bytes —
+    // which is what a future migration between providers has to be able to read.
+    default: 'minio',
+    description: "Provider name recorded on each document, e.g. 'r2' or 'minio'",
+  },
+} as const satisfies Schema;
+
+/**
  * The identity provider (ADR-0017).
  *
  * **Deliberately not naming a vendor.** OIDC is a standard, so Clerk, WorkOS, Auth0, or a
@@ -217,6 +268,7 @@ export const zentavioSchema = {
   ...parserSchema,
   ...devAuthSchema,
   ...oidcSchema,
+  ...storageSchema,
 } as const satisfies Schema;
 
 export type ZentavioConfig = {

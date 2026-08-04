@@ -1,8 +1,13 @@
 # Local development services.
 #
-# PostgreSQL only, for now. Redis and Qdrant are in the stack (`.claude/context/tech-stack.md`)
-# but nothing reads them yet, and a service declared before its first reader is a service nobody
-# verifies — the same rule `packages/config/src/zentavio.ts` applies to environment keys.
+# PostgreSQL and MinIO. Redis and Qdrant are in the stack (`.claude/context/tech-stack.md`) but
+# nothing reads them yet, and a service declared before its first reader is a service nobody
+# verifies — the same rule `packages/config/src/zentavio.ts` applies to environment keys. MinIO
+# arrives here only now, with `S3DocumentStore`, for exactly that reason.
+#
+# ADR-0021 requires development to exercise the **same S3 protocol** as production. A filesystem
+# stub locally would mean the real client is first executed in production, which is how the gateway
+# shipped with no CORS at all through M1c.
 #
 #   docker compose -f infra/docker/docker-compose.dev.yml up -d
 #
@@ -34,5 +39,30 @@ services:
       timeout: 3s
       retries: 30
 
+  minio:
+    # S3-compatible object storage for local development (ADR-0021). Production is Cloudflare R2 —
+    # same protocol, so `S3DocumentStore` and every test path are identical and only the endpoint
+    # and credentials differ.
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    container_name: zentavio-minio
+    restart: unless-stopped
+    command: server /data --console-address ':9001'
+    environment:
+      MINIO_ROOT_USER: zentavio
+      MINIO_ROOT_PASSWORD: zentavio_dev_secret
+    ports:
+      - '9000:9000'
+      # Console, for looking at what was archived. No code uses it.
+      - '9001:9001'
+    volumes:
+      - zentavio-miniodata:/data
+    healthcheck:
+      # `docker compose up --wait` blocks on this, so an ingest cannot race the boot.
+      test: ['CMD-SHELL', 'mc ready local || exit 1']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
 volumes:
   zentavio-pgdata:
+  zentavio-miniodata:
