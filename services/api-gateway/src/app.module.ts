@@ -23,6 +23,9 @@ import {
 import { DevSubjectResolver } from './auth/dev-subject.resolver.ts';
 import { OidcSubjectResolver } from './auth/oidc-subject.resolver.ts';
 import { SubjectGuard } from './auth/subject.guard.ts';
+import { EligibilityClient } from './eligibility/eligibility-client.ts';
+import { EligibilityController } from './eligibility/eligibility.controller.ts';
+import { EligibilityService } from './eligibility/eligibility.service.ts';
 import { GapClient } from './gap/gap-client.ts';
 import { GapController } from './gap/gap.controller.ts';
 import { GapService } from './gap/gap.service.ts';
@@ -30,10 +33,10 @@ import { HealthController } from './health/health.controller.ts';
 import { ParserClient } from './resume/parser-client.ts';
 import { ResumeController } from './resume/resume.controller.ts';
 import { ResumeService } from './resume/resume.service.ts';
-import { DATABASE, GAP_CLIENT, PARSER_CLIENT, SUBJECT_RESOLVER } from './tokens.ts';
+import { DATABASE, ELIGIBILITY_CLIENT, GAP_CLIENT, PARSER_CLIENT, SUBJECT_RESOLVER } from './tokens.ts';
 
 @Module({
-  controllers: [ResumeController, GapController, HealthController],
+  controllers: [ResumeController, GapController, EligibilityController, HealthController],
   providers: [
     {
       provide: DATABASE,
@@ -56,6 +59,12 @@ import { DATABASE, GAP_CLIENT, PARSER_CLIENT, SUBJECT_RESOLVER } from './tokens.
       useFactory: (): GapClient => new GapClient({ baseUrl: load(parserSchema).skillGapUrl }),
     },
     GapService,
+    {
+      provide: ELIGIBILITY_CLIENT,
+      useFactory: (): EligibilityClient =>
+        new EligibilityClient({ baseUrl: load(parserSchema).careerRoadmapUrl }),
+    },
+    EligibilityService,
     {
       provide: SUBJECT_RESOLVER,
       useFactory: (db: Kysely<Database>): SubjectResolver => {

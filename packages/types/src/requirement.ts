@@ -156,6 +156,66 @@ export interface EligibilityVerdict {
 }
 
 /**
+ * The eligibility service's wire shape.
+ *
+ * `snake_case` because that is what `ai/career-roadmap` emits, and renaming across the boundary
+ * would mean two names for one field with a translation nobody tests. The gateway validates rather
+ * than casts: `as EligibilityResponseWire` is a claim about a remote process, and a renamed field
+ * reads `undefined` and renders a wrong verdict without ever throwing.
+ */
+export interface EvaluatedRequirementWire {
+  readonly requirement_id: string;
+  readonly domain: string;
+  readonly imposed_by: string;
+  readonly result: RequirementResult;
+  readonly authority: string;
+  readonly source_url: string;
+  readonly effective_from: string;
+  readonly basis?: string | null;
+  readonly reason?: string | null;
+  readonly needs_input: readonly string[];
+}
+
+export interface EligibilityResponseWire {
+  readonly pathway_id: string | null;
+  readonly status: EligibilityStatus;
+  readonly requirements: readonly EvaluatedRequirementWire[];
+  readonly blockers: readonly string[];
+  readonly needs_from_user: readonly string[];
+  readonly binding_domain: string | null;
+  readonly confidence: string;
+  readonly as_of: string;
+  readonly disclaimer: string;
+  readonly notes: readonly string[];
+  readonly evaluator_version: string;
+}
+
+const ELIGIBILITY_STATUSES: readonly string[] = ['met', 'not_met', 'undetermined', 'unknown'];
+
+/**
+ * Validate a response from the eligibility service.
+ *
+ * Checks the fields a verdict is *rendered* from, not every field — the ones whose absence would
+ * silently produce a wrong screen rather than an error. `status` and `disclaimer` are the two that
+ * must never be missing: one decides what the user is told, the other is what keeps this
+ * information rather than advice.
+ */
+export function isEligibilityResponse(value: unknown): value is EligibilityResponseWire {
+  if (typeof value !== 'object' || value === null) return false;
+  const wire = value as Record<string, unknown>;
+
+  if (typeof wire['status'] !== 'string' || !ELIGIBILITY_STATUSES.includes(wire['status'])) return false;
+  if (typeof wire['as_of'] !== 'string' || wire['as_of'] === '') return false;
+  if (typeof wire['disclaimer'] !== 'string' || wire['disclaimer'] === '') return false;
+  if (typeof wire['confidence'] !== 'string') return false;
+  if (!Array.isArray(wire['requirements'])) return false;
+  if (!Array.isArray(wire['needs_from_user'])) return false;
+  if (!Array.isArray(wire['blockers'])) return false;
+
+  return true;
+}
+
+/**
  * `undetermined` dominates. One unknown requirement means the verdict is undetermined even if
  * everything else is met — it never rounds toward the friendlier answer.
  */
