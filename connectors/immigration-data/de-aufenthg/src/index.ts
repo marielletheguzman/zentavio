@@ -121,9 +121,6 @@ export class AufenthgConnector implements Connector<StatuteRaw, readonly Sourced
       profession: null,
       sourceTier: 1 as const,
       sourceUrl: raw.sourceUrl,
-      // Object storage is not provisioned (ADR-0021). A statute URL is more durable than the
-      // Bundesanzeiger's tokenised one, but it is still not an archived copy.
-      sourceDocument: null,
       retrievedAt: raw.fetchedAt,
       authority: AUTHORITY,
       authorityUrl: 'https://www.gesetze-im-internet.de/aufenthg_2004/__18g.html',
@@ -225,14 +222,6 @@ export class AufenthgConnector implements Connector<StatuteRaw, readonly Sourced
         }
       }
 
-      if (row.sourceDocument === null) {
-        issues.push({
-          severity: 'warning',
-          code: 'no-archived-document',
-          field: 'sourceDocument',
-          message: 'No archived copy of the statute as it stood when it was read (ADR-0021).',
-        });
-      }
     }
 
     return { issues };

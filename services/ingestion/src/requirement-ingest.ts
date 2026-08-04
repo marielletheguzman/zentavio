@@ -80,7 +80,6 @@ export function toRow(requirement: SourcedRequirement, id: string): NewRequireme
     needs_input: [...requirement.needsInput],
     source_tier: requirement.sourceTier,
     source_url: requirement.sourceUrl,
-    source_document: requirement.sourceDocument,
     retrieved_at: requirement.retrievedAt,
     authority: requirement.authority,
     authority_url: requirement.authorityUrl ?? null,

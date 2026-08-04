@@ -26,7 +26,6 @@ function requirement(overrides: Partial<SourcedRequirement> = {}): SourcedRequir
     needsInput: ['expected_gross_annual_salary_eur'],
     sourceTier: 1,
     sourceUrl: 'https://www.bundesanzeiger.de/…',
-    sourceDocument: null,
     retrievedAt: '2026-08-04T00:00:00.000Z',
     authority: 'Bundesministerium des Innern',
     effectiveFrom: '2026-01-01',

@@ -105,3 +105,12 @@ export {
   type PersonFactRow,
   type RecordFactOptions,
 } from './repositories/person-facts.ts';
+
+export {
+  DocumentConflictError,
+  attachDocument,
+  recordDocument,
+  unarchivedRequirements,
+  type DocumentRow,
+  type NewDocument,
+} from './repositories/documents.ts';
