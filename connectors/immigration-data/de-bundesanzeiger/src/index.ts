@@ -52,6 +52,19 @@ export interface BekanntmachungRaw {
   readonly fetchedAt: string;
   /** Text extracted from the published PDF, verbatim including its extraction defects. */
   readonly documentText: string;
+  /**
+   * The published PDF itself.
+   *
+   * Carried alongside the extraction rather than instead of it: the parser needs text, and the
+   * archive needs the document. Bytes, not base64 — encoding it would inflate the payload by a
+   * third for no gain, and the one place it was tried made the fixture privacy scan take 38
+   * seconds on a single long alphanumeric run.
+   *
+   * **Optional**, because a payload captured before this existed has only the text. `archivable`
+   * reports that honestly rather than claiming an original it does not hold.
+   */
+  readonly document?: Uint8Array;
+  readonly documentMimeType?: string;
 }
 
 export const SOURCE_ID = 'de-bundesanzeiger';
@@ -255,26 +268,35 @@ export class BundesanzeigerConnector implements Connector<BekanntmachungRaw, rea
   }
 
   /**
-   * What we read, which is **not** the published document.
+   * The published PDF, when the payload carries it.
    *
-   * The Bundesanzeiger publishes a PDF; the raw payload carries text extracted from it, because
-   * that is what the parser needs. Archiving the extraction is honest about what was parsed, but
-   * it is **weaker evidence than the PDF**: the extraction is exactly where this source's known
-   * defect lives — digits split by spaces, turning 50 700 into 700 — and a re-reader of the
-   * archive cannot see a defect that happened before the archive.
+   * **This matters more here than anywhere else in the repository.** The extraction is exactly
+   * where this source's known defect lives — the PDF's font map splits digit runs, turning
+   * `50 700` into `700` — and someone re-reading an archive of the *extraction* cannot tell
+   * whether the publisher or the parser produced a wrong number. Archiving the PDF makes that
+   * question answerable: the extraction can be redone from the evidence.
    *
-   * `isOriginal: false` records that gap so it is countable. Closing it means carrying the PDF
-   * bytes on the raw payload, which is follow-up work and not this phase.
+   * Falls back to the extracted text when the payload predates the PDF being carried, and reports
+   * `isOriginal: false` rather than claiming an original it does not hold.
    */
   archivable(raw: BekanntmachungRaw): ArchivableSource {
     const year = parseBekanntmachung(raw.documentText)?.year ?? new Date(raw.fetchedAt).getUTCFullYear();
+    const common = { slug: raw.publicationId, jurisdiction: 'DE', year } as const;
+
+    if (raw.document !== undefined && raw.document.byteLength > 0) {
+      return {
+        ...common,
+        bytes: raw.document,
+        contentType: raw.documentMimeType ?? 'application/pdf',
+        extension: 'pdf',
+        isOriginal: true,
+      };
+    }
 
     return {
+      ...common,
       bytes: new TextEncoder().encode(raw.documentText),
       contentType: 'text/plain; charset=utf-8',
-      slug: raw.publicationId,
-      jurisdiction: 'DE',
-      year,
       extension: 'txt',
       isOriginal: false,
     };
