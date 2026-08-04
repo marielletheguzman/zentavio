@@ -14,7 +14,7 @@ destination-only platforms ignore: overseas employment regulation, professional-
 qualification recognition, and document authentication.
 
 So a country target has two jurisdictions in play — where the person is coming *from* and where they
-are going. See "Origin-side rules" below; the current rule model does not yet express this.
+are going. The rule model expresses this: see "Origin-side rules" below.
 
 ## Launch markets
 
