@@ -3,8 +3,8 @@
 > **Purpose:** Career transition engine: readiness, transferable skills, roadmap generation.
 
 **What is built:** `eligibility.py` — deterministic evaluation of stored requirements against a
-person's facts. Readiness, transferable skills, and roadmap generation are **not** built; readiness
-lives in `ai/skill-gap` today.
+person's facts — and `main.py`, its HTTP surface. Readiness, transferable skills, and roadmap
+generation are **not** built; readiness lives in `ai/skill-gap` today.
 
 ## No model in this path
 
@@ -59,6 +59,30 @@ bug it is.
 `high` only when every fact relied on is `verified`. A self-reported salary is an **intention**, and
 a verdict computed from one is not wrong but is less certain — saying so is cheaper than being
 confidently wrong.
+
+## The HTTP surface
+
+```text
+POST /evaluate      requirements + facts + as_of  ->  verdict
+GET  /health/live
+GET  /health/ready
+```
+
+**Stateless.** Requirements, facts, and the evaluation date arrive in the request; the gateway owns
+the database. That keeps `ai/` free of a persistent store and makes determinism observable from
+outside — a test asserts the same body twice produces the same response.
+
+**`as_of` has no default.** A verdict without a stated date is unreproducible, so omitting it is a
+422 rather than an implicit "today".
+
+**Every eligibility outcome is a 200, including `unknown`.** An unmodelled pathway and a
+licence-gated profession with no recognition rule are results the user must be *shown*, with the
+reason. `4xx` stays reserved for "the caller sent something wrong", so an honest non-answer and our
+own defect remain distinguishable.
+
+`/health/ready` reports `dependencies: none` and means it — this service has no database, no model
+host, and no downstream. Saying so is more useful than a check that checks nothing and implies
+otherwise.
 
 ## Not yet wired
 
