@@ -6,6 +6,7 @@ requires-python = ">=3.12"
 members = [
     "zentavio-ai",
     "zentavio-ai-shared",
+    "zentavio-career-roadmap",
     "zentavio-resume-parser",
     "zentavio-skill-gap",
 ]
@@ -469,6 +470,11 @@ dev = [
 name = "zentavio-ai-shared"
 version = "0.0.0"
 source = { editable = "shared" }
+
+[[package]]
+name = "zentavio-career-roadmap"
+version = "0.0.0"
+source = { editable = "career-roadmap" }
 
 [[package]]
 name = "zentavio-resume-parser"
