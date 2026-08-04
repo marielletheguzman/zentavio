@@ -79,9 +79,14 @@ CREATE TABLE companies (
   CONSTRAINT ck_companies__tier CHECK (source_tier BETWEEN 1 AND 4),
   -- A domain, not a URL. Catches 'https://google.com/careers' and 'www.google.com' at write time,
   -- because a domain stored two ways is two companies.
+  -- The `www.` exclusion is separate on purpose: `www.acme.com` is a structurally valid host, so
+  -- the pattern alone accepts it and `acme.com` plus `www.acme.com` become two companies.
   CONSTRAINT ck_companies__domain CHECK (
     primary_domain IS NULL
-    OR primary_domain ~ '^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$'
+    OR (
+      primary_domain ~ '^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$'
+      AND primary_domain NOT LIKE 'www.%'
+    )
   ),
   -- 'merged' is a claim about where it went. Without the pointer it is a dead end.
   CONSTRAINT ck_companies__merged CHECK ((status = 'merged') = (merged_into IS NOT NULL)),

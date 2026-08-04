@@ -133,6 +133,68 @@ export function normalizeAlias(value: string): string {
 }
 
 /**
+ * Legal-form suffixes, stripped from a company name before it becomes a resolution key.
+ *
+ * "Google Germany GmbH" and "Google Germany" are the same employer, and a connector emits whichever
+ * string the posting happened to contain. Deliberately a **closed list of exact tokens**, not a
+ * pattern: `ag` is a legal form in Germany and also the whole name of real companies, so anything
+ * cleverer than an explicit list starts deciding which employers exist.
+ */
+const LEGAL_SUFFIXES: ReadonlySet<string> = new Set([
+  'inc',
+  'llc',
+  'ltd',
+  'limited',
+  'plc',
+  'corp',
+  'corporation',
+  'co',
+  'company',
+  'gmbh',
+  'mbh',
+  'ag',
+  'se',
+  'kg',
+  'ug',
+  'bv',
+  'nv',
+  'sa',
+  'sas',
+  'sarl',
+  'srl',
+  'spa',
+  'ab',
+  'as',
+  'oy',
+  'aps',
+  'pty',
+  'pte',
+  'kk',
+]);
+
+/**
+ * The resolution key for a company name (`docs/database/entities/company.md`).
+ *
+ * `normalizeAlias` plus legal-suffix removal. **This is the only function permitted to produce
+ * `company_aliases.normalized`.** Two normalizations that drift make resolution miss silently — the
+ * skill graph already demonstrated that failure, where the phrase lands in `unmatched` and reads as
+ * a coverage gap rather than the bug it is.
+ *
+ * Suffixes are stripped only from the **end**, and never all of them: "Ltd" in the middle of a name
+ * is part of the name, and a name that is *only* a suffix (a company literally called "Company")
+ * must not normalize to nothing, because an empty key would collide with every other empty one.
+ */
+export function normalizeCompanyAlias(value: string): string {
+  const words = normalizeAlias(value).split(' ').filter(Boolean);
+
+  while (words.length > 1 && LEGAL_SUFFIXES.has(words[words.length - 1] ?? '')) {
+    words.pop();
+  }
+
+  return words.join(' ');
+}
+
+/**
  * Validate the seed file's own invariants before touching the database.
  *
  * The database enforces these too, but a constraint violation mid-load reports one row while the
