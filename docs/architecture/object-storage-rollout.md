@@ -14,6 +14,13 @@ rejected rather than stored. Flipping that before storage works would stop inges
 enforcement comes last and every phase before it is additive. Two phases need the project lead and
 cannot be done by an agent: **accepting the ADR** and **provisioning the R2 account**.
 
+## Guiding principles
+
+- A **Proposed** ADR is not binding, and building against one decides it by momentum.
+- **Connectors stay pure data providers.** Persistence belongs to ingestion services.
+- Development exercises the **same protocol** as production — no filesystem stub.
+- **Enforcement last.** The archival pipeline works before a missing archive becomes a failure.
+
 ## Phase 0 — Accept ADR-0021
 
 **Nothing below may start first.** ADR-0021 is `Proposed`, and `.claude/context/decisions.md` says
@@ -46,15 +53,15 @@ download ──► archive ──► verify checksum ──► parse ──► i
 
 ## Phases
 
-| # | Phase | Owner | Blocked by |
-|---|---|---|---|
-| 0 | Accept ADR-0021 | **project lead** | — |
-| 1 | Provision R2 | **project lead** | 0 |
-| 2 | MinIO for local development | agent | 0 |
-| 3 | `DocumentStore` port | agent | 0 |
-| 4 | `documents` table and `document_id` | agent | 0 |
-| 5 | Ingestion integration | agent | 2, 3, 4 |
-| 6 | Enforcement | agent | 1, 5 |
+| # | Phase | Owner | Blocked by | Blocks |
+|---|---|---|---|---|
+| 0 | Accept ADR-0021 | **project lead** | — | everything |
+| 1 | Provision R2 | **project lead** | 0 | 6 only |
+| 2 | MinIO for local development | agent | 0 | 5 |
+| 3 | `DocumentStore` port | agent | 0 | 5 |
+| 4 | `documents` table and `document_id` | agent | 0 | 5 |
+| 5 | Ingestion integration | agent | 2, 3, 4 | 6 |
+| 6 | Enforcement | agent | 1, 5 | — |
 
 Phases 2–4 are independent of each other and of R2 — all three can be built and tested against
 MinIO before the production account exists. **Only Phase 6 requires Phase 1**, because flipping the
@@ -107,6 +114,23 @@ services/ingestion:  fetch via connector ──► archive ──► verify ─�
 
 `no-archived-document` becomes an error. **Do not start until** storage is deployed, the port is
 implemented, ingestion archives successfully, and document records are being written correctly.
+
+## The connector contract is unchanged
+
+ADR-0021 does not touch connector architecture, and this is the part of the rollout most likely to
+be got wrong, because archiving *feels* like something the thing doing the downloading should do.
+
+| Connectors do | Connectors must never do |
+|---|---|
+| talk to external systems | upload a document |
+| validate responses | write to object storage |
+| return raw payloads | write a database record |
+| | compute persistence metadata |
+
+Persistence stays in `services/ingestion`. This is what preserves ADR-0002's plugin architecture —
+and M3 is the milestone that tests it, by requiring that adding Luxembourg touches a reference file,
+connector coverage, ingested rules, and a registry entry, and **nothing in `services/` or `ai/`**.
+A connector that archives would fail that gate two milestones from now.
 
 ## Timestamp semantics
 
