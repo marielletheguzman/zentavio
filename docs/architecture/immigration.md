@@ -165,7 +165,13 @@ misleading in a way that costs people money:
 connectors/immigration-data ──► raw official pages (kept)
             │
             ▼
-knowledge-engine/immigration ──► requirements (6 domains, versioned, dated, tier-1) + pathways
+knowledge-engine/immigration ──► curates: source tier, provenance, dating, conflict resolution
+            │
+            ▼
+packages/db ──► stores: requirements (6 domains, versioned, dated, tier-1) + pathways
+            │
+            ▼
+services/api-gateway ──► reads, and is the only component that does
             │
             ▼
 ai/career-roadmap ──► eligibility evaluation (deterministic) × employability
@@ -173,6 +179,14 @@ ai/career-roadmap ──► eligibility evaluation (deterministic) × employabil
             ▼
 services/matching ──► viability in context; services/notifications ──► rule-change alerts
 ```
+
+**`knowledge-engine/` curates; `packages/db` stores** (ADR-0020, Accepted). A requirement is
+queried per request, so it lives in PostgreSQL like every other row the gateway reads. What the
+knowledge engine owns is everything that decides whether a fact is fit to store — which is the
+expensive part of immigration knowledge, not the persistence.
+
+*This diagram showed `knowledge-engine/immigration ──► requirements` until 2026-08-04, which
+ADR-0020 contradicts.*
 
 The LLM appears nowhere in the eligibility path. It may summarize a retrieved rule for display; it may
 never decide one.

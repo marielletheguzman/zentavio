@@ -56,15 +56,20 @@ A Filipino applicant's viability depends on requirements that are **not** destin
 authority with a date. Nothing above asserts a specific requirement — it names the domains that must be
 modelled and sourced.
 
-**Open design gap:** `requirements.jurisdiction` currently assumes the destination. Origin-side
-rules need a jurisdiction *role* (origin vs destination) or a separate rule kind, or Filipino-specific
-requirements cannot be evaluated at all. Recorded in
-`docs/architecture/immigration.md` and tracked; it is a schema decision, not a content gap.
+**The schema expresses this, and the gap this file used to describe is closed.** ADR-0010 generalized
+`immigration_rules` into `requirements` with `domain`, `imposed_by` (`origin` | `destination` |
+`bilateral`), and `authority` — so `jurisdiction` names the country whose authority imposes a rule,
+and `imposed_by` names which side of the move that authority sits on. A Philippine employment-clearance
+requirement and a German salary threshold are both rows in one table, distinguishable and separately
+evaluable.
 
-`REMOTE` is a first-class target because it is what many users should actually pursue, but it
-is modeled differently: no immigration pathway, and its constraints are employer policy, time
-zone, contracting and tax treatment, and payment mechanics. Never render it with an empty
-visa section — it has a different shape, not a missing one.
+*Until 2026-08-04 this section read "Open design gap: `requirements.jurisdiction` currently assumes
+the destination". It has not assumed that since the table was created on 2026-07-29.*
+
+**Still blocked on data, not schema.** No recognition, credential, authentication, or
+employment-clearance rule is ingested. Until a profession's rules exist and are dated, a licence-gated
+profession returns `unknown` with recognition named — never a visa-only verdict that reads as an
+answer.
 
 ## The country model
 
