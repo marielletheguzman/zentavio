@@ -35,6 +35,7 @@ already ruled out and how the rule is enforced.
 | [0019](0019-outcome-recording-begins-at-m2.md) | Outcome recording begins at M2 | Accepted | 2026-08-03 |
 | [0020](0020-knowledge-substrate-location.md) | Structured knowledge lives in `packages/db`; `knowledge-engine/` curates it | Accepted | 2026-08-03 |
 | [0021](0021-object-storage.md) | Source documents in S3-compatible object storage (R2), behind a port | Accepted | 2026-08-04 |
+| [0022](0022-viability-composition.md) | Viability is two axes with the binding constraint named, not a single score | **Proposed** | 2026-08-04 |
 
 **0010 is Accepted, and the rename is done** — `immigration_rules` is now `requirements`, with `domain`,
 `imposed_by`, and `authority`. Regulated professions remain blocked on **data**, not schema: nursing,
