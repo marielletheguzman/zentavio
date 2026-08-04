@@ -34,9 +34,21 @@ const FIXTURE = JSON.parse(
 
 const PATHWAY_ID = 'de.eu-blue-card';
 
-/** pg returns `date` columns as JS `Date`. `String(d).slice(0,10)` yields 'Thu Dec 31'. */
+/**
+ * The ISO date pg actually stored.
+ *
+ * Two traps, one after the other. `String(d).slice(0,10)` yields `'Thu Dec 31'`. And
+ * `toISOString()` is **wrong** here: pg returns a `date` column as a `Date` at *local* midnight,
+ * so in any timezone east of UTC it converts back to the previous day — `2026-12-31` reads as
+ * `2026-12-30`. CI runs UTC and cannot catch that; a machine in UTC+8 catches it immediately.
+ *
+ * Local date parts are what the column actually holds.
+ */
 function isoDate(value: unknown): string {
-  return value instanceof Date ? value.toISOString().slice(0, 10) : String(value).slice(0, 10);
+  if (!(value instanceof Date)) return String(value).slice(0, 10);
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${String(value.getFullYear())}-${month}-${day}`;
 }
 
 let pool: Pool;

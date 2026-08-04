@@ -150,6 +150,15 @@ export const parserSchema = {
     // something other than the service you meant is indistinguishable from a correct one.
     description: 'Base URL of the skill-gap service, e.g. http://127.0.0.1:8002',
   },
+  careerRoadmapUrl: {
+    env: 'ZENTAVIO_CAREER_ROADMAP_URL',
+    type: 'url',
+    // No default, for the same reason as every other service URL: a plausible-but-wrong default
+    // fails silently against the wrong host, and an eligibility verdict produced by something
+    // other than the service you meant is indistinguishable from a correct one. That matters more
+    // here than anywhere else, because the output is what someone plans a relocation around.
+    description: 'Base URL of the career-roadmap (eligibility) service, e.g. http://127.0.0.1:8003',
+  },
 } as const satisfies Schema;
 
 /**

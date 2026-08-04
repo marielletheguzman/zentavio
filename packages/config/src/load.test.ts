@@ -181,6 +181,7 @@ describe('the Zentavio schema', () => {
       ZENTAVIO_DATABASE_URL: 'postgresql://localhost/z',
       ZENTAVIO_RESUME_PARSER_URL: 'http://127.0.0.1:8001',
       ZENTAVIO_SKILL_GAP_URL: 'http://127.0.0.1:8002',
+      ZENTAVIO_CAREER_ROADMAP_URL: 'http://127.0.0.1:8003',
     });
     expect(config.ollamaHost).toBe('http://127.0.0.1:11434');
     expect(config.databaseMaxConnections).toBe(10);
@@ -205,6 +206,7 @@ describe('the Zentavio schema', () => {
       ZENTAVIO_DATABASE_URL: 'postgresql://localhost/z',
       ZENTAVIO_RESUME_PARSER_URL: 'http://127.0.0.1:8001',
       ZENTAVIO_SKILL_GAP_URL: 'http://127.0.0.1:8002',
+      ZENTAVIO_CAREER_ROADMAP_URL: 'http://127.0.0.1:8003',
     });
     expect(config.ollamaHost).toBe('http://127.0.0.1:11434');
     expect(config.evalModel).toBe('qwen2.5:14b-instruct');
@@ -214,6 +216,10 @@ describe('the Zentavio schema', () => {
     expect(envKeys(zentavioSchema)).toEqual([
       'NODE_ENV',
       'OLLAMA_HOST',
+      // ADR-0010: where services/api-gateway reaches ai/career-roadmap for an eligibility verdict.
+      // No default — a verdict produced by something other than the service you meant is
+      // indistinguishable from a correct one, and it is what someone plans a relocation around.
+      'ZENTAVIO_CAREER_ROADMAP_URL',
       'ZENTAVIO_DATABASE_CONNECTION_TIMEOUT_MS',
       'ZENTAVIO_DATABASE_MAX_CONNECTIONS',
       'ZENTAVIO_DATABASE_URL',
