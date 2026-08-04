@@ -1,6 +1,7 @@
 # ADR-0021: Source documents live in S3-compatible object storage, behind a port
 
-- **Status:** Proposed
+- **Status:** Accepted
+- **Accepted:** 2026-08-04
 - **Date:** 2026-08-04
 - **Deciders:** project lead
 - **Affects:** `packages/db`, `connectors/`, `services/ingestion`, `packages/config`,
