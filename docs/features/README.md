@@ -15,7 +15,7 @@ Every feature answers a user question. A feature that answers none is not a Zent
 | [job-matching](job-matching.md) | Which of these jobs is worth my time? | specified |
 | [migration-friendly-jobs](migration-friendly-jobs.md) | Which jobs can I actually take, and will the employer help? | specified |
 | [country-preferences](country-preferences.md) | Where should I go? | specified |
-| [immigration-tracking](immigration-tracking.md) | Am I eligible to work there? | specified |
+| [immigration-tracking](immigration-tracking.md) | Am I eligible to work there? | **partial** |
 | [interview-prep](interview-prep.md) | What will they ask, and am I ready? | specified |
 | [job-aggregation](job-aggregation.md) | Are these openings real and current? | specified |
 | [notifications](notifications.md) | What changed that I need to know? | specified |
@@ -44,6 +44,17 @@ versioned profiles, the correction path, erasure, and two model-backed steps beh
 partial credit, dependency ordering, the honest `unknown`, readiness with its remainder and band,
 and the gap surface. Not built: posting targets (`job_posting_skills` does not exist), seniority-step
 targets, and the prose explanation.
+
+**`immigration-tracking` — partial.** Built, for **one pathway** (`de.eu-blue-card`): tier-1
+ingestion from the Bundesanzeiger through a connector, versioned dated `requirements`, deterministic
+per-rule eligibility as of a stated date, the `undetermined` → `needsFromUser` → answer → re-evaluate
+loop, and a browser surface carrying each rule's authority, effective date and source link.
+
+Not built, and the gap is wider than the built half: **viability** — the feature's own question is
+"am I eligible to work there?", and eligibility alone does not answer it, because visa-eligible and
+unemployable at the threshold salary is not an opportunity (`docs/architecture/immigration.md`).
+Also missing: everything in § 18g beyond the two salary thresholds, every other jurisdiction, all
+recognition/credential/authentication/language rules, and archived source documents (ADR-0021).
 
 ## The chain
 
