@@ -1,0 +1,23 @@
+# The career-roadmap service (ADR-0003, ADR-0006 workspace member).
+#
+# **No runtime dependencies at all yet.** Eligibility is deterministic comparison over rows the
+# caller supplies (docs/architecture/immigration.md) — no model client, no database driver, no
+# document library. If that list ever grows, check first that the new dependency is not doing work
+# `eligibility.py` should be doing.
+
+[project]
+name = "zentavio-career-roadmap"
+version = "0.0.0"
+description = "Eligibility evaluation over retrieved requirements, and relocation viability."
+requires-python = ">=3.12"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+# The package directory, not `src` — packaging `src` installs a top-level module called `src` and
+# leaves the real package unimportable, which pytest hides because pytest.ini puts the source
+# directory on the path.
+packages = ["src/career_roadmap"]
