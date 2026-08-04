@@ -1,0 +1,13 @@
+{
+  "name": "@zentavio/connectors-core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The connector contract, registry, and shared operational behaviour (ADR-0002).",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}
