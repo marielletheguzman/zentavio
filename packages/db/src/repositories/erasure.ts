@@ -24,6 +24,11 @@ export interface ErasureReport {
   readonly profilesDeleted: number;
   /** Target careers hard-deleted. What someone was trying to become is personal. */
   readonly targetsDeleted: number;
+  /**
+   * Person facts hard-deleted, all versions. An expected salary is among the most sensitive
+   * things this system holds, and a superseded answer is exactly as personal as the live one.
+   */
+  readonly personFactsDeleted: number;
   /** False when the user did not exist, so a caller can tell "erased" from "nothing to erase". */
   readonly userTombstoned: boolean;
 }
@@ -61,6 +66,15 @@ export async function eraseUser(db: Kysely<Database>, userId: string): Promise<E
     // it unless it is deleted here.
     const targets = await trx.deleteFrom('user_targets').where('user_id', '=', userId).executeTakeFirst();
 
+    // All versions, not just the current one. A superseded salary is exactly as personal as the
+    // live one, and keeping history here would mean the erasure claim is false for the answers a
+    // person most regretted giving. `person_fact_kinds` is untouched — it is a catalogue of what
+    // may be asked, shared by every user, and holds nobody's answer.
+    const personFacts = await trx
+      .deleteFrom('person_facts')
+      .where('user_id', '=', userId)
+      .executeTakeFirst();
+
     const tombstone = await trx
       .updateTable('users')
       .set({
@@ -82,6 +96,7 @@ export async function eraseUser(db: Kysely<Database>, userId: string): Promise<E
       userId,
       profilesDeleted: Number(profiles.numDeletedRows),
       targetsDeleted: Number(targets.numDeletedRows),
+      personFactsDeleted: Number(personFacts.numDeletedRows),
       userTombstoned: Number(tombstone.numUpdatedRows) === 1,
     };
   });
@@ -113,6 +128,15 @@ export async function hasPersonalData(db: Kysely<Database>, userId: string): Pro
     .executeTakeFirst();
 
   if (target) return true;
+
+  const personFact = await db
+    .selectFrom('person_facts')
+    .select('id')
+    .where('user_id', '=', userId)
+    .limit(1)
+    .executeTakeFirst();
+
+  if (personFact) return true;
 
   const user = await db
     .selectFrom('users')

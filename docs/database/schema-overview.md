@@ -64,6 +64,7 @@ deleted on erasure and takes market intelligence with it.
 | `user_targets` | target careers, with the readiness they are pursuing |
 | `user_consents` | append-only consent facts, per purpose and policy version |
 | `user_immigration_facts` | citizenship, residence, permits — isolated and encrypted |
+| `person_fact_kinds`, `person_facts` | the facts a requirement asks for, and one person's versioned answers |
 | `applications`, `application_events` | a person's application, and its stage timeline |
 | `practice_sessions` | interview practice attempts, per theme, with evaluated strength |
 | `user_certifications` | credentials with issuer, expiry, and verification level |

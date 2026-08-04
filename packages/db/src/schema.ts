@@ -311,6 +311,60 @@ export interface CareerSkillsTable {
 
 export type UserTargetStatusColumn = 'active' | 'achieved' | 'abandoned';
 
+export type PersonFactValueType =
+  | 'monetary'
+  | 'integer'
+  | 'decimal'
+  | 'boolean'
+  | 'string'
+  | 'enum'
+  | 'date';
+
+/** How we know a fact. `self_reported` is the honest default and is never presented as verified. */
+export type PersonFactBasis = 'self_reported' | 'derived' | 'verified';
+
+/**
+ * The closed catalogue of facts a requirement may ask for. A key here matches a
+ * `requirements.needs_input` element exactly — a rule asking for a key this table does not define
+ * produces a `needsFromUser` nobody can answer.
+ */
+export interface PersonFactKindsTable {
+  key: string;
+  value_type: PersonFactValueType;
+  unit: string | null;
+  /** What to ask the person. `needsFromUser` renders this, never the key. */
+  prompt: string;
+  /** Why we are asking — shown alongside, so the question does not read as data collection. */
+  rationale: string;
+  sensitive: Generated<boolean>;
+  allowed_values: Generated<string[]>;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+}
+
+/**
+ * What a person answered. Versioned rather than updated in place, so a verdict computed against
+ * an earlier answer stays reproducible.
+ */
+export interface PersonFactsTable {
+  id: string;
+  user_id: string;
+  kind_key: string;
+  version: number;
+  is_current: Generated<boolean>;
+  /** Typed by the kind's `value_type`. Monetary values carry currency and period. */
+  value: unknown;
+  basis: Generated<PersonFactBasis>;
+  basis_detail: string | null;
+  verified_at: Timestamp | null;
+  stated_at: Generated<Timestamp>;
+  /** Facts expire. Null means no known expiry. */
+  valid_until: DateOnly | null;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+  deleted_at: Timestamp | null;
+}
+
 export interface UserTargetsTable {
   id: string;
   user_id: string;
@@ -345,6 +399,8 @@ export interface Database {
   skill_edges: SkillEdgesTable;
   career_skills: CareerSkillsTable;
   user_targets: UserTargetsTable;
+  person_fact_kinds: PersonFactKindsTable;
+  person_facts: PersonFactsTable;
   schema_migrations: SchemaMigrationsTable;
 }
 
