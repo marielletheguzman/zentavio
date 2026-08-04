@@ -37,9 +37,10 @@ class ExtractedText:
 class TextExtractor(Protocol):
     """Turns uploaded bytes into text.
 
-    The implementation is a stack decision (ADR-0016) that is still Proposed. This protocol
-    exists so everything downstream of extraction can be built and tested before that decision
-    lands, and so swapping `pypdf` for `pdfplumber` later touches one file.
+    The implementation is a stack decision (ADR-0016, Accepted): `pypdf` and `python-docx`, in
+    ``extract.py``, which is the only module allowed to import them. This protocol is what keeps
+    that true — everything downstream of extraction is built and tested against the port, so
+    swapping `pypdf` for `pdfplumber` later touches one file.
     """
 
     def extract(self, content: bytes, content_type: str) -> ExtractedText: ...

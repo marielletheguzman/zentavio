@@ -1,9 +1,10 @@
 /**
  * `@zentavio/auth` — identity, and only identity.
  *
- * `docs/architecture/security.md`: no service implements its own. The mechanism is ADR-0017 and is
- * still Proposed; what exists today is the seam, so routes stop trusting a user id from the request
- * body and swapping in a real provider replaces one class.
+ * `docs/architecture/security.md`: no service implements its own. The mechanism is ADR-0017
+ * (Accepted, and implemented here) — routes never trust a user id from the request body. What is
+ * missing is a configured provider, so `InsecureDevSubjectResolver` stands in for one; it refuses
+ * outright under `NODE_ENV=production`. Wiring a real provider replaces one class.
  */
 
 export {
