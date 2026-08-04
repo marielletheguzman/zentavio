@@ -6,6 +6,8 @@
  * (ADR-0002, `docs/architecture/connectors.md`).
  */
 
+export { executePlan, type ExecutionReport } from './executor.ts';
+
 export {
   dayBefore,
   planIngest,

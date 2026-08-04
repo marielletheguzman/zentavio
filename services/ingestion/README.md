@@ -5,8 +5,9 @@
 The persistence half of the plugin architecture. A connector fetches and returns data; this service
 decides what to store.
 
-**What is built:** requirement ingest planning — `planIngest`, `toRow`, `summarize`. Job listings,
-scheduling, and the queue named in the purpose line above are **not** built.
+**What is built:** requirement ingest, end to end — `planIngest` decides, `executePlan` applies.
+Job listings, scheduling, and the queue named in the purpose line above are **not** built; nothing
+runs this on a timer yet.
 
 ## Persistence lives here, never in a connector
 
@@ -47,11 +48,28 @@ both live for a day, and `uq_req__current` rejects the insert — correctly, bec
 evaluation non-deterministic. `dayBefore` uses UTC arithmetic, so a year boundary, a month boundary,
 and a leap day are all the same case.
 
-## Not yet wired
+## The executor decides nothing
 
-`planIngest` produces decisions; **nothing executes them against a live database yet**, and no
-scheduler runs it. The executor is the next step, together with the `de.eu-blue-card` row in
-`immigration_pathways` that `requirements.pathway_id` needs as a foreign key.
+`executePlan` opens a transaction and does what the plan says. Every rule was settled by
+`planIngest`, which is pure — a rule living in the executor is one that can only be tested against
+PostgreSQL, and therefore one nobody exercises at every edge.
+
+**One transaction for the whole plan.** A partially applied plan is the worst outcome available: a
+threshold superseded with its replacement missing leaves the pathway with *no* current rule, and a
+verdict computed in that window is wrong in a way that looks like an answer.
+
+Within a supersession, **close before insert** — inserting first leaves both rows live for the
+duration of the statement and trips `uq_req__current` inside the transaction.
+
+`dryRun` returns the same report having written nothing, so an operator can see whether a
+supersession is about to fire before it does.
+
+## Still missing
+
+No scheduler. `de.eu-blue-card` is seeded by `pnpm seed` (`packages/db/src/immigration-pathways.ts`)
+with `stages`, `permanent_residency` and `citizenship` **empty** — those need their own tier-1
+sourcing, and `requirement.md` calls them "what people actually plan around". Until they exist this
+pathway supports eligibility evaluation and nothing resembling planning advice.
 
 ## Related
 

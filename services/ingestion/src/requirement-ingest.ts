@@ -17,9 +17,9 @@
  * happen before it happens.
  */
 
-import { isIngestible, type AnyConnector } from '@zentavio/connectors-core';
+import { isIngestible, type AnyConnector, type ValidationIssue } from '@zentavio/connectors-core';
 import type { NewRequirement } from '@zentavio/db';
-import type { SourcedRequirement, ValidationIssue } from '@zentavio/types';
+import type { SourcedRequirement } from '@zentavio/types';
 
 /** What should happen to one requirement the connector produced. */
 export type IngestAction =
