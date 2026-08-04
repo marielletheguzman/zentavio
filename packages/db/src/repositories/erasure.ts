@@ -29,6 +29,17 @@ export interface ErasureReport {
    * things this system holds, and a superseded answer is exactly as personal as the live one.
    */
   readonly personFactsDeleted: number;
+  /** Applications hard-deleted. Where someone applied is a statement about them. */
+  readonly applicationsDeleted: number;
+  /**
+   * Outcomes **detached**, not deleted — the one table erasure treats this way.
+   *
+   * The row's subject is removed and the contribution is kept, because an anonymous "someone with
+   * this profile shape was offered this role" is no longer personal data and is the only thing
+   * that ever makes a predicted score checkable. Deleting it would destroy the calibration the
+   * platform's honesty rests on to remove information the row no longer contains.
+   */
+  readonly outcomesDetached: number;
   /** False when the user did not exist, so a caller can tell "erased" from "nothing to erase". */
   readonly userTombstoned: boolean;
 }
@@ -75,6 +86,23 @@ export async function eraseUser(db: Kysely<Database>, userId: string): Promise<E
       .where('user_id', '=', userId)
       .executeTakeFirst();
 
+    // Detached, not deleted. `ck_outcomes__anonymized` requires the pair to move together — a row
+    // with no subject and no `anonymized_at` would be a privacy claim nobody can verify — so both
+    // are set in one statement. This runs *before* applications are deleted, because
+    // `fk_outcomes__applications` is RESTRICT and an outcome still pointing at one would block it.
+    const outcomes = await trx
+      .updateTable('outcomes')
+      .set({ user_id: null, anonymized_at: sql`now()`, application_id: null, updated_at: sql`now()` })
+      .where('user_id', '=', userId)
+      .executeTakeFirst();
+
+    // Hard delete, per data-retention.md. Where someone applied is a statement about them, and it
+    // outlives nothing — the calibration value was already copied onto the outcome above.
+    const applications = await trx
+      .deleteFrom('applications')
+      .where('user_id', '=', userId)
+      .executeTakeFirst();
+
     const tombstone = await trx
       .updateTable('users')
       .set({
@@ -97,6 +125,8 @@ export async function eraseUser(db: Kysely<Database>, userId: string): Promise<E
       profilesDeleted: Number(profiles.numDeletedRows),
       targetsDeleted: Number(targets.numDeletedRows),
       personFactsDeleted: Number(personFacts.numDeletedRows),
+      applicationsDeleted: Number(applications.numDeletedRows),
+      outcomesDetached: Number(outcomes.numUpdatedRows),
       userTombstoned: Number(tombstone.numUpdatedRows) === 1,
     };
   });
@@ -137,6 +167,27 @@ export async function hasPersonalData(db: Kysely<Database>, userId: string): Pro
     .executeTakeFirst();
 
   if (personFact) return true;
+
+  const application = await db
+    .selectFrom('applications')
+    .select('id')
+    .where('user_id', '=', userId)
+    .limit(1)
+    .executeTakeFirst();
+
+  if (application) return true;
+
+  // An outcome still carrying a `user_id` is personal data. A detached one is not, and is
+  // deliberately invisible here — otherwise the erasure audit would fail forever on rows the
+  // erasure is designed to keep.
+  const outcome = await db
+    .selectFrom('outcomes')
+    .select('id')
+    .where('user_id', '=', userId)
+    .limit(1)
+    .executeTakeFirst();
+
+  if (outcome) return true;
 
   const user = await db
     .selectFrom('users')

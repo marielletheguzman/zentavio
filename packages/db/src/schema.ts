@@ -311,6 +311,95 @@ export interface CareerSkillsTable {
 
 export type UserTargetStatusColumn = 'active' | 'achieved' | 'abandoned';
 
+export type ApplicationStatusColumn =
+  | 'saved'
+  | 'applied'
+  | 'screening'
+  | 'interviewing'
+  | 'offered'
+  | 'accepted'
+  | 'rejected'
+  | 'withdrawn'
+  | 'expired';
+
+export type OutcomeKindColumn =
+  | 'applied'
+  | 'screened'
+  | 'interviewed'
+  | 'offered'
+  | 'rejected'
+  | 'withdrawn'
+  | 'accepted'
+  | 'started'
+  | 'relocated'
+  | 'course_completed'
+  | 'assessment_passed';
+
+export type OutcomeSourceColumn = 'user-reported' | 'inferred' | 'platform-observed';
+
+export interface ApplicationsTable {
+  id: string;
+  user_id: string;
+  /** No foreign key — `job_postings` is M4. The column exists so the data has somewhere to go. */
+  job_posting_id: string | null;
+  /** No foreign key — `matches` is M4. */
+  match_id: string | null;
+  company_id: string | null;
+  external_role: string | null;
+  status: ApplicationStatusColumn;
+  /** What `outcomes.elapsed_days` measures from. */
+  applied_at: Timestamp | null;
+  closed_at: Timestamp | null;
+  predicted_score: Numeric | null;
+  scorer_version: string | null;
+  required_sponsorship: Generated<boolean>;
+  sponsorship_status_at_apply: string | null;
+  country_code: string | null;
+  source: string;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+  deleted_at: Timestamp | null;
+}
+
+/**
+ * What happened, and what we had predicted when it did.
+ *
+ * The only table that survives erasure by **detachment**: `user_id` is nulled and the row kept,
+ * because the contribution is no longer personal and destroying it destroys the calibration the
+ * platform's honesty depends on.
+ */
+export interface OutcomesTable {
+  id: string;
+  /** Nulled on erasure. Everything else survives as an anonymous contribution. */
+  user_id: string | null;
+  application_id: string | null;
+  kind: OutcomeKindColumn;
+  occurred_at: Timestamp;
+  /** Month-truncated `occurred_at`; what aggregation reads. */
+  occurred_month: DateOnly;
+  career_id: string | null;
+  target_career_id: string | null;
+  company_id: string | null;
+  country_code: string | null;
+  seniority: string | null;
+  was_relocation: Generated<boolean>;
+  was_career_change: Generated<boolean>;
+  /** What we said before we learned what happened. Without it there is nothing to calibrate. */
+  predicted_score: Numeric | null;
+  predicted_kind: string | null;
+  scorer_version: string | null;
+  knowledge_as_of: Timestamp | null;
+  elapsed_days: number | null;
+  /** `[{skillId, status}]` — ids only, never text. */
+  skill_snapshot: Generated<unknown>;
+  source: OutcomeSourceColumn;
+  confidence: string;
+  /** Set exactly when `user_id` is nulled — `ck_outcomes__anonymized` enforces the pairing. */
+  anonymized_at: Timestamp | null;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+}
+
 export type CompanyStatusColumn = 'active' | 'defunct' | 'merged';
 
 /**
@@ -439,6 +528,8 @@ export interface Database {
   user_targets: UserTargetsTable;
   companies: CompaniesTable;
   company_aliases: CompanyAliasesTable;
+  applications: ApplicationsTable;
+  outcomes: OutcomesTable;
   person_fact_kinds: PersonFactKindsTable;
   person_facts: PersonFactsTable;
   schema_migrations: SchemaMigrationsTable;

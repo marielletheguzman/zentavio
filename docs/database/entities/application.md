@@ -8,6 +8,32 @@ document.
 
 Two tables: `applications` and `practice_sessions`.
 
+## What was migrated in M2, and what was deliberately left out
+
+`applications` was created on 2026-08-04 (`20260804190000-create-applications-outcomes.sql`) with
+**three documented deviations from the schema below**. Each is a deferral with a reason, not an
+oversight, and each should be closed by adding to the schema rather than by rewriting history.
+
+**`job_posting_id` and `match_id` have no foreign key.** `job_postings` and `matches` belong to M4.
+The columns exist so the data has somewhere to go; the constraints are added when their tables are.
+Creating those tables early would mean designing them against no reader.
+
+**`application_events` was not created.** It records `(status, occurred_at, source)` per stage
+transition — which is the same timeline `outcomes.kind` already covers for the application
+lifecycle (`applied`, `screened`, `interviewed`, `offered`, `rejected`, `withdrawn`, `accepted`).
+Building both would write every transition twice into two tables with no constraint keeping them
+consistent, and ADR-0019 makes `outcomes` the canonical record. It earns its place when the product
+shows a person their own application history, which is a UI concern rather than a calibration one.
+
+> **When `application_events` does land, its `note_free_text` CHECK must come with it.** The column
+> exists specifically to be forbidden — it documents that a notes field was considered and rejected,
+> because a note on a rejection becomes the most sensitive and least controllable data in the
+> schema, and asking someone to explain a rejection is a good way to never be told about one again.
+> A future implementer reading only the table would see the absence as an oversight and add it back.
+
+**`elapsed_days` does not depend on any of this.** It is
+`outcomes.occurred_at − applications.applied_at`, and `applied_at` is a column here.
+
 ## `applications`
 
 ```sql
