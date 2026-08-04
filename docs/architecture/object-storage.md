@@ -187,6 +187,7 @@ The current schema stores a **textual** `requirements.source_document`. Moving t
 ## Related
 
 - **ADR-0021** — selects the provider, region, IAM model, lifecycle and encryption configuration
+- **`object-storage-rollout.md`** — the phase order, and why enforcement comes last
 - ADR-0015 — Supabase "and nothing else", which is why storage is a separate provider
 - ADR-0010 — the `requirements` table and its provenance columns
 - `connectors/immigration-data/de-bundesanzeiger/README.md` — the citation that motivated this
