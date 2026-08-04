@@ -11,6 +11,7 @@ name a connector, and the shared operational behaviour no connector may hand-rol
 |---|---|
 | `src/contract.ts` | `Connector`, `ConnectorMeta`, `SearchQuery`, `Page`, `ValidationResult`, `HealthStatus` |
 | `src/registry.ts` | `ConnectorRegistry` — register, look up by id, filter by kind or region |
+| `src/default-registry.ts` | `createRegistry` — the composed registry, the only module that names a connector |
 | `src/errors.ts` | `ConnectorError` and the retryable/terminal taxonomy |
 | `src/retry.ts` | exponential backoff with full jitter, capped by attempts *and* total time |
 | `src/rate-limit.ts` | `RateLimiter` — sliding window budget plus minimum interval |
@@ -56,6 +57,17 @@ or import-driven — a connector that appears in a run depending on whether a mo
 imported is a failure nobody can reproduce. A duplicate `meta.id` is refused loudly, because ids are
 foreign keys in the database and a silent replacement leaves rows pointing at behaviour that did not
 write them.
+
+## The `./registry` entry point
+
+`createRegistry(deps)` composes the registered sources and lives behind a **separate export path**,
+never re-exported from `index.ts`. A connector imports the contract from `@zentavio/connectors-core`
+while this module imports connectors, so folding the two together would put a cycle on the module
+graph. Splitting the entry point keeps the cycle at the package-manifest level, where pnpm resolves
+it and nothing at runtime depends on initialization order.
+
+Per-source dependencies are passed in rather than constructed here: a registry that built its own
+HTTP clients would be untestable and would read configuration from a layer not permitted to.
 
 ## Boundary
 

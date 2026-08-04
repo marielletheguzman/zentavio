@@ -34,6 +34,94 @@ export const DOMAIN_EVALUATION_ORDER: readonly RequirementDomain[] = [
 export const REQUIREMENT_RESULTS = ['met', 'not_met', 'undetermined'] as const;
 export type RequirementResult = (typeof REQUIREMENT_RESULTS)[number];
 
+export const REQUIREMENT_KINDS = [
+  'eligibility',
+  'threshold',
+  'quota',
+  'document',
+  'timeline',
+  'condition',
+  'right',
+  'assessment',
+] as const;
+export type RequirementKind = (typeof REQUIREMENT_KINDS)[number];
+
+export const REQUIREMENT_EVALUATIONS = [
+  'numeric-gte',
+  'numeric-lte',
+  'set-member',
+  'boolean',
+  'document-present',
+  'manual',
+] as const;
+export type RequirementEvaluation = (typeof REQUIREMENT_EVALUATIONS)[number];
+
+/** A money amount. Never a bare number — a threshold without its currency and period is unusable. */
+export interface MonetaryValue {
+  readonly amount: number;
+  /** ISO-4217. */
+  readonly currency: string;
+  readonly period: 'year' | 'month';
+  /** `gross` matters: a threshold compared against the wrong one is off by a third. */
+  readonly basis: 'gross' | 'net';
+}
+
+/**
+ * A requirement as a connector produces it, before it is stored.
+ *
+ * Mirrors the `requirements` table (`packages/db/migrations/20260729120100-create-requirements.sql`)
+ * because a connector that emits a shape the schema cannot hold fails at insert time, where the
+ * error names a column rather than the decision that produced it.
+ *
+ * **`retrievedAt` is carried on the raw payload, not read from a clock**, so `normalize` stays
+ * pure — the connector records when it fetched, and normalize copies it through.
+ */
+export interface SourcedRequirement {
+  /** Stable, namespaced, permanent: `de.eu-blue-card.salary-threshold.general`. */
+  readonly requirementId: string;
+  readonly domain: RequirementDomain;
+  readonly imposedBy: ImposedBy;
+  /** ISO-3166-1 alpha-2 of the imposing authority. */
+  readonly jurisdiction: string;
+  readonly subdivision?: string;
+  /** Set for the `immigration` domain; null otherwise. Enforced by `ck_req__scope`. */
+  readonly pathwayId: string | null;
+  /** Set for `recognition` and `credential`; null otherwise. */
+  readonly profession: string | null;
+  readonly kind: RequirementKind;
+  /** Typed by `kind`. A threshold carries a `MonetaryValue`, never a bare number. */
+  readonly value: unknown;
+  /** Occupation lists, qualification levels, age bands — explicit, never implied. */
+  readonly appliesTo: Readonly<Record<string, unknown>>;
+  readonly domainDetail: Readonly<Record<string, unknown>>;
+  readonly evaluation: RequirementEvaluation;
+  /** The person facts needed to evaluate this. Drives `needsFromUser`. */
+  readonly needsInput: readonly string[];
+  /** Always 1. `ck_req__tier_one` will not hold anything else, for any domain. */
+  readonly sourceTier: 1;
+  readonly sourceUrl: string;
+  /**
+   * The archived copy of the page, once object storage exists. `null` until then — and a null
+   * here is a real gap, not a formality: a citation whose URL carries an opaque token is not
+   * durable, and the document it points at is the evidence for a number people plan around.
+   */
+  readonly sourceDocument: string | null;
+  /** ISO-8601 UTC, taken from the raw payload's fetch envelope. */
+  readonly retrievedAt: string;
+  /** The body that decides — answers "who do I contact?" */
+  readonly authority: string;
+  readonly authorityUrl?: string;
+  readonly effectiveFrom: string;
+  /** Null while current. A changed rule is a new row, never an update. */
+  readonly effectiveTo: string | null;
+  /** The source's own version where it has one, else our sequence. */
+  readonly version: string;
+  readonly contested: boolean;
+  readonly contestedNote?: string;
+  /** Past this date confidence drops and the UI says so. */
+  readonly refreshAfter: string;
+}
+
 /** One evaluated requirement, always citing its source and the authority that decides. */
 export interface EvaluatedRequirement {
   readonly requirementId: string;

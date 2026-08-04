@@ -5,9 +5,13 @@
   "description": "The connector contract, registry, and shared operational behaviour (ADR-0002).",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./registry": "./src/default-registry.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zentavio/connector-de-bundesanzeiger": "workspace:*"
   }
 }
