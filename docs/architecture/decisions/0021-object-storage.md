@@ -168,9 +168,11 @@ possible.
   existing Qdrant-outside-`vector-store` rule. Verified by attempting the violation.
 - **No binary column.** `tests/integration/db/schema-drift.test.ts` reads the declared schema; a
   `bytea` column anywhere is a violation of this ADR and of `docs/database/`.
-- **Every ingested requirement carries a document.** `de-bundesanzeiger`'s `validate` already emits
-  `no-archived-document` as a warning for a null `sourceDocument`. When this lands that warning
-  becomes an **error**, so a rule ingested without its archived source is rejected rather than stored.
+- **Every ingested requirement carries a document.** Enforced since 2026-08-05 in
+  `services/ingestion`: a payload whose archive failed rejects every rule it produced, naming the
+  storage reason. Deliberately *not* a `NOT NULL` on `requirements.document_id` — a database
+  constraint cannot distinguish a storage failure from a source that legitimately has nothing to
+  archive, and the second must remain storable.
 - **Integrity is checked, not assumed.** The stored `sha256` is verified on read; a mismatch is a
   failure, never a warning. A document that changed after archiving is not evidence.
 - **The résumé exclusion is enforced by the existing schema**: `user_profiles` has no document column,

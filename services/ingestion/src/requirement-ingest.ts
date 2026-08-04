@@ -57,6 +57,22 @@ export interface IngestPlan {
 }
 
 /**
+ * What archiving produced for this source (ADR-0021).
+ *
+ * Three states, and the middle one is why this is not a nullable id. A source that **declares** it
+ * has nothing to archive — a pure API whose response we already keep — is a connector making a
+ * deliberate statement. A source whose archive **failed** is an incident. Collapsing them into
+ * "no document" would let a storage outage look like a source that never had a document, which is
+ * exactly the confusion enforcement exists to prevent.
+ */
+export type Evidence =
+  | { readonly kind: 'archived'; readonly documentId: string }
+  /** The connector implements no `archivable()`, or returned null. Not a failure. */
+  | { readonly kind: 'none-declared' }
+  /** Storage or the document row refused. Every rule from this payload is rejected. */
+  | { readonly kind: 'failed'; readonly reason: string };
+
+/**
  * Map a connector's normalized requirement onto the row shape the repository accepts.
  *
  * `id` is deliberately absent: the caller supplies a UUIDv7 at write time. Generating it here
@@ -116,12 +132,16 @@ export function planIngest(
   existing: readonly ExistingRequirement[],
   idsFor: (requirementId: string) => string,
   /**
-   * The archived source these rules came from, when there is one.
+   * The archive outcome for the source these rules came from.
    *
    * Passed in rather than fetched, so `planIngest` stays pure — archiving is I/O and belongs to
    * the caller (`archiveSource`).
+   *
+   * **This is ADR-0021's enforcement point.** A rule whose source could not be archived is
+   * rejected rather than stored: the archive is what makes a statutory claim re-checkable, and a
+   * rule with no retrievable evidence is a number nobody can audit.
    */
-  documentId: string | null = null,
+  evidence: Evidence = { kind: 'none-declared' },
 ): IngestPlan {
   const currentByRequirementId = new Map(
     existing.filter((row) => row.effectiveTo === null).map((row) => [row.requirementId, row]),
@@ -129,6 +149,30 @@ export function planIngest(
   const storedVersions = new Set(existing.map((row) => `${row.requirementId}@${row.version}`));
 
   const decisions: IngestDecision[] = [];
+
+  // Enforcement, applied before anything else is considered. A failed archive rejects every rule
+  // from this payload rather than storing some of them — a partially evidenced ingest is harder to
+  // reason about later than none at all.
+  if (evidence.kind === 'failed') {
+    return {
+      sourceId: connector.meta.id,
+      decisions: normalized.map((requirement) => ({
+        requirementId: requirement.requirementId,
+        action: 'reject' as const,
+        issues: [
+          {
+            severity: 'error' as const,
+            code: 'no-archived-document',
+            message:
+              `the source could not be archived (${evidence.reason}), and a rule with no ` +
+              'retrievable evidence is a number nobody can audit — ADR-0021',
+          },
+        ],
+      })),
+    };
+  }
+
+  const documentId = evidence.kind === 'archived' ? evidence.documentId : null;
 
   for (const requirement of normalized) {
     // The connector's own validation runs first and is authoritative about its payload. A rejected
