@@ -298,3 +298,57 @@ class TestVerdict:
         for value in literals + names:
             for marker in ("DE", "Germany", "Bundesanzeiger", "AufenthG", "eu-blue-card"):
                 assert marker != value, f"{marker!r} is hardcoded in the evaluator"
+
+
+class TestARightNeverBlocks:
+    """A `right` is a benefit the statute grants, not a hurdle.
+
+    Germany's reduced Blue Card salary threshold for certain ISCO groups is one: it can only lower
+    the bar. Letting an unanswered one drag the verdict to `undetermined` rejects exactly the people
+    the provision is being generous to — found live, after the statute was first ingested.
+    """
+
+    def right(self, **overrides) -> Requirement:
+        return threshold(
+            requirement_id="de.eu-blue-card.reduced-threshold-occupations",
+            kind="right",
+            evaluation="set-member",
+            value=["133", "25"],
+            needs_input=("isco_08_group",),
+            **overrides,
+        )
+
+    def test_an_unanswered_right_does_not_make_the_verdict_undetermined(self):
+        verdict = evaluate_pathway(
+            "de.eu-blue-card", [threshold(), self.right()], [salary(60000)], AS_OF
+        )
+        assert verdict.status == "met"
+
+    def test_it_is_not_listed_as_something_the_user_must_supply(self):
+        # Listing it would promise that answering changes the outcome. It cannot make things worse,
+        # and here it cannot make them better either — the general threshold is already met.
+        verdict = evaluate_pathway(
+            "de.eu-blue-card", [threshold(), self.right()], [salary(60000)], AS_OF
+        )
+        assert "isco_08_group" not in verdict.needs_from_user
+
+    def test_a_right_that_does_not_apply_is_never_a_blocker(self):
+        facts = [salary(60000), PersonFact(key="isco_08_group", value="9999")]
+        verdict = evaluate_pathway("de.eu-blue-card", [threshold(), self.right()], facts, AS_OF)
+
+        assert verdict.status == "met"
+        assert verdict.blockers == ()
+
+    def test_it_is_still_evaluated_and_reported(self):
+        # Not blocking is not the same as invisible: the person should see it was considered.
+        verdict = evaluate_pathway(
+            "de.eu-blue-card", [threshold(), self.right()], [salary(60000)], AS_OF
+        )
+        ids = [r.requirement_id for r in verdict.requirements]
+        assert "de.eu-blue-card.reduced-threshold-occupations" in ids
+
+    def test_a_real_requirement_still_blocks(self):
+        # The fix must not make everything permissive.
+        verdict = evaluate_pathway("de.eu-blue-card", [threshold(), self.right()], [], AS_OF)
+        assert verdict.status == "undetermined"
+        assert verdict.needs_from_user == ("expected_gross_annual_salary_eur",)

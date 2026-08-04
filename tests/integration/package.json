@@ -10,6 +10,7 @@
     "@zentavio/auth": "workspace:*",
     "@zentavio/ingestion": "workspace:*",
     "@zentavio/connector-de-bundesanzeiger": "workspace:*",
-    "kysely": "^0.29.4"
+    "kysely": "^0.29.4",
+    "@zentavio/connector-de-aufenthg": "workspace:*"
   }
 }

@@ -49,4 +49,38 @@ export const PERSON_FACT_KINDS: readonly PersonFactKindSeed[] = [
     sensitive: true,
     allowedValues: [],
   },
+  {
+    key: 'employment_contract_months',
+    valueType: 'integer',
+    unit: 'months',
+    prompt: 'How many months does the job offer run for?',
+    rationale:
+      '§ 18g Abs. 3 AufenthG requires the offer to provide for at least six months of employment. ' +
+      'A shorter contract does not qualify, however well paid it is.',
+    sensitive: false,
+    allowedValues: [],
+  },
+  {
+    key: 'has_recognised_academic_degree',
+    valueType: 'boolean',
+    unit: null,
+    prompt: 'Do you hold a recognised higher-education degree?',
+    rationale:
+      '§ 18g Abs. 1 S. 1 AufenthG addresses a Fachkraft mit akademischer Ausbildung. Whether a ' +
+      'particular qualification counts is decided by recognition rules we have not sourced, so a ' +
+      'no here means we cannot confirm this route rather than that no route exists.',
+    sensitive: false,
+    allowedValues: [],
+  },
+  {
+    key: 'isco_08_group',
+    valueType: 'string',
+    unit: null,
+    prompt: 'Which ISCO-08 occupational group does the role fall under?',
+    rationale:
+      'Roles in the groups § 18g Abs. 1 S. 2 lists qualify at the reduced salary threshold. This ' +
+      'can only lower the bar, never raise it.',
+    sensitive: false,
+    allowedValues: [],
+  },
 ];

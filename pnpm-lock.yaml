@@ -69,9 +69,21 @@ importers:
 
   connectors/core:
     dependencies:
+      '@zentavio/connector-de-aufenthg':
+        specifier: workspace:*
+        version: link:../immigration-data/de-aufenthg
       '@zentavio/connector-de-bundesanzeiger':
         specifier: workspace:*
         version: link:../immigration-data/de-bundesanzeiger
+
+  connectors/immigration-data/de-aufenthg:
+    dependencies:
+      '@zentavio/connectors-core':
+        specifier: workspace:*
+        version: link:../../core
+      '@zentavio/types':
+        specifier: workspace:*
+        version: link:../../../packages/types
 
   connectors/immigration-data/de-bundesanzeiger:
     dependencies:
@@ -167,6 +179,9 @@ importers:
       '@zentavio/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@zentavio/connector-de-aufenthg':
+        specifier: workspace:*
+        version: link:../../connectors/immigration-data/de-aufenthg
       '@zentavio/connector-de-bundesanzeiger':
         specifier: workspace:*
         version: link:../../connectors/immigration-data/de-bundesanzeiger

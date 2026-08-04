@@ -344,27 +344,39 @@ def evaluate_pathway(
             ),
         )
 
-    # `undetermined` dominates: one unknown makes the whole verdict undetermined, even when
-    # everything else is met. It never rounds toward the friendlier answer.
-    if any(r.result == "undetermined" for r in evaluated):
+    # A `right` is a benefit the statute grants, not a hurdle — Germany's reduced Blue Card salary
+    # threshold for certain ISCO groups is one. It can only ever *lower* the bar, so an unanswered
+    # one must not block a verdict: doing so rejects exactly the people the provision is being
+    # generous to, and asks a question whose answer could not have hurt them.
+    #
+    # Rights are still evaluated and still reported. They simply do not dominate.
+    deciding = tuple(
+        pair[0] for pair in zip(evaluated, applicable, strict=True) if pair[1].kind != "right"
+    )
+
+    # `undetermined` dominates among the deciding rules: one unknown makes the whole verdict
+    # undetermined, even when everything else is met. It never rounds toward the friendlier answer.
+    if any(r.result == "undetermined" for r in deciding):
         status: Status = "undetermined"
-    elif any(r.result == "not_met" for r in evaluated):
+    elif any(r.result == "not_met" for r in deciding):
         status = "not_met"
     else:
         status = "met"
 
-    blockers = tuple(r.requirement_id for r in evaluated if r.result == "not_met")
+    blockers = tuple(r.requirement_id for r in deciding if r.result == "not_met")
 
     # Ordered by the domain pass, and de-duplicated while keeping first appearance — so the input
     # that unblocks the earliest-blocking domain is named first.
+    # Only what would actually resolve the verdict. A right's input is optional by construction —
+    # listing it as "needed" would promise that answering it changes the outcome.
     needs: list[str] = []
-    for req in evaluated:
+    for req in deciding:
         for key in req.needs_input:
             if key not in needs:
                 needs.append(key)
 
     binding = next(
-        (r.domain for r in evaluated if r.result != "met"),
+        (r.domain for r in deciding if r.result != "met"),
         None,
     )
 
