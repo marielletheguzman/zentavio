@@ -22,7 +22,9 @@ that resolves it, then `met` once answered — **browser-verified 2026-08-04**.
 unemployable is not caught), the rest of § 18g beyond the two salary thresholds, outcome recording
 (ADR-0019), and archived provenance (ADR-0021 phases 2–6).
 
-13 tables, ~780 tests, CI blocking on `main`.
+13 tables. **924 tests — 399 unit, 175 integration, 350 pytest** (measured 2026-08-04, not
+estimated; the previous figure here was a recollection and was wrong by ~150). CI blocking on
+`main`.
 
 | Built | Still a placeholder |
 |---|---|
