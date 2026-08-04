@@ -145,7 +145,10 @@ describe('the stored rule cites its evidence', () => {
     const archive = await archiveSource(source, FIXTURE, FIXTURE.sourceUrl, FIXTURE.fetchedAt, deps());
     if (archive.kind !== 'archived') throw new Error('expected an archive');
 
-    const plan = planIngest(source, source.normalize(FIXTURE), [], () => uuidv7(), archive.document.id);
+    const plan = planIngest(source, source.normalize(FIXTURE), [], () => uuidv7(), {
+      kind: 'archived',
+      documentId: archive.document.id,
+    });
     const report = await executePlan(db, plan);
 
     expect(report.inserted).toBe(3);
@@ -164,16 +167,36 @@ describe('the stored rule cites its evidence', () => {
 
     await executePlan(
       db,
-      planIngest(source, source.normalize(FIXTURE), [], () => uuidv7(), archive.document.id),
+      planIngest(source, source.normalize(FIXTURE), [], () => uuidv7(), {
+        kind: 'archived',
+        documentId: archive.document.id,
+      }),
     );
 
     const { rows } = await pool.query('SELECT id FROM requirements WHERE document_id IS NULL');
     expect(rows).toEqual([]);
   });
 
-  it('still stores rules with a null document when archiving was skipped', async () => {
-    // The pre-enforcement behaviour, and the reason the backfill list exists. Once the flip lands
-    // this path is rejected instead.
+  it('rejects every rule when the archive failed', async () => {
+    // ADR-0021's enforcement point. A rule with no retrievable evidence is a number nobody can
+    // audit, so none of them are stored — not even the ones that parsed cleanly.
+    const source = connector();
+    const plan = planIngest(source, source.normalize(FIXTURE), [], () => uuidv7(), {
+      kind: 'failed',
+      reason: 'storage unreachable',
+    });
+
+    const report = await executePlan(db, plan);
+
+    expect(report.inserted).toBe(0);
+    expect(report.rejected).toBe(3);
+    expect((await pool.query('SELECT id FROM requirements')).rows).toEqual([]);
+  });
+
+  it('still stores when a connector declares it has nothing to archive', async () => {
+    // Distinct from a failure on purpose: a source with no document — a pure API whose response we
+    // already keep — is a connector making a deliberate statement, not an incident. Collapsing the
+    // two would let a storage outage look like a source that never had a document.
     const source = connector();
     await executePlan(db, planIngest(source, source.normalize(FIXTURE), [], () => uuidv7()));
 

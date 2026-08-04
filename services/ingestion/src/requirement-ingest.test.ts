@@ -261,3 +261,66 @@ describe('summarize', () => {
     });
   });
 });
+
+describe('archival enforcement (ADR-0021)', () => {
+  it('rejects every rule when the archive failed', () => {
+    // Not just the ones that parsed badly — all of them. A partially evidenced ingest is harder to
+    // reason about later than none at all.
+    const plan = planIngest(
+      stubConnector(),
+      [requirement(), requirement({ requirementId: 'second' })],
+      [],
+      ids,
+      { kind: 'failed', reason: 'storage unreachable' },
+    );
+
+    expect(plan.decisions.every((d) => d.action === 'reject')).toBe(true);
+    expect(plan.decisions).toHaveLength(2);
+  });
+
+  it('says why, naming the storage reason and the ADR', () => {
+    const [decision] = planIngest(stubConnector(), [requirement()], [], ids, {
+      kind: 'failed',
+      reason: 'connect ECONNREFUSED',
+    }).decisions;
+
+    expect(decision?.issues?.[0]?.code).toBe('no-archived-document');
+    expect(decision?.issues?.[0]?.message).toContain('connect ECONNREFUSED');
+    expect(decision?.issues?.[0]?.message).toContain('ADR-0021');
+  });
+
+  it('carries the document id onto every row when archiving succeeded', () => {
+    const [decision] = planIngest(stubConnector(), [requirement()], [], ids, {
+      kind: 'archived',
+      documentId: 'doc-1',
+    }).decisions;
+
+    expect(decision?.action).toBe('insert');
+    expect(decision?.row?.document_id).toBe('doc-1');
+  });
+
+  it('stores with no document when the connector declares nothing to archive', () => {
+    // A deliberate connector statement, not an incident — collapsing it into "failed" would make a
+    // storage outage indistinguishable from a source that never had a document.
+    const [decision] = planIngest(stubConnector(), [requirement()], [], ids, {
+      kind: 'none-declared',
+    }).decisions;
+
+    expect(decision?.action).toBe('insert');
+    expect(decision?.row?.document_id).toBeNull();
+  });
+
+  it('a failed archive beats every other outcome, including unchanged', () => {
+    // Enforcement is checked before anything else. A rule already stored is not a reason to accept
+    // a payload whose evidence is missing.
+    const existing: ExistingRequirement[] = [
+      { id: 'e1', requirementId: requirement().requirementId, version: '2026', effectiveTo: null },
+    ];
+    const plan = planIngest(stubConnector(), [requirement()], existing, ids, {
+      kind: 'failed',
+      reason: 'nope',
+    });
+
+    expect(plan.decisions[0]?.action).toBe('reject');
+  });
+});

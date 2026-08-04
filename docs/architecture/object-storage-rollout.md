@@ -62,11 +62,15 @@ download ──► archive ──► verify checksum ──► parse ──► i
 | 3 | `DocumentStore` port | agent | 0 | 5 |
 | 4 | `documents` table and `document_id` | agent | 0 | 5 |
 | 5 | Ingestion integration | agent | 2, 3, 4 | 6 |
-| 6 | Enforcement | agent | 1, 5 | — |
+| 6 | Enforcement | agent | 5 | — |
 
 Phases 2–4 are independent of each other and of R2 — all three can be built and tested against
-MinIO before the production account exists. **Only Phase 6 requires Phase 1**, because flipping the
-warning to an error with no production bucket would fail every real ingest.
+MinIO before the production account exists.
+
+*Phase 6 was expected to require Phase 1 and did not.* Enforcement is a policy in
+`services/ingestion` that rejects a failed archive; it does not care which bucket succeeded. What
+would have broken without a working store is **ingestion itself**, and MinIO satisfies that
+locally. R2 is needed to run ingestion in production, not to enforce.
 
 ### Phase 1 — Provision R2
 
@@ -113,8 +117,22 @@ services/ingestion:  fetch via connector ──► archive ──► verify ─�
 
 ### Phase 6 — Enforcement
 
-`no-archived-document` becomes an error. **Do not start until** storage is deployed, the port is
-implemented, ingestion archives successfully, and document records are being written correctly.
+**Done, 2026-08-05.** A payload whose archive **failed** rejects every rule it produced — not just
+the ones that parsed badly, because a partially evidenced ingest is harder to reason about later
+than none at all. The rejection names the storage reason and the ADR.
+
+**`failed` and `none-declared` are deliberately different states.** A connector that implements no
+`archivable()` — a pure API whose response we already keep — is making a statement; a storage
+outage is an incident. Collapsing them into "no document" would let an outage look like a source
+that never had one, which is the confusion enforcement exists to prevent.
+
+Enforcement is in `services/ingestion`, not a `NOT NULL` on `requirements.document_id`. The column
+stays nullable **on purpose**: a future source that legitimately has nothing to archive must still
+be storable, and a database constraint cannot tell that apart from a failure.
+
+Preconditions were met before the flip: every requirement was backfilled and every archive holds
+an **original** published document, so nothing existing was invalidated and the guarantee means
+what it says.
 
 ## The connector contract is unchanged
 

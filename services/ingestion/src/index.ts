@@ -15,6 +15,7 @@ export {
   planIngest,
   summarize,
   toRow,
+  type Evidence,
   type ExistingRequirement,
   type IngestAction,
   type IngestDecision,
