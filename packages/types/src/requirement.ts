@@ -100,12 +100,6 @@ export interface SourcedRequirement {
   /** Always 1. `ck_req__tier_one` will not hold anything else, for any domain. */
   readonly sourceTier: 1;
   readonly sourceUrl: string;
-  /**
-   * The archived copy of the page, once object storage exists. `null` until then — and a null
-   * here is a real gap, not a formality: a citation whose URL carries an opaque token is not
-   * durable, and the document it points at is the evidence for a number people plan around.
-   */
-  readonly sourceDocument: string | null;
   /** ISO-8601 UTC, taken from the raw payload's fetch envelope. */
   readonly retrievedAt: string;
   /** The body that decides — answers "who do I contact?" */

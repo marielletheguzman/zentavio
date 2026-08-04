@@ -31,7 +31,6 @@ const immigrationRow: NewRequirement = {
   evaluation: 'numeric-gte',
   source_tier: 1,
   source_url: 'https://official.invalid/blue-card',
-  source_document: null,
   retrieved_at: '2026-07-14T00:00:00Z',
   authority: 'Federal immigration authority',
   authority_url: 'https://official.invalid',

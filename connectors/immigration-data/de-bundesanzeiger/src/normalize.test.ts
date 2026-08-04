@@ -170,13 +170,14 @@ describe('normalize', () => {
 });
 
 describe('validate', () => {
-  it('accepts the real announcement, flagging only the missing archive', () => {
+  it('accepts the real announcement with no issues at all', () => {
+    // Archival is not checked here. A connector never archives — it returns data — so it cannot
+    // report whether a document was stored. That belongs to `services/ingestion` (ADR-0021).
     const connectorInstance = connector();
     const result = connectorInstance.validate(connectorInstance.normalize(FIXTURE));
 
     expect(isIngestible(result)).toBe(true);
-    expect(result.issues.every((i) => i.severity === 'warning')).toBe(true);
-    expect(result.issues.map((i) => i.code)).toContain('no-archived-document');
+    expect(result.issues).toEqual([]);
   });
 
   it('rejects a document that yielded nothing', () => {

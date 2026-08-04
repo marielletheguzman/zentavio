@@ -83,7 +83,6 @@ export interface RequirementsTable {
   /** Tier 1 only, in every domain — `ck_req__tier_one`. */
   source_tier: number;
   source_url: string;
-  source_document: string | null;
   retrieved_at: Timestamp;
   /** The body that decides. `NOT NULL`, because "who do I contact?" must be answerable. */
   authority: string;
@@ -97,6 +96,8 @@ export interface RequirementsTable {
   contested: Generated<boolean>;
   contested_note: string | null;
   refresh_after: DateOnly;
+  /** Null until archived. Made non-null by ADR-0021's enforcement phase, after backfill. */
+  document_id: string | null;
 
   created_at: Generated<Timestamp>;
   updated_at: Generated<Timestamp>;
@@ -400,6 +401,34 @@ export interface OutcomesTable {
   updated_at: Generated<Timestamp>;
 }
 
+/**
+ * An archived source document (ADR-0021).
+ *
+ * **Metadata only** — the bytes live in object storage behind the `DocumentStore` port. `sha256` is
+ * the recorded expectation `DocumentStore.get` verifies against, which is why it is here rather
+ * than trusted from the provider.
+ */
+export interface DocumentsTable {
+  id: string;
+  /** Deterministic and recomputable from the record: `<category>/<jurisdiction>/<year>/<slug>.<ext>`. */
+  object_key: string;
+  /** Which provider holds the bytes, per row — a migration between providers must tell them apart. */
+  provider: string;
+  bucket: string;
+  mime_type: string;
+  size_bytes: string;
+  /** Hex SHA-256, lower case, over the bytes as stored. */
+  sha256: string;
+  source_url: string;
+  /** The connector obtained the bytes. */
+  retrieved_at: Timestamp;
+  /** The bytes reached storage. Separate on purpose: a gap between the two is a failure to see. */
+  archived_at: Generated<Timestamp>;
+  version: string | null;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+}
+
 export type CompanyStatusColumn = 'active' | 'defunct' | 'merged';
 
 /**
@@ -526,6 +555,7 @@ export interface Database {
   skill_edges: SkillEdgesTable;
   career_skills: CareerSkillsTable;
   user_targets: UserTargetsTable;
+  documents: DocumentsTable;
   companies: CompaniesTable;
   company_aliases: CompanyAliasesTable;
   applications: ApplicationsTable;

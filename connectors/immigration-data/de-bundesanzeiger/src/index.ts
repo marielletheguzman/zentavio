@@ -188,10 +188,6 @@ export class BundesanzeigerConnector implements Connector<BekanntmachungRaw, rea
         needsInput: ['expected_gross_annual_salary_eur'],
         sourceTier: 1,
         sourceUrl: raw.sourceUrl,
-        // Object storage is not provisioned. A null here is a real gap: this citation's URL
-        // carries an opaque token, so it is not a durable reference to the document that
-        // justifies a number people plan a relocation around.
-        sourceDocument: null,
         retrievedAt: raw.fetchedAt,
         authority: 'Bundesministerium des Innern',
         authorityUrl: 'https://www.bmi.bund.de',
@@ -252,16 +248,6 @@ export class BundesanzeigerConnector implements Connector<BekanntmachungRaw, rea
         });
       }
 
-      if (row.sourceDocument === null) {
-        issues.push({
-          severity: 'warning',
-          code: 'no-archived-document',
-          field: 'sourceDocument',
-          message:
-            'No archived copy of the announcement. The Bundesanzeiger URL carries an opaque token ' +
-            'and is not a durable citation.',
-        });
-      }
     }
 
     return { issues };

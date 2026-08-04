@@ -39,7 +39,7 @@ CREATE TABLE requirements (
   -- Provenance. Tier 1 only, enforced below.
   source_tier     smallint     NOT NULL,
   source_url      text         NOT NULL,
-  source_document text,                               -- the archived page in object storage
+  document_id     uuid,                               -- the archived page (ADR-0021); null until backfilled
   retrieved_at    timestamptz  NOT NULL,
   authority       text         NOT NULL,              -- the body that decides — answers "who do I contact?"
   authority_url   text,                               -- that body's official page
@@ -235,8 +235,13 @@ those cheap. A verdict is never cached past the window.
 ## Retention
 
 Indefinite, all versions. A superseded requirement is the explanation for an answer we gave last year.
-`source_document` archives the official page, because pages change and disappear and a claim with a dead
-link is unverifiable.
+`document_id` references the archived page (`documents`, ADR-0021), because pages change and
+disappear and a claim with a dead link is unverifiable.
+
+*This was `source_document text` until 2026-08-05 — an object key with nothing to join to, no
+checksum, and no way to tell a missing archive from a mistyped path. It is **nullable until
+ADR-0021's enforcement phase**: the requirements already stored were accepted before archival
+existed, and they are backfilled before the flip rather than deleted.*
 
 ## Invariants
 
