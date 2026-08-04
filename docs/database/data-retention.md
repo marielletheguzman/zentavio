@@ -26,6 +26,7 @@ in the schedule below is unfinished (`docs/architecture/privacy.md`).
 | `user_country_preferences` | while active | hard delete |
 | `user_targets` | while active | hard delete |
 | `user_immigration_facts` | while active; on request, immediately | hard delete |
+| `person_facts` | while active | hard delete, all versions |
 | `user_consents` | 6 years after revocation | **retained** — the record that consent existed is itself the legal basis |
 | `applications` | while active | hard delete |
 | `application_events` | with its application | cascade |

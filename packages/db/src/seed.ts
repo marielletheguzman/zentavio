@@ -20,6 +20,7 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { Pool } from 'pg';
 import { databaseSchema, load } from '@zentavio/config';
+import { PERSON_FACT_KINDS } from './person-fact-kinds.ts';
 import { uuidv7 } from './uuid.ts';
 
 export const EXIT = { OK: 0, FAILED: 1, USAGE: 2 } as const;
@@ -267,6 +268,8 @@ export interface SeedPlan {
   readonly aliasesInserted: number;
   readonly careerSkillsInserted: number;
   readonly edgesInserted: number;
+  /** Fact kinds inserted or refreshed. Upserted, so this counts rows touched. */
+  readonly factKindsUpserted: number;
 }
 
 interface RunOptions {
@@ -334,7 +337,8 @@ export async function run(options: RunOptions): Promise<number> {
         `${String(plan.skillsUpdated)} updated, ` +
         `${String(plan.aliasesInserted)} alias(es), ` +
         `${String(plan.careerSkillsInserted)} requirement(s), ` +
-        `${String(plan.edgesInserted)} edge(s).`,
+        `${String(plan.edgesInserted)} edge(s), ` +
+        `${String(plan.factKindsUpserted)} fact kind(s).`,
     );
     if (dryRun) out('Nothing was written. Re-run without --dry-run to apply.');
     return EXIT.OK;
@@ -365,6 +369,7 @@ export async function applySeed(
   let aliasesInserted = 0;
   let careerSkillsInserted = 0;
   let edgesInserted = 0;
+  let factKindsUpserted = 0;
 
   try {
     await client.query('BEGIN');
@@ -474,6 +479,36 @@ export async function applySeed(
       edgesInserted += result.rowCount ?? 0;
     }
 
+    // The fact catalogue. Not from the seed file and carrying no source tier, because a fact kind
+    // is the shape of a question rather than sourced knowledge — see `person-fact-kinds.ts`.
+    // Idempotent on `key`, and it updates the wording: a prompt is user-facing copy that will be
+    // improved, and leaving an old phrasing in place because the row already existed would make
+    // the catalogue silently un-editable.
+    for (const kind of PERSON_FACT_KINDS) {
+      const result = await client.query(
+        `INSERT INTO person_fact_kinds (key, value_type, unit, prompt, rationale, sensitive, allowed_values)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         ON CONFLICT (key) DO UPDATE SET
+           value_type = EXCLUDED.value_type,
+           unit = EXCLUDED.unit,
+           prompt = EXCLUDED.prompt,
+           rationale = EXCLUDED.rationale,
+           sensitive = EXCLUDED.sensitive,
+           allowed_values = EXCLUDED.allowed_values,
+           updated_at = now()`,
+        [
+          kind.key,
+          kind.valueType,
+          kind.unit,
+          kind.prompt,
+          kind.rationale,
+          kind.sensitive,
+          [...kind.allowedValues],
+        ],
+      );
+      factKindsUpserted += result.rowCount ?? 0;
+    }
+
     if (options.dryRun === true) {
       await client.query('ROLLBACK');
     } else {
@@ -490,7 +525,15 @@ export async function applySeed(
     client.release();
   }
 
-  return { careersInserted, skillsInserted, skillsUpdated, aliasesInserted, careerSkillsInserted, edgesInserted };
+  return {
+    careersInserted,
+    skillsInserted,
+    skillsUpdated,
+    aliasesInserted,
+    careerSkillsInserted,
+    edgesInserted,
+    factKindsUpserted,
+  };
 }
 
 const executedDirectly =
