@@ -150,7 +150,12 @@ definite answer with one input, and it is what `recommendations` surfaces as a n
 
 ## Relocation viability
 
-> **viability = eligibility × employability.** The binding constraint is always named.
+> **Viability is eligibility *and* employability, with the binding constraint named** (ADR-0022).
+>
+> *This line read `viability = eligibility × employability` until 2026-08-04. The `×` was shorthand
+> for "you need both", and reading it literally produced a question nobody could answer: eligibility
+> is categorical and employability is a band, and there is no multiplication between a category and
+> an interval. **No composite viability score is computed, stored, or rendered.***
 
 Eligibility comes from here. Employability comes from `ai/career-roadmap` — readiness, market demand,
 and the language level actually required for that sector. Presenting one without the other is

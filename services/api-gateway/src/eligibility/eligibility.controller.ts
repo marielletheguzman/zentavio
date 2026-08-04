@@ -31,6 +31,7 @@ import { CurrentSubject } from '../auth/current-subject.decorator.ts';
 import { DATABASE } from '../tokens.ts';
 import { RecordFactDto } from './dto/record-fact.dto.ts';
 import { EligibilityService } from './eligibility.service.ts';
+import { GapService } from '../gap/gap.service.ts';
 
 /** `YYYY-MM-DD`, and a real date — `2026-02-31` parses in JS and is not a day. */
 function parseIsoDate(raw: string): string | null {
@@ -43,10 +44,16 @@ function parseIsoDate(raw: string): string | null {
 @Controller('v1')
 export class EligibilityController {
   readonly #service: EligibilityService;
+  readonly #gap: GapService;
   readonly #db: Kysely<Database>;
 
-  constructor(service: EligibilityService, @Inject(DATABASE) db: Kysely<Database>) {
+  constructor(
+    service: EligibilityService,
+    gap: GapService,
+    @Inject(DATABASE) db: Kysely<Database>,
+  ) {
     this.#service = service;
+    this.#gap = gap;
     this.#db = db;
   }
 
@@ -57,20 +64,11 @@ export class EligibilityController {
     @Query('pathway') pathway?: string,
     @Query('asOf') asOf?: string,
   ): Promise<unknown> {
-    if (pathway === undefined || pathway === '') {
-      throw new BadRequestException('pathway is required, e.g. ?pathway=de.eu-blue-card');
-    }
+    // `asOf` is deliberately not defaulted to today: a verdict must state the date its rules were
+    // read as of, or it cannot be reproduced or explained later.
+    const date = this.#requireInputs(pathway, asOf);
 
-    if (asOf === undefined || asOf === '') {
-      // Deliberately not defaulted to today. A verdict must state the date its rules were read
-      // as of, or it cannot be reproduced or explained later.
-      throw new BadRequestException('asOf is required, as YYYY-MM-DD. A verdict without a date is not reproducible.');
-    }
-
-    const date = parseIsoDate(asOf);
-    if (date === null) throw new BadRequestException('asOf must be a real date, as YYYY-MM-DD');
-
-    const outcome = await this.#service.evaluate(subject.userId, pathway, date);
+    const outcome = await this.#service.evaluate(subject.userId, pathway ?? '', date);
 
     if (outcome.kind === 'unavailable') {
       throw new ServiceUnavailableException(
@@ -79,6 +77,57 @@ export class EligibilityController {
     }
 
     return outcome.verdict;
+  }
+
+  /**
+   * Viability — both axes, with the binding constraint named (ADR-0022).
+   *
+   * **No composite score is returned**, here or anywhere. The response is a pair plus the name of
+   * whichever axis currently stops this being a pathway worth pursuing.
+   */
+  @Get('viability')
+  @HttpCode(HttpStatus.OK)
+  async viability(
+    @CurrentSubject() subject: Subject,
+    @Query('pathway') pathway?: string,
+    @Query('asOf') asOf?: string,
+  ): Promise<unknown> {
+    const date = this.#requireInputs(pathway, asOf);
+
+    const gap = await this.#gap.currentGap(subject.userId);
+    if (gap.kind !== 'computed') {
+      // Answering from eligibility alone here would produce exactly the bare `met` ADR-0022 exists
+      // to stop, so the missing half is reported rather than papered over. Not a 503: the person
+      // has not chosen a track or has no profile, which are answers they can act on.
+      return { status: 'no-employability', reason: gap.kind };
+    }
+
+    const outcome = await this.#service.viability(subject.userId, pathway ?? '', date, gap.gap);
+
+    if (outcome.kind === 'unavailable') {
+      throw new ServiceUnavailableException(
+        'Viability cannot be assessed right now. No answer is better than a wrong one here.',
+      );
+    }
+
+    return outcome.viability;
+  }
+
+  /** Shared by both read routes, so they cannot drift on what they require. */
+  #requireInputs(pathway?: string, asOf?: string): string {
+    if (pathway === undefined || pathway === '') {
+      throw new BadRequestException('pathway is required, e.g. ?pathway=de.eu-blue-card');
+    }
+
+    if (asOf === undefined || asOf === '') {
+      throw new BadRequestException(
+        'asOf is required, as YYYY-MM-DD. A verdict without a date is not reproducible.',
+      );
+    }
+
+    const date = parseIsoDate(asOf);
+    if (date === null) throw new BadRequestException('asOf must be a real date, as YYYY-MM-DD');
+    return date;
   }
 
   /**

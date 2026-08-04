@@ -132,3 +132,74 @@ class TestHealth:
         body = client.get("/health/ready").json()
         assert body["status"] == "ok"
         assert body["dependencies"] == "none"
+
+
+VIABILITY_BODY = {
+    "pathway_id": "de.eu-blue-card",
+    "requirements": [THRESHOLD],
+    "facts": [
+        {
+            "key": "expected_gross_annual_salary_eur",
+            "value": {"amount": 60000, "currency": "EUR", "period": "year", "basis": "gross"},
+        }
+    ],
+    "as_of": "2026-06-01",
+    "employability": {
+        "status": "ok",
+        "score_low": 0.31,
+        "score_high": 0.44,
+        "missing_count": 7,
+        "as_of": "2026-06-01",
+    },
+}
+
+
+def viability(**overrides):
+    body = {**VIABILITY_BODY, **overrides}
+    return client.post("/viability", json=body)
+
+
+class TestViability:
+    def test_eligible_but_not_ready_binds_on_employability(self):
+        # The case ADR-0022 exists for. Before it, this returned a bare `met`.
+        body = viability().json()
+        assert body["eligibility"]["status"] == "met"
+        assert body["binding"] == "employability"
+        assert "7 skill(s)" in body["binding_reason"]
+
+    def test_there_is_no_score_field(self):
+        body = viability().json()
+        for forbidden in ("score", "viability_score", "composite", "rating"):
+            assert forbidden not in body
+
+    def test_the_band_survives_without_a_midpoint(self):
+        body = viability().json()
+        assert body["employability"]["score_low"] == 0.31
+        assert body["employability"]["score_high"] == 0.44
+
+    def test_an_unanswered_question_still_binds_on_eligibility(self):
+        body = viability(facts=[]).json()
+        assert body["binding"] == "eligibility"
+        assert "Nothing here says no" in body["binding_reason"]
+
+    def test_nothing_binds_when_both_axes_are_satisfied(self):
+        body = viability(
+            employability={
+                "status": "no_gap",
+                "score_low": 0.91,
+                "score_high": 0.94,
+                "as_of": "2026-06-01",
+            }
+        ).json()
+        assert body["binding"] == "none"
+
+    def test_two_dates_are_a_422_not_a_verdict(self):
+        # A caller mistake, not an eligibility outcome. Answering it would describe no moment.
+        assert (
+            viability(employability={"status": "no_gap", "as_of": "2025-01-01"}).status_code == 422
+        )
+
+    def test_every_response_carries_its_date_and_disclaimer(self):
+        body = viability().json()
+        assert body["as_of"] == "2026-06-01"
+        assert "not legal advice" in body["disclaimer"]

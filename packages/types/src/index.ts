@@ -60,6 +60,7 @@ export {
   aggregateStatus,
   firstBindingDomain,
   isEligibilityResponse,
+  isViabilityResponse,
   requiresRecognitionData,
   type EligibilityResponseWire,
   type EligibilityStatus,
@@ -73,6 +74,7 @@ export {
   type RequirementKind,
   type RequirementResult,
   type SourcedRequirement,
+  type ViabilityResponseWire,
 } from './requirement.ts';
 
 export {

@@ -11,7 +11,12 @@
  * user must be shown, not failures to retry.
  */
 
-import { isEligibilityResponse, type EligibilityResponseWire } from '@zentavio/types';
+import {
+  isEligibilityResponse,
+  isViabilityResponse,
+  type EligibilityResponseWire,
+  type ViabilityResponseWire,
+} from '@zentavio/types';
 
 export interface EvaluateRequestWire {
   readonly pathway_id: string | null;
@@ -21,8 +26,13 @@ export interface EvaluateRequestWire {
   readonly licence_gated: boolean;
 }
 
-export type EligibilityOutcome =
-  | { readonly kind: 'evaluated'; readonly response: EligibilityResponseWire }
+/** Viability adds the employability half. One call, so the two axes cannot disagree. */
+export interface ViabilityRequestWire extends EvaluateRequestWire {
+  readonly employability: Readonly<Record<string, unknown>>;
+}
+
+export type EligibilityOutcome<TResponse = EligibilityResponseWire> =
+  | { readonly kind: 'evaluated'; readonly response: TResponse }
   | {
       /** The service refused the request. Our defect, not the user's. */
       readonly kind: 'rejected';
@@ -56,13 +66,34 @@ export class EligibilityClient {
   }
 
   async evaluate(request: EvaluateRequestWire): Promise<EligibilityOutcome> {
+    return this.#post('/evaluate', request, isEligibilityResponse);
+  }
+
+  /**
+   * Both axes, paired, with the binding constraint named (ADR-0022).
+   *
+   * Deliberately **one call** rather than `/evaluate` followed by a compose: two calls would
+   * evaluate eligibility twice, and the second result could differ from the first if anything
+   * changed between them — a pair whose halves disagree about what was checked.
+   */
+  async viability(
+    request: ViabilityRequestWire,
+  ): Promise<EligibilityOutcome<ViabilityResponseWire>> {
+    return this.#post('/viability', request, isViabilityResponse);
+  }
+
+  async #post<TResponse>(
+    path: string,
+    request: EvaluateRequestWire,
+    isValid: (value: unknown) => value is TResponse,
+  ): Promise<EligibilityOutcome<TResponse>> {
     const controller = new AbortController();
     const timer = setTimeout(() => {
       controller.abort();
     }, this.#timeoutMs);
 
     try {
-      const response = await this.#fetch(`${this.#baseUrl}/evaluate`, {
+      const response = await this.#fetch(`${this.#baseUrl}${path}`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(request),
@@ -83,7 +114,7 @@ export class EligibilityClient {
       }
 
       const body: unknown = await response.json();
-      if (!isEligibilityResponse(body)) {
+      if (!isValid(body)) {
         // Shape drift is unavailable rather than rejected: the request was fine, the contract
         // moved. Rendering a partial verdict would be worse than saying we cannot answer.
         return {
