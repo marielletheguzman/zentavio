@@ -17,7 +17,7 @@ surfaces in `apps/web` render it. 11 tables, ~720 tests, CI blocking on `main`.
 | `services/api-gateway` | `matching`, `ingestion`, `notifications`, `billing` |
 | `ai/resume-parser`, `ai/skill-gap`, `ai/shared` | `career-roadmap`, `embeddings`, `interview-prep`, `learning-paths` |
 | `apps/web` — upload and gap | `apps/admin`, `apps/mobile` |
-| `knowledge-engine/` — seeded skill graph only | everything else under it, `connectors/` |
+| the seeded skill graph — in `packages/db/seeds/` and four tables, **not** `knowledge-engine/` (ADR-0020) | all of `knowledge-engine/`, `connectors/` |
 
 Not built at all: connectors, outcome recording, any deployed environment. ADR-0015's
 Supabase project is decided but not provisioned; ADR-0017's authentication is implemented
@@ -52,8 +52,9 @@ is there instead**, and is equally binding.
 
 ## Non-negotiable principles
 
-1. **Knowledge before generation.** AI services read from `knowledge-engine/`. They do not
-   invent facts about companies, salaries, visas, or job markets.
+1. **Knowledge before generation.** AI services reason over curated knowledge and do not invent
+   facts about companies, salaries, visas, or job markets. The path is `knowledge-engine/` curates →
+   `packages/db` stores → the gateway reads → `ai/` reasons (ADR-0020).
 2. **Explainability.** Every score, match, or recommendation carries the evidence that
    produced it. A number with no provenance is a bug.
 3. **Stateless AI layer.** `ai/` services own no persistent store. State lives in

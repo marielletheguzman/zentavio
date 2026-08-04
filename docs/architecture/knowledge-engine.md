@@ -20,11 +20,25 @@ densify, and outcomes turn described scores into predicted ones.
 A judgment persisted as a fact corrupts every answer downstream, because the next reasoning step
 cites it as truth. This is the most consequential rule in the layer.
 
+## Where it is stored
+
+**This layer curates; `packages/db` stores** (ADR-0020, Proposed). The tables are PostgreSQL because
+knowledge is queried per request — `skillGraph()` is a SQL query on the gap path, not a file read.
+What this layer owns is everything that decides whether a fact is fit to store: source tier,
+provenance, dating, conflict resolution, reconciliation, idempotent ingest.
+
+So "the only place structured truth lives" is a claim about **which facts are canonical**, not about
+which directory holds the bytes. The seeded skill graph is `packages/db/seeds/` and four tables
+today, and it is still knowledge — every row carries `source_tier`, `NOT NULL` and CHECK-constrained.
+
+The module table below is the curation surface. **None of it is built**; `knowledge-engine/` holds
+thirteen READMEs and no implementation.
+
 ## Modules
 
-| Module | Holds |
+| Module | Curates |
 |---|---|
-| `skills-graph` | skills and their typed, weighted relationships |
+| `skills-graph` | skills and their typed, weighted relationships — **seeded set already stored in `packages/db`** |
 | `companies` | company registry, aliases, size, locations, stack |
 | `immigration` | versioned, dated, tier-1 rules and the pathways composed of them |
 | `market-intel` | demand, salary bands, hiring difficulty, trends, by market |
