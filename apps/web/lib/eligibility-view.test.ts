@@ -1,7 +1,12 @@
 import type { EligibilityResponseWire } from '@zentavio/types';
 import { describe, expect, it } from 'vitest';
 
-import { toEligibilityView, toFactValue } from './eligibility-view.ts';
+import {
+  toEligibilityView,
+  toFactValue,
+  toViabilityView,
+  type ViabilityWire,
+} from './eligibility-view.ts';
 
 function verdict(overrides: Partial<EligibilityResponseWire> = {}): EligibilityResponseWire {
   return {
@@ -185,5 +190,79 @@ describe('toFactValue', () => {
 
   it('passes a unitless answer through as text', () => {
     expect(toFactValue('k', ' B2 ', null)).toEqual({ ok: true, value: 'B2' });
+  });
+});
+
+describe('the headline is driven by the binding constraint, not the verdict', () => {
+  function wire(overrides: Partial<ViabilityWire> = {}): ViabilityWire {
+    return {
+      binding: 'employability',
+      binding_reason: 'You meet the requirements, and 27 skill(s) still stand between you and the work.',
+      eligibility: verdict({ status: 'met', needs_from_user: [] }),
+      employability: { score_low: 0.129, score_high: 0.164, missing_count: 27 },
+      as_of: '2026-06-01',
+      disclaimer: 'Sourced official information, not legal advice.',
+      ...overrides,
+    };
+  }
+
+  it('does not say "you meet the requirements" when readiness is what binds', () => {
+    // The exact misleading output ADR-0022 removed: `met` at 13% readiness and `met` at 91% are
+    // the same verdict and completely different situations.
+    const view = toViabilityView(wire());
+    if (view.kind !== 'viability') return;
+
+    expect(view.eligibility.status).toBe('met');
+    expect(view.headline).toBe('You qualify — the gap is readiness, not the rules');
+    expect(view.headline).not.toContain('meet the requirements we can check');
+  });
+
+  it('says it is worth pursuing only when nothing binds', () => {
+    const view = toViabilityView(
+      wire({ binding: 'none', employability: { score_low: 0.91, score_high: 0.94, missing_count: 0 } }),
+    );
+    if (view.kind !== 'viability') return;
+    expect(view.headline).toBe('This looks worth pursuing');
+  });
+
+  it('gives recognition and unsourced coverage different sentences', () => {
+    // One is about the person's profession, the other about our gaps. Collapsing them tells a
+    // nurse we have no rules when what we mean is her licence may not transfer.
+    const recognition = toViabilityView(wire({ binding: 'recognition' }));
+    const unmodelled = toViabilityView(wire({ binding: 'unmodelled' }));
+    if (recognition.kind !== 'viability' || unmodelled.kind !== 'viability') return;
+
+    expect(recognition.headline).not.toBe(unmodelled.headline);
+    expect(recognition.headline).toContain('recognition');
+  });
+
+  it('carries the band as a range, never a single figure', () => {
+    const view = toViabilityView(wire());
+    if (view.kind !== 'viability') return;
+
+    expect(view.readiness).toEqual({ low: 13, high: 16, missing: 27 });
+  });
+
+  it('has no readiness when it could not be scored', () => {
+    const view = toViabilityView(
+      wire({ employability: { score_low: null, score_high: null, missing_count: 0 } }),
+    );
+    if (view.kind !== 'viability') return;
+    expect(view.readiness).toBeNull();
+  });
+
+  it('still offers the resolving question when eligibility binds', () => {
+    const view = toViabilityView(wire({ binding: 'eligibility', eligibility: verdict() }));
+    if (view.kind !== 'viability') return;
+
+    expect(view.binding).toBe('eligibility');
+    expect(view.questions.map((q) => q.key)).toEqual(['expected_gross_annual_salary_eur']);
+  });
+
+  it('carries the date and the disclaimer', () => {
+    const view = toViabilityView(wire());
+    if (view.kind !== 'viability') return;
+    expect(view.asOf).toBe('2026-06-01');
+    expect(view.disclaimer).toContain('not legal advice');
   });
 });

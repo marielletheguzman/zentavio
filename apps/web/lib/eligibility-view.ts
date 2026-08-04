@@ -177,3 +177,114 @@ export function toFactValue(
     value: { amount, currency, period, basis: 'gross' },
   };
 }
+
+/**
+ * The viability half (ADR-0022).
+ *
+ * **The headline is driven by the binding constraint, not by the eligibility status.** That is the
+ * whole point: `met` with 13% readiness and `met` with 91% readiness are the same eligibility
+ * verdict and completely different situations, and leading with "you meet the requirements" for
+ * both is the misleading output the ADR was written to remove.
+ */
+
+export type BindingConstraint =
+  | 'eligibility'
+  | 'employability'
+  | 'recognition'
+  | 'unmodelled'
+  | 'none';
+
+export interface ReadinessView {
+  /** The band, as a percentage range. Never a single figure — the width is the point. */
+  readonly low: number;
+  readonly high: number;
+  /** How many requirements still stand between the person and the work. */
+  readonly missing: number;
+}
+
+export type ViabilityViewState =
+  | { readonly kind: 'idle' }
+  | { readonly kind: 'loading' }
+  | { readonly kind: 'error'; readonly message: string; readonly retryable: boolean }
+  /**
+   * Readiness could not be computed, so no pair exists. Deliberately its own state rather than
+   * falling back to eligibility alone — that fallback is exactly what ADR-0022 removed.
+   */
+  | { readonly kind: 'no-employability'; readonly reason: string }
+  | {
+      readonly kind: 'viability';
+      readonly headline: string;
+      /** What currently stops this being worth pursuing, in the service's own words. */
+      readonly bindingReason: string;
+      readonly binding: BindingConstraint;
+      readonly eligibility: EligibilityViewState & { readonly kind: 'verdict' };
+      /** Absent when readiness could not be scored. */
+      readonly readiness: ReadinessView | null;
+      readonly questions: readonly AnswerableQuestion[];
+      readonly asOf: string;
+      readonly disclaimer: string;
+    };
+
+/**
+ * The headline for each binding constraint.
+ *
+ * Every one of these is a different sentence on purpose. Collapsing them would put the reader back
+ * where they started: unable to tell "we have not asked you something" from "you are not ready"
+ * from "we have no rules for this".
+ */
+function headlineForBinding(binding: BindingConstraint): string {
+  switch (binding) {
+    case 'none':
+      return 'This looks worth pursuing';
+    case 'employability':
+      // Not "you are not eligible" and not "you are unqualified". The requirements are met; the
+      // distance is to the work itself.
+      return 'You qualify — the gap is readiness, not the rules';
+    case 'eligibility':
+      return 'The rules are what stand in the way right now';
+    case 'recognition':
+      return 'We cannot answer this without your profession’s recognition rules';
+    default:
+      return 'We have not sourced the rules for this route yet';
+  }
+}
+
+export interface ViabilityWire {
+  readonly binding: BindingConstraint;
+  readonly binding_reason: string;
+  readonly eligibility: EligibilityResponseWire;
+  readonly employability: {
+    readonly score_low: number | null;
+    readonly score_high: number | null;
+    readonly missing_count: number;
+  };
+  readonly as_of: string;
+  readonly disclaimer: string;
+}
+
+export function toViabilityView(
+  wire: ViabilityWire,
+  prompts: PromptLookup = {},
+): ViabilityViewState {
+  const eligibility = toEligibilityView(wire.eligibility, prompts);
+  // `toEligibilityView` only ever returns a verdict; the narrowing keeps the union honest.
+  if (eligibility.kind !== 'verdict') return { kind: 'error', message: 'Unreadable verdict.', retryable: false };
+
+  const { score_low: low, score_high: high, missing_count: missing } = wire.employability;
+
+  return {
+    kind: 'viability',
+    headline: headlineForBinding(wire.binding),
+    bindingReason: wire.binding_reason,
+    binding: wire.binding,
+    eligibility,
+    readiness:
+      low === null || high === null
+        ? null
+        : { low: Math.round(low * 100), high: Math.round(high * 100), missing },
+    // Questions still come from the eligibility half — those are the inputs that move a verdict.
+    questions: eligibility.questions,
+    asOf: wire.as_of,
+    disclaimer: wire.disclaimer,
+  };
+}

@@ -18,10 +18,10 @@
 import { useId, useState } from 'react';
 
 import {
-  toEligibilityView,
   toFactValue,
-  type EligibilityViewState,
+  toViabilityView,
   type PromptLookup,
+  type ViabilityViewState,
 } from '../../lib/eligibility-view.ts';
 
 /**
@@ -62,7 +62,7 @@ export function EligibilityPanel({
    */
   today: string;
 }) {
-  const [state, setState] = useState<EligibilityViewState>({ kind: 'idle' });
+  const [state, setState] = useState<ViabilityViewState>({ kind: 'idle' });
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [note, setNote] = useState<string | null>(null);
   const [asOf, setAsOf] = useState(today);
@@ -72,8 +72,10 @@ export function EligibilityPanel({
     setState({ kind: 'loading' });
     setNote(null);
     try {
+      // `/v1/viability`, not `/v1/eligibility`. Eligibility alone renders "you meet the
+      // requirements" to someone who is 13% ready, which is the output ADR-0022 removed.
       const response = await fetch(
-        `${gatewayUrl}/v1/eligibility?pathway=${encodeURIComponent(pathway)}&asOf=${encodeURIComponent(date)}`,
+        `${gatewayUrl}/v1/viability?pathway=${encodeURIComponent(pathway)}&asOf=${encodeURIComponent(date)}`,
         { headers: devAuthHeader(devUserId) },
       );
 
@@ -91,7 +93,16 @@ export function EligibilityPanel({
         return;
       }
 
-      setState(toEligibilityView(await response.json(), FALLBACK_PROMPTS));
+      const body = await response.json();
+
+      // No readiness half means no pair. Shown as its own state rather than falling back to
+      // eligibility alone — that fallback is the thing ADR-0022 exists to prevent.
+      if (body.status === 'no-employability') {
+        setState({ kind: 'no-employability', reason: String(body.reason) });
+        return;
+      }
+
+      setState(toViabilityView(body, FALLBACK_PROMPTS));
     } catch {
       setState({
         kind: 'error',
@@ -169,10 +180,42 @@ export function EligibilityPanel({
         </div>
       )}
 
-      {state.kind === 'verdict' && (
+      {state.kind === 'no-employability' && (
+        <div>
+          <h3>We can check the rules, but not your readiness yet</h3>
+          <p>
+            Whether this is worth pursuing depends on both. Upload a résumé and choose a track, and
+            this will show you which of the two is actually in your way.
+          </p>
+        </div>
+      )}
+
+      {state.kind === 'viability' && (
         <div>
           <h3>{state.headline}</h3>
-          <p>{state.explanation}</p>
+          {/* The service's own sentence. Not reworded here — the reasoning belongs to the layer
+              that did the reasoning. */}
+          <p>{state.bindingReason}</p>
+
+          <h4>Where you stand</h4>
+          <dl>
+            <dt>The rules</dt>
+            <dd>{state.eligibility.headline}</dd>
+
+            <dt>Your readiness</dt>
+            <dd>
+              {state.readiness === null ? (
+                'Not enough on file to say yet.'
+              ) : (
+                <>
+                  {/* A range, never one number. The width is how much rests on what you have told
+                      us rather than what we can see. */}
+                  between {state.readiness.low}% and {state.readiness.high}%
+                  {state.readiness.missing > 0 && ` — ${String(state.readiness.missing)} skill(s) still missing`}
+                </>
+              )}
+            </dd>
+          </dl>
 
           {state.questions.length > 0 && (
             <div>
@@ -197,11 +240,11 @@ export function EligibilityPanel({
 
           {note !== null && <p role="status">{note}</p>}
 
-          {state.blockers.length > 0 && (
+          {state.eligibility.blockers.length > 0 && (
             <div>
               <h4>What blocks this</h4>
               <ul>
-                {state.blockers.map((blocker) => (
+                {state.eligibility.blockers.map((blocker) => (
                   <li key={blocker}>{blocker}</li>
                 ))}
               </ul>
@@ -210,7 +253,7 @@ export function EligibilityPanel({
 
           <h4>Every rule we checked</h4>
           <ul>
-            {state.requirements.map((requirement) => (
+            {state.eligibility.requirements.map((requirement) => (
               <li key={requirement.requirementId}>
                 <strong>{requirement.label}</strong> — {requirement.requirementId}
                 {requirement.detail !== null && <p>{requirement.detail}</p>}
@@ -224,16 +267,16 @@ export function EligibilityPanel({
             ))}
           </ul>
 
-          {state.notes.length > 0 && (
+          {state.eligibility.notes.length > 0 && (
             <ul>
-              {state.notes.map((noteText) => (
+              {state.eligibility.notes.map((noteText) => (
                 <li key={noteText}>{noteText}</li>
               ))}
             </ul>
           )}
 
           <p>
-            As of {state.asOf}. Confidence: {state.confidence}.
+            As of {state.asOf}. Confidence: {state.eligibility.confidence}.
           </p>
           {/* Verbatim. Never reworded, never shortened — it is what keeps this information
               rather than advice. */}
