@@ -64,6 +64,20 @@ duration of the statement and trips `uq_req__current` inside the transaction.
 `dryRun` returns the same report having written nothing, so an operator can see whether a
 supersession is about to fire before it does.
 
+## Annually bounded rules never supersede
+
+Worth knowing before reading the supersede path and assuming it runs. The Bundesanzeiger
+announcement is explicitly *for one calendar year*, so `normalize` sets `effective_to` to
+31 December — **these rows are born closed.** Nothing is ever `effective_to IS NULL`, so
+supersession does not fire for this source: each year is simply another row.
+
+That is the honest model, and it has a consequence. `uq_req__current` is partial on
+`effective_to IS NULL`, so **it enforces nothing for annually bounded rules.** What keeps exactly one
+rule applicable on a given date is that the year ranges do not overlap, and no constraint checks
+that. An open-ended rule from a future source would use the supersede path and be protected; these
+are not. Closing that would mean a `daterange` exclusion constraint, which is a schema decision
+rather than something to add quietly.
+
 ## Still missing
 
 No scheduler. `de.eu-blue-card` is seeded by `pnpm seed` (`packages/db/src/immigration-pathways.ts`)
