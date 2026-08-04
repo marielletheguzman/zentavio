@@ -228,17 +228,36 @@ class TestPrivacy:
     def test_no_committed_fixture_contains_anything_resembling_a_real_resume(self) -> None:
         # `docs/development/testing.md`: fixtures are synthetic, never a real person's résumé. This
         # is the check that a helpful "let me just drop my own CV in" never survives review.
+        #
+        # **PDFs are extracted, not read as bytes.** A PDF's text lives in compressed streams, so
+        # reading one as UTF-8 inspects nothing — which meant a CV committed as a PDF, the most
+        # likely format for one, bypassed this check entirely. The TypeScript mirror
+        # (`tests/unit/invariants/m1a-invariants.test.ts`) still skips binaries and says so; this
+        # side closes the gap because ADR-0016's extractor lives here.
         fixture_root = Path(__file__).resolve().parents[3] / "tests" / "fixtures"
         email = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+")
+        reserved = (".invalid", ".example", "example.com", "example.invalid")
 
         for path in fixture_root.rglob("*"):
             if not path.is_file():
                 continue
-            text = path.read_text(encoding="utf-8", errors="ignore")
+
+            if path.suffix.lower() == ".pdf":
+                try:
+                    text = extract(path.read_bytes(), "application/pdf").text
+                except UnsupportedDocumentError:  # pragma: no cover - a fixture we cannot read
+                    # Deliberately a failure, not a skip: an unreadable binary fixture is exactly
+                    # where a CV could hide from this check.
+                    pytest.fail(
+                        f"{path.name} is a PDF this suite cannot extract, so it cannot be vetted"
+                    )
+            else:
+                text = path.read_text(encoding="utf-8", errors="ignore")
+
             for address in email.findall(text):
-                assert address.endswith(
-                    (".invalid", ".example", "example.com", "example.invalid")
-                ), f"{path.name} contains {address}, which is not a reserved test domain"
+                assert address.endswith(reserved), (
+                    f"{path.name} contains {address}, which is not a reserved test domain"
+                )
 
 
 class TestNormalizationParity:

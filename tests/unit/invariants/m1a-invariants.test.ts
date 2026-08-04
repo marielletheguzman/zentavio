@@ -171,9 +171,10 @@ describe('privacy — no résumé text in any committed fixture', () => {
     // have caught a CV committed as a PDF *even before* the skip. What it did do was backtrack for
     // 38 seconds on the archived Bundesanzeiger PDF's long alphanumeric runs.
     //
-    // **A binary fixture is therefore not covered by this guard.** Adding one means reviewing it
-    // by eye, or extracting its text first — `ai/resume-parser` already has the extractor for that
-    // (ADR-0016), which is the shape a stronger version of this check would take.
+    // **PDFs are covered by the Python mirror instead**, which extracts their text first
+    // (`ai/resume-parser/tests/test_invariants.py`, ADR-0016) — verified by committing a PDF whose
+    // page text held a real-looking address and watching it fail. Other binaries — images,
+    // archives, fonts — are covered by neither and need review by eye.
     const BINARY = /\.(pdf|docx?|png|jpe?g|gif|zip|woff2?)$/i;
 
     const scan = (dir: string): string[] =>
