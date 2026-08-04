@@ -6,22 +6,38 @@ viability — using structured knowledge rather than keyword matching.
 
 ## Current state
 
-**M1 is built and runs end to end.** A résumé uploads, becomes a versioned profile with a
-verbatim source span on every claim, is correctable, and can be compared against a career
-track to produce a dependency-ordered gap and a readiness score with its remainder. Two
-surfaces in `apps/web` render it. 11 tables, ~720 tests, CI blocking on `main`.
+**M1 is complete. M2's verification passed; M2 itself is not finished.**
+
+M1: a résumé uploads, becomes a versioned profile with a verbatim source span on every claim, is
+correctable, and can be compared against a career track to produce a dependency-ordered gap and a
+readiness score with its remainder.
+
+M2 so far: a real German statutory source (`BAnz AT 18.12.2025 B3`) is ingested through a connector,
+planned, executed, and stored as versioned tier-1 `requirements`; the gateway evaluates them against
+a person's facts through `ai/career-roadmap`; and the browser shows `undetermined` with the one input
+that resolves it, then `met` once answered — **browser-verified 2026-08-04**.
+
+**What M2 still lacks** is in `docs/roadmap/milestones.md` and matters before calling it done:
+**viability** (eligibility × employability — only eligibility exists, so visa-eligible-and-
+unemployable is not caught), the rest of § 18g beyond the two salary thresholds, outcome recording
+(ADR-0019), and archived provenance (ADR-0021 phases 2–6).
+
+13 tables, ~780 tests, CI blocking on `main`.
 
 | Built | Still a placeholder |
 |---|---|
 | `packages/db`, `config`, `types`, `auth` | `logger`, `events`, `i18n`, `ui` |
-| `services/api-gateway` | `matching`, `ingestion`, `notifications`, `billing` |
-| `ai/resume-parser`, `ai/skill-gap`, `ai/shared` | `career-roadmap`, `embeddings`, `interview-prep`, `learning-paths` |
-| `apps/web` — upload and gap | `apps/admin`, `apps/mobile` |
-| the seeded skill graph — in `packages/db/seeds/` and four tables, **not** `knowledge-engine/` (ADR-0020) | all of `knowledge-engine/`, `connectors/` |
+| `services/api-gateway`, `services/ingestion` — requirement ingest only | `matching`, `notifications`, `billing`; ingestion's job-listing and scheduling half |
+| `ai/resume-parser`, `ai/skill-gap`, `ai/shared`, `ai/career-roadmap` — eligibility only | `embeddings`, `interview-prep`, `learning-paths`; career-roadmap's readiness and viability half |
+| `apps/web` — upload, gap, eligibility | `apps/admin`, `apps/mobile` |
+| `connectors/core`, `connectors/immigration-data/de-bundesanzeiger` | every other connector, all of `knowledge-engine/` |
+| the seeded skill graph — in `packages/db/seeds/` and four tables, **not** `knowledge-engine/` (ADR-0020) | |
 
-Not built at all: connectors, outcome recording, any deployed environment. ADR-0015's
+Not built at all: outcome recording, object storage, any deployed environment. ADR-0015's
 Supabase project is decided but not provisioned; ADR-0017's authentication is implemented
-but needs a provider, so the dev header is a stand-in refused in production.
+but needs a provider, so the dev header is a stand-in refused in production; ADR-0021 is
+Accepted but only its decision exists, so every ingested rule carries `source_document: null`
+and a warning.
 
 **This section was wrong for several milestones** — it claimed there was no application
 code while the above existed. If you find it disagreeing with the tree again, the tree

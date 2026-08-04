@@ -244,6 +244,28 @@ resolve it — and supplying it produces a definite answer.
 
 That is the milestone's real test. A product that only works on complete profiles does not work.
 
+**The verification passed in a browser on 2026-08-04** (`90dae86`, PR #68). `/eligibility` returned
+`undetermined` naming `expected_gross_annual_salary_eur`; entering 60 000 and re-checking returned
+`met` with the basis *"60000 against a threshold of at least 50700"*, the deciding authority, the
+effective date, and a link to the source. CORS worked — which only a browser can prove, and which
+M1c shipped without while every server-side check passed.
+
+The path is real end to end: `BAnz AT 18.12.2025 B3` → `connectors/immigration-data/de-bundesanzeiger`
+→ `planIngest` → `executePlan` → `requirements` → gateway → `ai/career-roadmap` → browser.
+
+**Not yet met, and this milestone is not complete without it:**
+
+- **Viability.** The line above says *"viability with the binding constraint named"*, and viability
+  is **eligibility × employability** (`docs/architecture/immigration.md`). Only eligibility is
+  built. The evaluator names the binding *domain* within eligibility, but nothing yet joins
+  readiness and market demand, so **visa-eligible and unemployable at the threshold salary is not
+  caught** — which that document calls misleading in a way that costs people money.
+- **Coverage is every requirement *ingested*, not every statutory requirement.** Two salary
+  thresholds are on file. § 18g's ISCO-08 groups, qualification rules, and six-month employment
+  duration are not, so "every rule we checked" is currently two rules.
+- **Outcome recording** (ADR-0019) and **archived provenance** (ADR-0021, phases 2–6) are both
+  scoped to M2 and unbuilt.
+
 ---
 
 ## M3 — Adding a country costs no code
