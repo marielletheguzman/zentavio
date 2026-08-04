@@ -66,11 +66,22 @@ comes from the document's own *"für das Jahr NNNN"*, **not** from the publicati
 rates were published in December 2025, so keying off publication would be wrong by one year, every
 year.
 
-## Known gap
+## What gets archived: the PDF, not the extraction
 
-`sourceDocument` is `null` because object storage is not provisioned. This is a real gap rather than
-a formality: the Bundesanzeiger URL carries an opaque token, so it is not a durable citation for a
-number people plan a relocation around. `validate` emits a warning for every row until that lands.
+`archivable()` returns the **published PDF** (ADR-0021), and this matters more here than for any
+other source in the repository.
+
+The extraction is exactly where this source's known defect lives — the font map splits digit runs,
+turning `50 700` into `700`. Archive only the extracted text and nobody auditing the archive can
+tell whether the *publisher* or the *parser* produced a wrong number. Archive the PDF and the
+question is answerable: the extraction can be redone from the evidence.
+
+The fixture keeps the PDF as a **binary file** beside the JSON rather than base64 inside it. Base64
+inflates it by a third, and when it was tried the fixture privacy scan took 38 seconds backtracking
+over one long alphanumeric run.
+
+A payload captured before the PDF was carried falls back to the extracted text and reports
+`isOriginal: false` — an honest weaker answer rather than a claimed original it does not hold.
 
 ## Related
 

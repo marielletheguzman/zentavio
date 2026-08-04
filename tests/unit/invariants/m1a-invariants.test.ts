@@ -166,12 +166,22 @@ describe('privacy — no résumé text in any committed fixture', () => {
     const emails = /[\w.+-]+@[\w-]+\.[\w.]+/g;
     const root = fileURLToPath(new URL('../../fixtures/', import.meta.url));
 
+    // Binary fixtures are skipped, and it is worth being precise about what that costs. Read as
+    // UTF-8 they are noise, and a PDF's text lives in compressed streams — so this scan would not
+    // have caught a CV committed as a PDF *even before* the skip. What it did do was backtrack for
+    // 38 seconds on the archived Bundesanzeiger PDF's long alphanumeric runs.
+    //
+    // **A binary fixture is therefore not covered by this guard.** Adding one means reviewing it
+    // by eye, or extracting its text first — `ai/resume-parser` already has the extractor for that
+    // (ADR-0016), which is the shape a stronger version of this check would take.
+    const BINARY = /\.(pdf|docx?|png|jpe?g|gif|zip|woff2?)$/i;
+
     const scan = (dir: string): string[] =>
-      readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
-        entry.isDirectory()
-          ? scan(join(dir, entry.name))
-          : [readFileSync(join(dir, entry.name), 'utf8')],
-      );
+      readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+        if (entry.isDirectory()) return scan(join(dir, entry.name));
+        if (BINARY.test(entry.name)) return [];
+        return [readFileSync(join(dir, entry.name), 'utf8')];
+      });
 
     for (const contents of scan(root)) {
       for (const address of contents.match(emails) ?? []) {

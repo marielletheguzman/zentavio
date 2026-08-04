@@ -13,14 +13,24 @@ import { healNumericSpacing, parseBekanntmachung, parseGermanDecimal } from './p
  * defects. `normalize` is tested against this fixture and never against the live source
  * (`docs/architecture/connectors.md`, "Adding a source", step 3).
  */
-const FIXTURE = JSON.parse(
-  readFileSync(
-    fileURLToPath(
-      new URL('../../../../tests/fixtures/connectors/de-bundesanzeiger/banz-at-18-12-2025-b3.json', import.meta.url),
-    ),
-    'utf8',
+const FIXTURE_DIR = new URL(
+  '../../../../tests/fixtures/connectors/de-bundesanzeiger/',
+  import.meta.url,
+);
+
+/**
+ * The real 2026 announcement: its metadata and extracted text as JSON, and **the published PDF as
+ * a binary file beside it**. The PDF is not embedded — base64 inflates it by a third and, tried
+ * once, made the fixture privacy scan take 38 seconds on one long alphanumeric run.
+ */
+const FIXTURE: BekanntmachungRaw = {
+  ...(JSON.parse(
+    readFileSync(fileURLToPath(new URL('banz-at-18-12-2025-b3.json', FIXTURE_DIR)), 'utf8'),
+  ) as BekanntmachungRaw),
+  document: new Uint8Array(
+    readFileSync(fileURLToPath(new URL('banz-at-18-12-2025-b3.pdf', FIXTURE_DIR))),
   ),
-) as BekanntmachungRaw;
+};
 
 function connector() {
   return new BundesanzeigerConnector({
@@ -240,5 +250,42 @@ describe('healthCheck', () => {
     });
 
     expect(await failing.healthCheck()).toMatchObject({ state: 'unreachable' });
+  });
+});
+
+describe('what gets archived (ADR-0021)', () => {
+  it('archives the published PDF, not the extraction', async () => {
+    // This matters more here than anywhere else: the extraction is exactly where this source's
+    // known defect lives. Archiving only the text leaves nobody able to tell whether the
+    // publisher or the parser produced a wrong number.
+    const source = connector().archivable?.(FIXTURE);
+
+    expect(source?.isOriginal).toBe(true);
+    expect(source?.contentType).toBe('application/pdf');
+    expect(source?.extension).toBe('pdf');
+  });
+
+  it('archives the actual PDF bytes', async () => {
+    const source = connector().archivable?.(FIXTURE);
+
+    // %PDF- — the file magic. Base64 that decoded to something else would be silently wrong.
+    expect(new TextDecoder().decode(source!.bytes.slice(0, 5))).toBe('%PDF-');
+    expect(source!.bytes.byteLength).toBeGreaterThan(100_000);
+  });
+
+  it('files it under the year the amounts apply to', async () => {
+    // Not the publication year. The 2026 rates were published in December 2025.
+    expect(connector().archivable?.(FIXTURE)?.year).toBe(2026);
+  });
+
+  it('falls back to the extraction when a payload predates the PDF, and says so', async () => {
+    // Reporting `isOriginal: false` is the honest answer — better than claiming an original the
+    // payload does not hold.
+    const withoutPdf: BekanntmachungRaw = { ...FIXTURE };
+    delete (withoutPdf as { document?: Uint8Array }).document;
+    const source = connector().archivable?.(withoutPdf);
+
+    expect(source?.isOriginal).toBe(false);
+    expect(source?.extension).toBe('txt');
   });
 });
