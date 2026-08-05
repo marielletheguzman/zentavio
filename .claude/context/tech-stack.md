@@ -19,9 +19,10 @@
 - **Next.js** (App Router) — `apps/web`, `apps/admin`
 - **React** + **TypeScript** (strict)
 - **Tailwind CSS** — approved for styling, **not yet installed**. `apps/web` styles with plain CSS
-  against the tokens below, and `packages/ui` ships no shadcn components, because shadcn needs
-  Tailwind and adding it is still a decision nobody has written down. Being listed here permits it;
-  it does not mean it is there.
+  against the tokens below, and `packages/ui` ships no shadcn components. **ADR-0023 is drafted
+  `Proposed`** and recommends Tailwind v4 with `packages/ui/src/tokens.css` as its `@theme` source;
+  until it is Accepted, nothing installs and no component primitive is written. Being listed here
+  permits it; it does not mean it is there.
 - **packages/ui** — the design-token layer (`src/tokens.css`): spacing, type, radii, both themes.
   Extend it; do not fork tokens or primitives per app. Component primitives arrive with Tailwind.
 

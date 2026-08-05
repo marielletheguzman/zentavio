@@ -19,6 +19,10 @@ nothing new enters the stack without an ADR. So this package ships the half that
 dependency, and the component library waits for that decision rather than arriving through a
 `pnpm add` nobody wrote down.
 
+That ADR now exists as a draft: **[ADR-0023](../../docs/architecture/decisions/0023-tailwind-css-adoption.md),
+status `Proposed`** — Tailwind v4 with this file as its `@theme` source, shadcn vendored on top.
+**Nothing installs until it is Accepted**, and the second-export rule below still holds.
+
 Until then `apps/web/app/globals.css` holds the layout rules, built from these tokens.
 
 ## The two rules the tokens exist to enforce
