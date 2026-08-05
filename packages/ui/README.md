@@ -19,6 +19,17 @@ nothing new enters the stack without an ADR. So this package ships the half that
 dependency, and the component library waits for that decision rather than arriving through a
 `pnpm add` nobody wrote down.
 
+That ADR now exists and is **Accepted**:
+**[ADR-0023](../../docs/architecture/decisions/0023-tailwind-css-adoption.md)** — Tailwind v4 with
+this file as its `@theme` source, Tailwind's own scales disabled rather than extended, and **these
+tokens canonical over the utilities generated from them**. A design value that is not here has no
+utility class.
+
+**It authorises the install; it did not perform it.** Nothing is installed, no component exists, and
+the second-export rule below still holds — it is spent by phase 4, not before. **shadcn itself is
+not approved**: the ADR approves the vendoring pattern, and each component and each transitive
+dependency (Radix, `cva`, `clsx`, `tailwind-merge`) is reviewed in the PR that first needs it.
+
 Until then `apps/web/app/globals.css` holds the layout rules, built from these tokens.
 
 ## The two rules the tokens exist to enforce
