@@ -105,37 +105,44 @@ export function GapPanel({ gatewayUrl, devUserId }: { gatewayUrl: string; devUse
     <section aria-labelledby="gap-heading">
       <h2 id="gap-heading">How far am I?</h2>
 
-      <form onSubmit={chooseTarget}>
-        <label htmlFor={trackId}>Track</label>
-        <input id={trackId} name="slug" defaultValue="cloud-platform-engineer" required />
+      <form className="card" onSubmit={chooseTarget}>
+        <div className="controls">
+          <div>
+            <label htmlFor={trackId}>Track</label>
+            <input id={trackId} name="slug" defaultValue="cloud-platform-engineer" required />
+          </div>
 
-        <label htmlFor={marketId}>Market (optional)</label>
-        <input
-          id={marketId}
-          name="market"
-          placeholder="DE"
-          pattern="[A-Z]{2}"
-          // Not a display preference. A different market is a different requirement set — German is
-          // real for a Berlin role and absent for remote-worldwide.
-          aria-describedby={`${marketId}-hint`}
-        />
-        <p id={`${marketId}-hint`}>
+          <div>
+            <label htmlFor={marketId}>Market (optional)</label>
+            <input
+              id={marketId}
+              name="market"
+              placeholder="DE"
+              pattern="[A-Z]{2}"
+              // Not a display preference. A different market is a different requirement set — German
+              // is real for a Berlin role and absent for remote-worldwide.
+              aria-describedby={`${marketId}-hint`}
+            />
+          </div>
+
+          <button type="submit" disabled={choosing}>
+            {choosing ? 'Setting…' : 'Compare'}
+          </button>
+        </div>
+
+        <p className="hint" id={`${marketId}-hint`}>
           Leave blank to compare against the global requirements. A market changes which
           requirements apply, not just how they are shown.
         </p>
-
-        <button type="submit" disabled={choosing}>
-          {choosing ? 'Setting…' : 'Compare'}
-        </button>
       </form>
 
       {/* Announced politely so a screen reader hears the outcome without losing the user's place. */}
-      <p role="status" aria-live="polite">
+      <p className="hint" role="status" aria-live="polite">
         {note}
       </p>
 
       {state === null ? (
-        <p>Pick a track to see what stands between you and it.</p>
+        <p className="hint">Pick a track to see what stands between you and it.</p>
       ) : (
         <GapBody state={state} onRetry={loadGap} />
       )}
@@ -146,21 +153,19 @@ export function GapPanel({ gatewayUrl, devUserId }: { gatewayUrl: string; devUse
 function GapBody({ state, onRetry }: { state: GapViewState; onRetry: () => void }) {
   switch (state.kind) {
     case 'loading':
-      // A skeleton matching the final layout rather than a spinner in a void.
+      // A skeleton matching the final layout rather than a spinner in a void: the readiness block
+      // and then the ordered steps, at the height they will occupy.
       return (
-        <ul aria-busy="true" aria-label="Computing your gap">
+        <ul className="skeleton" aria-busy="true" aria-label="Computing your gap">
           {[0, 1, 2].map((row) => (
-            <li key={row} aria-hidden="true">
-              <span>█████████</span>
-              <span>████</span>
-            </li>
+            <li className="skeleton-row" key={row} aria-hidden="true" />
           ))}
         </ul>
       );
 
     case 'error':
       return (
-        <div role="alert">
+        <div className="card notice notice-error" role="alert">
           <p>{state.message}</p>
           {state.retryable ? (
             <button type="button" onClick={onRetry}>
@@ -171,13 +176,15 @@ function GapBody({ state, onRetry }: { state: GapViewState; onRetry: () => void 
       );
 
     case 'no-target':
-      return <p>{state.reason}</p>;
+      return <p className="hint">{state.reason}</p>;
 
     case 'no-profile':
       return (
-        <div>
+        <div className="card">
           <p>{state.reason}</p>
-          <a href="/">Upload a résumé</a>
+          <p>
+            <a href="/">Upload a résumé</a>
+          </p>
         </div>
       );
 
@@ -185,10 +192,10 @@ function GapBody({ state, onRetry }: { state: GapViewState; onRetry: () => void 
       // Named, never a generic empty gap. A person deciding what to spend six months learning
       // deserves "we have not modelled this" over a plausible-looking empty list.
       return (
-        <div>
+        <div className="card unknown">
           <p>{state.reason}</p>
           {state.missing.length > 0 ? (
-            <ul>
+            <ul className="notes">
               {state.missing.map((entry) => (
                 <li key={entry}>{entry}</li>
               ))}
@@ -199,7 +206,7 @@ function GapBody({ state, onRetry }: { state: GapViewState; onRetry: () => void 
 
     case 'no-gap':
       return (
-        <div>
+        <div className="card">
           <p>{state.reason}</p>
           <p>
             Checked against {state.held.length} skill{state.held.length === 1 ? '' : 's'} on your
@@ -210,11 +217,11 @@ function GapBody({ state, onRetry }: { state: GapViewState; onRetry: () => void 
 
     case 'gap':
       return (
-        <div>
+        <div className="card">
           <ReadinessBlock readiness={state.readiness} />
 
           <p>{state.summary}</p>
-          <p>
+          <p className="hint">
             <ConfidenceNote confidence={state.confidence} />
           </p>
 
@@ -231,15 +238,13 @@ function GapBody({ state, onRetry }: { state: GapViewState; onRetry: () => void 
             </details>
           ) : null}
 
-          <ol>
+          <ol className="steps">
             {state.items.map((item) => (
               <GapRow key={item.skillId} item={item} />
             ))}
           </ol>
 
-          <p>
-            <small>Computed by {state.scorerVersion}.</small>
-          </p>
+          <p className="provenance">Computed by {state.scorerVersion}.</p>
         </div>
       );
   }
@@ -255,8 +260,8 @@ function ReadinessBlock({ readiness }: { readiness: ReadinessView }) {
           {/* The number and its remainder in one breath. A readiness score without what is still
               missing is a vanity metric (`.claude/context/career-philosophy.md`), so the two are
               never separated by a layout that could hide one. */}
-          <p>
-            <strong>{readiness.percent}%</strong> of what this track asks for,{' '}
+          <p className="axis-value">
+            <strong className="numeric">{readiness.percent}%</strong> of what this track asks for,{' '}
             <ConfidenceNote confidence={readiness.confidence} />.
           </p>
 
@@ -304,15 +309,11 @@ function ReadinessBlock({ readiness }: { readiness: ReadinessView }) {
       {/* Never an invented timeline. `career-philosophy.md`: optimistic timelines are the most
           damaging thing a career platform can produce, because people reorganise their lives
           around them. */}
-      <p>
-        <small>{readiness.timeBasis}</small>
-      </p>
+      <p className="hint">{readiness.timeBasis}</p>
 
       {/* The assumption behind the number, stated where the number is. A penalty nobody can see
           is a hidden penalty, whatever the module comment says. */}
-      <p>
-        <small>{readiness.assumption}</small>
-      </p>
+      <p className="hint">{readiness.assumption}</p>
 
       {readiness.caveats.length > 0 ? (
         <details>
@@ -325,9 +326,7 @@ function ReadinessBlock({ readiness }: { readiness: ReadinessView }) {
         </details>
       ) : null}
 
-      <p>
-        <small>Scored by {readiness.scorerVersion}.</small>
-      </p>
+      <p className="provenance">Scored by {readiness.scorerVersion}.</p>
     </section>
   );
 }
@@ -339,7 +338,7 @@ function ConfidenceNote({ confidence }: { confidence: { level: string; label: st
 
 function GapRow({ item }: { item: GapItemView }) {
   return (
-    <li>
+    <li className="step">
       <h3>
         {item.position}. {item.label}
       </h3>

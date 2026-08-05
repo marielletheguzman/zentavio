@@ -30,6 +30,13 @@ export default function GapPage() {
       </p>
 
       <GapPanel gatewayUrl={GATEWAY_URL} devUserId={SEEDED_TEST_USER} />
+
+      {/* Every page ends in a next action (`.claude/context/ui-guidelines.md`). Closing a gap and
+          being allowed to work somewhere are different questions, and this is where the second one
+          becomes the obvious thing to ask. */}
+      <nav className="next-action">
+        <a href="/eligibility">Check whether you could work in Germany</a>
+      </nav>
     </main>
   );
 }

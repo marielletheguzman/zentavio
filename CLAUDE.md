@@ -28,18 +28,18 @@ estimated; the previous figure here was a recollection and was wrong by ~150). C
 
 | Built | Still a placeholder |
 |---|---|
-| `packages/db`, `config`, `types`, `auth` | `logger`, `events`, `i18n`, `ui` |
+| `packages/db`, `config`, `types`, `auth`, `storage`; `ui` — design tokens only | `logger`, `events`, `i18n`; `ui`'s component primitives, which need Tailwind and so need an ADR |
 | `services/api-gateway`, `services/ingestion` — requirement ingest only | `matching`, `notifications`, `billing`; ingestion's job-listing and scheduling half |
 | `ai/resume-parser`, `ai/skill-gap`, `ai/shared`, `ai/career-roadmap` — eligibility only | `embeddings`, `interview-prep`, `learning-paths`; career-roadmap's readiness and viability half |
 | `apps/web` — upload, gap, eligibility | `apps/admin`, `apps/mobile` |
 | `connectors/core`, `connectors/immigration-data/de-bundesanzeiger` | every other connector, all of `knowledge-engine/` |
 | the seeded skill graph — in `packages/db/seeds/` and four tables, **not** `knowledge-engine/` (ADR-0020) | |
 
-Not built at all: outcome recording, object storage, any deployed environment. ADR-0015's
-Supabase project is decided but not provisioned; ADR-0017's authentication is implemented
-but needs a provider, so the dev header is a stand-in refused in production; ADR-0021 is
-Accepted but only its decision exists, so every ingested rule carries `source_document: null`
-and a warning.
+Not built at all: outcome recording, any deployed environment. ADR-0015's Supabase project is
+decided but not provisioned; ADR-0017's authentication is implemented but needs a provider, so the
+dev header is a stand-in refused in production; ADR-0021 is implemented against MinIO and enforced
+— a rule whose source could not be archived is rejected — but its production bucket (Cloudflare R2)
+is not provisioned yet.
 
 **This section was wrong for several milestones** — it claimed there was no application
 code while the above existed. If you find it disagreeing with the tree again, the tree

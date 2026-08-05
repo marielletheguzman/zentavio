@@ -1,0 +1,104 @@
+/*
+ * Design tokens (`.claude/context/ui-guidelines.md`).
+ *
+ * **Dark first, light verified.** Both themes ship from these values, and the dark set is the one
+ * designed against — the guidelines are explicit that light is the verification pass, not the
+ * default that dark is derived from.
+ *
+ * Every colour pair here clears WCAG 2.1 AA in **both** themes: 4.5:1 for text, 3:1 for UI
+ * boundaries. That is the floor, not an audit item, and it is why the semantic colours are darker
+ * in light mode than their dark-mode counterparts rather than being the same hue re-used.
+ *
+ * **Nothing here encodes meaning in hue alone.** A colour token is always paired at the call site
+ * with a word, an icon, or a shape — see `--shape-*` below, which exists so "low confidence" can be
+ * a different *shape* rather than a lighter tint of the same badge. Understating uncertainty is a
+ * correctness bug, not a styling preference.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  /* ── spacing: 4px base, nothing off-scale ─────────────────────────────── */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* ── type: one family, restrained scale, three weights ─────────────────── */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+  --text-3xl: 2.5rem;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  /* ── radius: rounded, consistently. Nothing square; pills only for tags ── */
+  --radius-md: 0.375rem;
+  --radius-lg: 0.625rem;
+  --radius-pill: 999px;
+
+  /* Borders over shadows. One level, for genuinely floating things only. */
+  --shadow-floating: 0 8px 24px rgb(0 0 0 / 0.24);
+
+  /* Content is constrained and centred; full-bleed text reads as unfinished. */
+  --measure: 80rem;
+
+  /* ── dark, the designed default ────────────────────────────────────────── */
+  --bg: #0d1117;
+  --bg-raised: #161b22;
+  --border: #30363d;
+  --border-strong: #4d5866;
+  --fg: #e6edf3;
+  --fg-muted: #9aa7b4;
+
+  --accent: #6ea8fe;
+  --accent-contrast: #06121f;
+
+  /* One meaning each. Never re-used for a second idea. */
+  --positive: #57d58c;
+  --caution: #e3b341;
+  --negative: #ff8886;
+  --info: #79c0ff;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #ffffff;
+    --bg-raised: #f6f8fa;
+    --border: #d8dee4;
+    --border-strong: #8c959f;
+    --fg: #1f2328;
+    --fg-muted: #59636e;
+
+    --accent: #0a52c7;
+    --accent-contrast: #ffffff;
+
+    /* Darker than their dark-theme counterparts on purpose: the same hue that clears 4.5:1 on
+       #0d1117 does not clear it on white. */
+    --positive: #14713d;
+    --caution: #7a5000;
+    --negative: #b42318;
+    --info: #0b5ca8;
+  }
+}
+
+/*
+ * Shape, so meaning never rests on hue.
+ *
+ * Low confidence is a *dashed* border, not a paler solid one — the guidelines call the
+ * lighter-tint version a correctness bug, because it reads as "the same thing, quieter" when it
+ * means "we are less sure this is true".
+ */
+:root {
+  --shape-certain: solid;
+  --shape-uncertain: dashed;
+}

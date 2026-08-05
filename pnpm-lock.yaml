@@ -50,6 +50,9 @@ importers:
       '@zentavio/types':
         specifier: workspace:*
         version: link:../../packages/types
+      '@zentavio/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       next:
         specifier: 15.5.4
         version: 15.5.4(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -127,6 +130,8 @@ importers:
         version: link:../config
 
   packages/types: {}
+
+  packages/ui: {}
 
   services/api-gateway:
     dependencies:
