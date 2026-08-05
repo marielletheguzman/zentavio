@@ -126,7 +126,7 @@ review** — the two are separable, which is the point of listing this separatel
 
 **Option C.** Adopt **Tailwind CSS v4** as the single styling mechanism, with
 `packages/ui/src/tokens.css` as its **theme source via `@theme`**, and vendor shadcn components into
-`packages/ui` on top of it.
+`packages/ui` on top of it — one at a time, under the boundary stated below.
 
 The deciding argument is **where the design rules end up living**. The two rules that carry this
 product's credibility — confidence is a shape not a tint, and nothing is off-scale — are today
@@ -139,12 +139,46 @@ enforcement in `services/ingestion` rather than in a comment.
 no stock palette, no stock spacing scale, no stock type scale. If `bg-red-500` resolves to anything,
 the configuration is wrong and the compliance check below fails.
 
-**shadcn is approved as a source of vendored components, not as a blanket dependency approval.**
-Each component's transitive dependencies — Radix packages in particular — are reviewed when that
-component lands. A component whose Radix primitive is rejected falls back to Option D for that one
-component.
+### Ownership hierarchy
 
-**This ADR does not install anything.** It authorises the follow-up work below.
+**Design tokens remain the canonical design system. Tailwind is an implementation layer generated
+from those tokens.**
+
+Changes to colour, spacing, typography, radii, shadow, sizing, or any other design primitive
+**originate in `packages/ui/src/tokens.css`**. Tailwind configuration and utility classes must never
+become the authoritative source for a design decision — a utility exists because a token exists, and
+never the other way round.
+
+Three consequences follow, and they are the binding part of this ADR:
+
+- **A design value that is not in `tokens.css` has no utility class.** Adding one via a Tailwind
+  config override is a defect, not a shortcut, because it puts a design value outside the file
+  `.claude/context/ui-guidelines.md` points at.
+- **Tailwind is replaceable; the tokens are not.** If this decision is reversed, `tokens.css`
+  survives unchanged — which is the property the rollback section depends on.
+- **`@theme` exposes tokens, it does not define them.** The block contains mappings, not values.
+
+### What accepting this ADR does and does not approve
+
+**Approved by acceptance:**
+
+- Tailwind CSS v4 enters the stack as the **single** styling mechanism.
+- `packages/ui/src/tokens.css` is its `@theme` source, with Tailwind's own scales disabled.
+- The phase 1–3 work below — install, `@theme`, lint rule, surface migration.
+
+**Not approved by acceptance, and each needs its own review:**
+
+- **shadcn.** Acceptance approves the *vendoring pattern* — components copied into
+  `packages/ui/src/components/` as ordinary reviewable code — and nothing more. **No component is
+  approved, and no component may be vendored, until a PR proposes that specific one.**
+- **Radix, `class-variance-authority`, `clsx`, `tailwind-merge`,** or any other package a component
+  pulls in. Each is approved in the PR that first needs it. A component whose Radix primitive is
+  rejected falls back to **Option D** for that one component, and Option D remains a standing
+  position rather than a discarded alternative.
+- **Any installation at all.** This ADR installs nothing; it authorises the follow-up work below.
+
+**Tailwind adoption and component-library adoption are therefore separable decisions**, and this one
+settles only the first. Rejecting shadcn later does not reopen Tailwind.
 
 ## Consequences
 
@@ -300,6 +334,10 @@ own deciding argument.
   makes "the tokens are upstream" true rather than intended.
 - **`@theme` appears in exactly one file.** A grep across `apps/` and `packages/` finds it only in
   `packages/ui/src/tokens.css`; a second occurrence is a forked design system.
+- **No design value lives in Tailwind configuration.** There is no `tailwind.config.*` defining a
+  colour, length, radius, or shadow anywhere in the tree — a grep finds none. This is the check that
+  makes the ownership hierarchy enforceable rather than stated: a value outside `tokens.css` means
+  the implementation layer has started owning design decisions.
 - **No hardcoded colour or off-scale length in `apps/*`.** The existing rule from the design pass —
   *nothing hardcodes a colour or an off-scale length* — becomes a lint rule rather than a README
   sentence.
