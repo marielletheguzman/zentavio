@@ -1,6 +1,7 @@
 # ADR-0023: Tailwind CSS v4, with `packages/ui/src/tokens.css` as its theme source
 
-- **Status:** Proposed
+- **Status:** Accepted
+- **Accepted:** 2026-08-05
 - **Date:** 2026-08-05
 - **Deciders:** project lead
 - **Affects:** `packages/ui`, `apps/web`, `apps/admin`, `apps/mobile`,
@@ -142,7 +143,12 @@ the configuration is wrong and the compliance check below fails.
 ### Ownership hierarchy
 
 **Design tokens remain the canonical design system. Tailwind is an implementation layer generated
-from those tokens.**
+from those tokens.** The dependency direction is one-way:
+
+1. **`packages/ui/src/tokens.css`** — the canonical design system.
+2. **Tailwind** consumes those tokens through `@theme`.
+3. **Component libraries**, shadcn included, consume Tailwind and the tokens.
+4. **No layer may redefine the layer above it.**
 
 Changes to colour, spacing, typography, radii, shadow, sizing, or any other design primitive
 **originate in `packages/ui/src/tokens.css`**. Tailwind configuration and utility classes must never

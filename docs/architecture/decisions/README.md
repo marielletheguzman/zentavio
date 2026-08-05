@@ -36,7 +36,7 @@ already ruled out and how the rule is enforced.
 | [0020](0020-knowledge-substrate-location.md) | Structured knowledge lives in `packages/db`; `knowledge-engine/` curates it | Accepted | 2026-08-03 |
 | [0021](0021-object-storage.md) | Source documents in S3-compatible object storage (R2), behind a port | Accepted | 2026-08-04 |
 | [0022](0022-viability-composition.md) | Viability is two axes with the binding constraint named, not a single score | Accepted | 2026-08-04 |
-| [0023](0023-tailwind-css-adoption.md) | Tailwind CSS v4, with `packages/ui/src/tokens.css` as its theme source | Proposed | 2026-08-05 |
+| [0023](0023-tailwind-css-adoption.md) | Tailwind CSS v4, with `packages/ui/src/tokens.css` as its theme source | Accepted | 2026-08-05 |
 
 **0010 is Accepted, and the rename is done** — `immigration_rules` is now `requirements`, with `domain`,
 `imposed_by`, and `authority`. Regulated professions remain blocked on **data**, not schema: nursing,
