@@ -161,6 +161,9 @@ export class EligibilityService {
         kind: rule.kind,
         evaluation: rule.evaluation,
         value: rule.value,
+        // Carried, never interpreted. The evaluator reads `route` out of this (ADR-0024); the
+        // gateway must not branch on one, or route semantics end up in two places.
+        applies_to: rule.applies_to,
         needs_input: rule.needs_input,
         authority: rule.authority,
         source_url: rule.source_url,

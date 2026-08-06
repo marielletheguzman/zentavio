@@ -141,7 +141,13 @@ export class AufenthgConnector implements Connector<StatuteRaw, readonly Sourced
         ...base,
         requirementId: 'de.eu-blue-card.employment-duration',
         kind: 'condition',
-        value: { months: parsed.minimumEmploymentMonths },
+        // `{ amount, unit }`, matching the monetary shape, because the evaluator compares
+        // `value.amount` and refuses anything it cannot read as a number. Written as
+        // `{ months: n }` this rule parsed, stored, and then evaluated `undetermined` forever —
+        // a rule that is on file and can never be satisfied.
+        value: { amount: parsed.minimumEmploymentMonths, unit: 'months' },
+        // No route: § 18g Abs. 3 governs every way in, and a rule with no route is pathway-wide
+        // (ADR-0024 rule 2).
         appliesTo: {},
         domainDetail: { legalBasis: 'AufenthG § 18g Abs. 3' },
         evaluation: 'numeric-gte',
@@ -155,7 +161,12 @@ export class AufenthgConnector implements Connector<StatuteRaw, readonly Sourced
         requirementId: 'de.eu-blue-card.qualification',
         kind: 'eligibility',
         value: true,
-        appliesTo: { route: 'AufenthG § 18g Abs. 1 S. 1' },
+        // **Pathway-wide, and only correct while Abs. 2 is unmodelled.** Abs. 1 S. 2 incorporates
+        // this condition by reference — *"Fachkräften mit akademischer Ausbildung"* — so it governs
+        // both Abs. 1 routes. Abs. 2 is the route that does **not** require it, and the day that
+        // route is added this row must become route-scoped, or it will wrongly demand a degree of
+        // the one population the provision exists to admit without one.
+        appliesTo: {},
         domainDetail: {
           legalBasis: 'AufenthG § 18g Abs. 1 S. 1',
           // Named rather than modelled: § 18g Abs. 2 admits some occupations without a degree, and
@@ -173,10 +184,11 @@ export class AufenthgConnector implements Connector<StatuteRaw, readonly Sourced
         ...base,
         requirementId: 'de.eu-blue-card.reduced-threshold-occupations',
         // Not a hurdle — a route that *lowers* the salary threshold. `kind: 'right'` says so, and
-        // the evaluator must never treat it as something a person can fail.
+        // the evaluator must never treat it as something a person can fail: it **gates its own
+        // route** and never blocks the pathway, because `abs1-s1` remains open (ADR-0024 rule 6).
         kind: 'right',
         value: parsed.reducedThresholdIscoGroups,
-        appliesTo: { grants: 'de.eu-blue-card.salary-threshold.reduced' },
+        appliesTo: { route: 'abs1-s2' },
         domainDetail: { legalBasis: 'AufenthG § 18g Abs. 1 S. 2' },
         evaluation: 'set-member',
         needsInput: ['isco_08_group'],
@@ -210,7 +222,7 @@ export class AufenthgConnector implements Connector<StatuteRaw, readonly Sourced
 
     for (const row of normalized) {
       if (row.requirementId === 'de.eu-blue-card.employment-duration') {
-        const months = (row.value as { months: number }).months;
+        const months = (row.value as { amount: number }).amount;
         // A plausibility floor, in the shape the Bundesanzeiger connector taught: a number that
         // parses is not a number that is right.
         if (!(months >= 1 && months <= 60)) {

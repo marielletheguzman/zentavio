@@ -17,6 +17,16 @@ Three rules carry most of the value:
    undetermined even when everything else is met — it never rounds toward the friendlier answer.
 3. Every ``undetermined`` names the input that would resolve it. That is ``needs_from_user``, and
    it is what converts a dead end into a next action.
+
+**Routes (ADR-0024).** A pathway may offer more than one way in, and a rule may belong to one of
+them. A requirement declaring ``applies_to.route`` belongs to that route; one declaring none is
+pathway-wide and belongs to every route. The pathway is satisfied when **any** route is, and the
+verdict names the route it used. A route the person cannot use is ``not_applicable`` — not a
+failure, and never reported as one.
+
+**Route ids are opaque.** They arrive in the data and mean nothing here. This module must never
+construct one, infer one, or branch on a particular value — that is what keeps the evaluator
+generic, and an AST test enforces it.
 """
 
 from __future__ import annotations
@@ -25,7 +35,13 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Any, Literal
 
-Result = Literal["met", "not_met", "undetermined"]
+#: What a comparison against a person's facts can conclude. Shared by every level that aggregates.
+Decided = Literal["met", "not_met", "undetermined"]
+#: A requirement's result. ``not_applicable`` belongs to a rule on a route this person cannot use —
+#: not a failure, and never rendered as one (ADR-0024).
+Result = Literal["met", "not_met", "undetermined", "not_applicable"]
+#: A pathway's status. ``unknown`` is pathway-only: nothing on file, or a licence-gated profession
+#: with no recognition rule. It never means "no route is open" — that is ``not_met``.
 Status = Literal["met", "not_met", "undetermined", "unknown"]
 
 #: Emitted verbatim on every verdict. Never reworded, never shortened, never omitted
@@ -67,6 +83,20 @@ class Requirement:
     refresh_after: date | None = None
     contested: bool = False
     contested_note: str | None = None
+    #: Occupation lists, qualification levels — and ``route``, which is the only key this module
+    #: reads. Everything else here is carried for the caller's benefit and ignored.
+    applies_to: dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def route(self) -> str | None:
+        """The route this rule belongs to, or ``None`` when it is pathway-wide.
+
+        A non-string or empty value is treated as absent rather than as an error: a malformed
+        ``applies_to`` should make a rule pathway-wide, which is the conservative reading, not make
+        the whole pathway unevaluable.
+        """
+        value = self.applies_to.get("route")
+        return value if isinstance(value, str) and value != "" else None
 
 
 @dataclass(frozen=True)
@@ -93,6 +123,26 @@ class EvaluatedRequirement:
 
 
 @dataclass(frozen=True)
+class RouteOutcome:
+    """One way into a pathway, and how far this person gets along it.
+
+    ``not_applicable`` is the state that earns this type. A person holding a degree has no use for
+    Germany's experience route, and telling them they *failed* it would be false — they were never
+    on it. That distinction cannot survive in a single aggregate, which is why routes are reported
+    individually as well as aggregated.
+    """
+
+    route: str
+    status: Result
+    blockers: tuple[str, ...]
+    needs_from_user: tuple[str, ...]
+    #: Every requirement considered for this route, pathway-wide rules included.
+    requirement_ids: tuple[str, ...]
+    #: Why the route is closed, when it is. ``None`` whenever it is open.
+    reason: str | None = None
+
+
+@dataclass(frozen=True)
 class Verdict:
     pathway_id: str | None
     status: Status
@@ -104,6 +154,11 @@ class Verdict:
     as_of: str
     disclaimer: str = DISCLAIMER
     notes: tuple[str, ...] = field(default_factory=tuple)
+    #: The route this verdict is about: the one that is met, else the nearest open one. ``None``
+    #: for a pathway whose rules declare no routes, which is every pathway until one does.
+    route: str | None = None
+    #: Every route, including the ones that do not apply. Empty when the pathway has no routes.
+    routes: tuple[RouteOutcome, ...] = field(default_factory=tuple)
 
 
 def applicable_on(requirement: Requirement, as_of: date) -> bool:
@@ -148,7 +203,9 @@ def _units_match(requirement_value: Any, fact_value: Any) -> bool:
     """
     if not isinstance(requirement_value, dict) or not isinstance(fact_value, dict):
         return True
-    for key in ("currency", "period", "basis"):
+    # `unit` covers the non-monetary thresholds — months of contract, years of experience. It is
+    # here for the same reason `currency` is: 6 months against 6 years is a confident wrong answer.
+    for key in ("currency", "period", "basis", "unit"):
         expected, actual = requirement_value.get(key), fact_value.get(key)
         if expected is not None and actual is not None and expected != actual:
             return False
@@ -344,20 +401,105 @@ def evaluate_pathway(
             ),
         )
 
-    # A `right` is a benefit the statute grants, not a hurdle — Germany's reduced Blue Card salary
-    # threshold for certain ISCO groups is one. It can only ever *lower* the bar, so an unanswered
-    # one must not block a verdict: doing so rejects exactly the people the provision is being
-    # generous to, and asks a question whose answer could not have hurt them.
-    #
-    # Rights are still evaluated and still reported. They simply do not dominate.
-    deciding = tuple(
-        pair[0] for pair in zip(evaluated, applicable, strict=True) if pair[1].kind != "right"
+    pairs = tuple(zip(evaluated, applicable, strict=True))
+
+    if not any(req.route is not None for _, req in pairs):
+        # No rule declares a route, so the pathway has exactly one implicit way in — itself. This
+        # branch is today's behaviour, unchanged, and a test asserts it stays identical (ADR-0024
+        # rule 2). It is also what makes the whole change additive: stored rows keep working.
+        return _verdict(
+            pathway_id, pairs, _aggregate(pairs), by_key=by_key, as_of=as_of, notes=notes
+        )
+
+    outcomes = _route_outcomes(pairs)
+    reported = _reported_route(outcomes)
+
+    # A rule belonging only to a closed route is reported as `not_applicable` rather than as
+    # whatever it evaluated to. Telling someone they "failed" the €45 934,20 threshold on a route
+    # their occupation never opened is false, and it is the exact confusion ADR-0024 rule 3 exists
+    # to prevent. The gating right keeps its own result — that is *why* the route is closed.
+    closed = {o.route for o in outcomes if o.status == "not_applicable"}
+    open_routes = {o.route for o in outcomes if o.status != "not_applicable"}
+    evaluated = tuple(
+        _as_not_applicable(result, req.route)
+        if req.route is not None
+        and req.route in closed
+        and req.route not in open_routes
+        and req.kind != "right"
+        else result
+        for result, req in pairs
     )
 
-    # `undetermined` dominates among the deciding rules: one unknown makes the whole verdict
-    # undetermined, even when everything else is met. It never rounds toward the friendlier answer.
+    if any(o.status == "met" for o in outcomes):
+        status: Status = "met"
+    elif any(o.status == "undetermined" for o in outcomes):
+        status = "undetermined"
+    else:
+        # Every route is closed or failed. `not_met` either way: "no way in is open to you" is an
+        # answer about this person, and `unknown` would say we have no data, which is not true.
+        status = "not_met"
+
+    if all(o.status == "not_applicable" for o in outcomes):
+        notes.append("no route into this pathway is open on the facts on file")
+
+    binding = next(
+        (
+            result.domain
+            for result, req in pairs
+            if result.result not in ("met", "not_applicable")
+            and (req.route is None or reported is None or req.route == reported.route)
+        ),
+        None,
+    )
+
+    return Verdict(
+        pathway_id=pathway_id,
+        status=status,
+        requirements=evaluated,
+        blockers=() if status == "met" else (reported.blockers if reported else ()),
+        needs_from_user=reported.needs_from_user if reported else (),
+        binding_domain=None if status == "met" else binding,
+        confidence=_confidence(evaluated, by_key),
+        as_of=as_of.isoformat(),
+        notes=tuple(notes),
+        route=reported.route if reported else None,
+        routes=outcomes,
+    )
+
+
+def _as_not_applicable(result: EvaluatedRequirement, route: str | None) -> EvaluatedRequirement:
+    return EvaluatedRequirement(
+        requirement_id=result.requirement_id,
+        domain=result.domain,
+        imposed_by=result.imposed_by,
+        result="not_applicable",
+        authority=result.authority,
+        source_url=result.source_url,
+        effective_from=result.effective_from,
+        reason=f"belongs to route {route!r}, which is not open on the facts on file",
+    )
+
+
+_Pairs = tuple[tuple[EvaluatedRequirement, Requirement], ...]
+
+
+def _aggregate(pairs: _Pairs) -> tuple[Decided, tuple[str, ...], tuple[str, ...]]:
+    """Aggregate one set of rules: the status, the blockers, and the inputs that would move it.
+
+    Used for a whole routeless pathway and for one route, because they are the same computation —
+    a route *is* a pathway's rules narrowed to one way in.
+
+    A `right` is a benefit the statute grants, not a hurdle. Within this set it does not decide:
+    Germany's reduced-threshold occupation list can only ever lower the bar, and letting an
+    unanswered one block would reject exactly the people the provision is generous to. Whether the
+    right *opens* this route is decided by the caller, before this runs.
+    """
+    deciding = tuple(result for result, req in pairs if req.kind != "right")
+
+    # `undetermined` dominates: one unknown makes the whole thing undetermined even when everything
+    # else is met. It never rounds toward the friendlier answer.
     if any(r.result == "undetermined" for r in deciding):
-        status: Status = "undetermined"
+        status: Decided = "undetermined"
     elif any(r.result == "not_met" for r in deciding):
         status = "not_met"
     else:
@@ -365,18 +507,120 @@ def evaluate_pathway(
 
     blockers = tuple(r.requirement_id for r in deciding if r.result == "not_met")
 
-    # Ordered by the domain pass, and de-duplicated while keeping first appearance — so the input
-    # that unblocks the earliest-blocking domain is named first.
-    # Only what would actually resolve the verdict. A right's input is optional by construction —
-    # listing it as "needed" would promise that answering it changes the outcome.
+    # Ordered by the domain pass and de-duplicated keeping first appearance, so the input that
+    # unblocks the earliest-blocking domain is named first. Only what would actually resolve the
+    # verdict: a right's input is optional by construction, and listing it as "needed" would
+    # promise that answering it changes the outcome.
     needs: list[str] = []
-    for req in deciding:
-        for key in req.needs_input:
+    for result in deciding:
+        for key in result.needs_input:
             if key not in needs:
                 needs.append(key)
 
+    return status, blockers, tuple(needs)
+
+
+def _route_outcomes(pairs: _Pairs) -> tuple[RouteOutcome, ...]:
+    """Evaluate every route the data declares.
+
+    Route ids are discovered from the rules and sorted, never constructed here (ADR-0024 rule 10).
+    Sorted so two identical inputs produce one ordering — a verdict that reorders between calls is
+    not reproducible, and reproducibility is the whole reason `as_of` is required.
+    """
+    shared = tuple(pair for pair in pairs if pair[1].route is None)
+    route_ids = sorted({req.route for _, req in pairs if req.route is not None})
+
+    outcomes: list[RouteOutcome] = []
+    for route_id in route_ids:
+        members = tuple(pair for pair in pairs if pair[1].route == route_id) + shared
+        gates = tuple(
+            result for result, req in members if req.kind == "right" and req.route == route_id
+        )
+
+        # A right gates the route it belongs to (ADR-0024 rule 6, amended during implementation).
+        # It opens this way in; it never blocks the pathway, because another route may carry it.
+        if any(g.result == "not_met" for g in gates):
+            closed_by = next(g for g in gates if g.result == "not_met")
+            outcomes.append(
+                RouteOutcome(
+                    route=route_id,
+                    status="not_applicable",
+                    blockers=(),
+                    needs_from_user=(),
+                    requirement_ids=tuple(result.requirement_id for result, _ in members),
+                    reason=f"{closed_by.requirement_id} does not apply to this person",
+                )
+            )
+            continue
+
+        status, blockers, needs = _aggregate(members)
+        # An unanswered gate leaves the route open but unproven — undetermined, never met. Its
+        # input is worth asking for here, unlike a right inside an already-open route, because
+        # answering it is what decides whether this way in exists at all.
+        gate_needs = tuple(
+            key for g in gates if g.result == "undetermined" for key in g.needs_input
+        )
+        if gate_needs:
+            status = "undetermined"
+            needs = tuple(dict.fromkeys((*needs, *gate_needs)))
+
+        outcomes.append(
+            RouteOutcome(
+                route=route_id,
+                status=status,
+                blockers=blockers,
+                needs_from_user=needs,
+                requirement_ids=tuple(result.requirement_id for result, _ in members),
+            )
+        )
+
+    return tuple(outcomes)
+
+
+def _reported_route(outcomes: tuple[RouteOutcome, ...]) -> RouteOutcome | None:
+    """The route the verdict is about.
+
+    A met route if there is one. Otherwise the **nearest open route** — the undetermined one asking
+    for the fewest further answers (ADR-0024 rule 5). The others are still reported in full; this
+    only decides which one's questions the product puts first, because the union of every route's
+    questions is a form nobody finishes.
+
+    Ties break on route id so the choice is stable across identical calls.
+    """
+    met = [o for o in outcomes if o.status == "met"]
+    if met:
+        return min(met, key=lambda o: o.route)
+
+    open_routes = [o for o in outcomes if o.status == "undetermined"]
+    if open_routes:
+        return min(open_routes, key=lambda o: (len(o.needs_from_user), o.route))
+
+    failed = [o for o in outcomes if o.status == "not_met"]
+    if failed:
+        return min(failed, key=lambda o: (len(o.blockers), o.route))
+
+    return None
+
+
+def _verdict(
+    pathway_id: str | None,
+    pairs: _Pairs,
+    aggregate: tuple[Decided, tuple[str, ...], tuple[str, ...]],
+    *,
+    by_key: dict[str, PersonFact],
+    as_of: date,
+    notes: list[str],
+) -> Verdict:
+    """The routeless verdict.
+
+    One implicit way in, which is every pathway until one of them declares a route.
+    """
+    status, blockers, needs = aggregate
+    evaluated = tuple(result for result, _ in pairs)
+    # Rights are excluded here exactly as they were before routes existed: a benefit nobody claimed
+    # is not what binds a verdict.
     binding = next(
-        (r.domain for r in deciding if r.result != "met"),
+        (result.domain for result, req in pairs if req.kind != "right" and result.result != "met"),
         None,
     )
 
@@ -385,7 +629,7 @@ def evaluate_pathway(
         status=status,
         requirements=evaluated,
         blockers=blockers,
-        needs_from_user=tuple(needs),
+        needs_from_user=needs,
         binding_domain=binding,
         confidence=_confidence(evaluated, by_key),
         as_of=as_of.isoformat(),

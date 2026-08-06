@@ -82,7 +82,9 @@ const CATEGORY_BY_PERCENT: ReadonlyMap<number, { readonly suffix: string; readon
       {
         suffix: 'general',
         legalBasis: 'AufenthG § 18g Abs. 1 S. 1',
-        appliesTo: { category: 'general' },
+        // `route` is the join key the evaluator reads (ADR-0024). It is an opaque, stable id — not
+        // the citation, which stays in `domainDetail.legalBasis` where it can be reworded freely.
+        appliesTo: { route: 'abs1-s1' },
       },
     ],
     [
@@ -92,7 +94,12 @@ const CATEGORY_BY_PERCENT: ReadonlyMap<number, { readonly suffix: string; readon
         legalBasis: 'AufenthG § 18g Abs. 1 S. 2, § 18g Abs. 2',
         // The ISCO-08 groups and the recent-graduate window live in the statute, not in this
         // announcement. Naming them here would be this connector inventing them.
-        appliesTo: { category: 'reduced', groupsDefinedIn: 'AufenthG § 18g' },
+        //
+        // **One announcement, one figure, two routes.** § 18g Abs. 1 S. 2 and Abs. 2 share the
+        // 45,3 % minimum but are different ways in, and a row carries one route. This row is
+        // `abs1-s2`; the Abs. 2 route needs its own row when that provision is modelled, because
+        // the two can diverge the moment BMI announces different figures for them.
+        appliesTo: { route: 'abs1-s2', groupsDefinedIn: 'AufenthG § 18g' },
       },
     ],
   ]);

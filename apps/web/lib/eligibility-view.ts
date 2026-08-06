@@ -27,7 +27,14 @@ export interface AnswerableQuestion {
 
 export interface RequirementView {
   readonly requirementId: string;
-  readonly result: 'met' | 'not_met' | 'undetermined';
+  /**
+   * `not_applicable` is a rule on a route this person cannot use (ADR-0024).
+   *
+   * It must never be styled as a failure. Someone holding a degree was never on Germany's
+   * experience route, and rendering "not met" against a rule that never applied to them is a false
+   * statement about them, not a cosmetic issue.
+   */
+  readonly result: 'met' | 'not_met' | 'undetermined' | 'not_applicable';
   /** What the screen says about it. Never a bare status word. */
   readonly label: string;
   readonly detail: string | null;
@@ -65,6 +72,10 @@ function requirementLabel(requirement: EvaluatedRequirementWire): string {
       return 'Met';
     case 'not_met':
       return 'Not met';
+    case 'not_applicable':
+      // Not a failure and not a gap. This rule belongs to a way in that is not this person's, and
+      // the wording has to make that unmistakable — "not met" here would be untrue.
+      return 'Does not apply to you';
     default:
       // Deliberately not "Failed" or "Missing". The rule is fine; we have not asked the question.
       return 'Not answered yet';
