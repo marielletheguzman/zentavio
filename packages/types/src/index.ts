@@ -73,6 +73,7 @@ export {
   type RequirementEvaluation,
   type RequirementKind,
   type RequirementResult,
+  type RouteOutcomeWire,
   type SourcedRequirement,
   type ViabilityResponseWire,
 } from './requirement.ts';

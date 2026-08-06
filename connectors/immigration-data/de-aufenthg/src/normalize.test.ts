@@ -171,9 +171,49 @@ describe('validate', () => {
   it('rejects an implausible duration', () => {
     const c = connector();
     const [row] = c.normalize(FIXTURE);
-    const broken = { ...row!, value: { months: 900 } };
+    const broken = { ...row!, value: { amount: 900, unit: 'months' } };
 
     expect(isIngestible(c.validate([broken]))).toBe(false);
+  });
+});
+
+describe('routes (ADR-0024)', () => {
+  const byId = (id: string) => connector().normalize(FIXTURE).find((r) => r.requirementId === id);
+
+  it('scopes the occupation list to the reduced route and nothing else', () => {
+    // It is the gate that opens `abs1-s2`. Scoped anywhere else it would either do nothing or —
+    // worse — hand the reduced threshold to occupations the statute never listed.
+    expect(byId('de.eu-blue-card.reduced-threshold-occupations')?.appliesTo).toEqual({
+      route: 'abs1-s2',
+    });
+  });
+
+  it('leaves the six-month duration pathway-wide', () => {
+    // § 18g Abs. 3 governs every way in. A route here would silently exempt the other routes.
+    expect(byId('de.eu-blue-card.employment-duration')?.appliesTo).toEqual({});
+  });
+
+  it('states the duration in the shape the evaluator can compare', () => {
+    // `{ months: 6 }` parsed, stored, and then evaluated `undetermined` forever, because the
+    // evaluator reads `value.amount`. A rule that is on file and can never be satisfied is the
+    // quietest failure available.
+    expect(byId('de.eu-blue-card.employment-duration')?.value).toEqual({
+      amount: 6,
+      unit: 'months',
+    });
+  });
+
+  it('never writes a legal citation where a route id belongs', () => {
+    // A route id is a join key; a citation is display text that may be reworded at any time.
+    // Anything with a space or a section symbol is the citation leaking into the key.
+    for (const row of connector().normalize(FIXTURE)) {
+      const route = (row.appliesTo as { route?: unknown }).route;
+      if (route === undefined) continue;
+
+      expect(typeof route).toBe('string');
+      expect(route as string).not.toMatch(/[\s§]/);
+      expect(route).not.toBe(row.domainDetail['legalBasis']);
+    }
   });
 });
 

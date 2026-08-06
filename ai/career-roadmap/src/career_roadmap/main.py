@@ -62,6 +62,9 @@ class RequirementInput(BaseModel):
     refresh_after: date | None = None
     contested: bool = False
     contested_note: str | None = None
+    #: Carried through from the stored row. Only `route` is read (ADR-0024); the rest is the
+    #: caller's business.
+    applies_to: dict[str, Any] = Field(default_factory=dict)
 
 
 class PersonFactInput(BaseModel):
@@ -86,13 +89,26 @@ class EvaluatedRequirementOutput(BaseModel):
     requirement_id: str
     domain: str
     imposed_by: str
-    result: Literal["met", "not_met", "undetermined"]
+    #: `not_applicable` is a rule on a route this person cannot use. **A surface must never render
+    #: it as a failure** — they were never on that route (ADR-0024).
+    result: Literal["met", "not_met", "undetermined", "not_applicable"]
     authority: str
     source_url: str
     effective_from: str
     basis: str | None = None
     reason: str | None = None
     needs_input: list[str] = Field(default_factory=list)
+
+
+class RouteOutcomeOutput(BaseModel):
+    """One way into the pathway, reported whether or not it is the one that applies."""
+
+    route: str
+    status: Literal["met", "not_met", "undetermined", "not_applicable"]
+    blockers: list[str]
+    needs_from_user: list[str]
+    requirement_ids: list[str]
+    reason: str | None = None
 
 
 class EvaluateResponse(BaseModel):
@@ -107,6 +123,10 @@ class EvaluateResponse(BaseModel):
     disclaimer: str
     notes: list[str]
     evaluator_version: str
+    #: The route this verdict is about, or null for a pathway whose rules declare none.
+    route: str | None = None
+    #: Every route. Empty for a pathway with no routes, which is how every pathway starts.
+    routes: list[RouteOutcomeOutput] = Field(default_factory=list)
 
 
 def _error(code: str, message: str, http_status: int) -> JSONResponse:
@@ -158,6 +178,18 @@ def _to_response(verdict: Verdict) -> EvaluateResponse:
         disclaimer=verdict.disclaimer,
         notes=list(verdict.notes),
         evaluator_version=EVALUATOR_VERSION,
+        route=verdict.route,
+        routes=[
+            RouteOutcomeOutput(
+                route=o.route,
+                status=o.status,
+                blockers=list(o.blockers),
+                needs_from_user=list(o.needs_from_user),
+                requirement_ids=list(o.requirement_ids),
+                reason=o.reason,
+            )
+            for o in verdict.routes
+        ],
     )
 
 
@@ -181,6 +213,7 @@ def _evaluate(payload: EvaluateRequest) -> Verdict:
                 refresh_after=r.refresh_after,
                 contested=r.contested,
                 contested_note=r.contested_note,
+                applies_to=r.applies_to,
             )
             for r in payload.requirements
         ],

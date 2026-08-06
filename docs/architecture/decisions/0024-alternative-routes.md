@@ -162,8 +162,16 @@ must not contain it.
    still reported**, with their own inputs, so nothing is hidden — but the product asks for the
    shortest path first rather than the union of every question every route could ask. This is a
    product judgment, stated here so it is reviewable rather than emergent.
-6. **Rights keep their existing semantics *within* a route** — evaluated, reported, never deciding,
-   never contributing to `needs_from_user` (ADR's predecessor finding, `de-aufenthg`).
+6. **A right gates the route it belongs to, and nothing else.** *Amended 2026-08-06 during
+   implementation; the original wording said rights never decide within a route, and that is a false
+   positive.* § 18g Abs. 1 S. 2's ISCO list is not decoration on the reduced route — it is the
+   condition that **opens** it. A right that never decides would let anyone earning €45 934,20
+   qualify by that route regardless of occupation, which is worse than the false negative this ADR
+   exists to fix. So: a right that evaluates `met` opens its route; one that evaluates `not_met`
+   makes its route `not_applicable`; one that is `undetermined` leaves its route undetermined. The
+   original guarantee survives where it was aimed — **a right never blocks the pathway**, because
+   another route can carry it, and **a pathway with no routed rows keeps today's behaviour exactly**,
+   where rights are reported and never decide.
 7. **No composite, no ranking of routes** beyond rule 5. A route is met or it is not; nothing scores
    how nearly. ADR-0022's argument applies unchanged.
 8. **The evaluator never learns a route's meaning.** Route ids are opaque strings from data. The
@@ -222,12 +230,13 @@ have no data".
 
 **Follow-up work.**
 
-1. `applies_to.route` in `packages/types`' `SourcedRequirement`, and route ids in both German
-   connectors, replacing `category` and the prose `route`.
-2. The gateway carries `applies_to` — a fourteenth field in `#inputs`.
-3. `Requirement` gains `applies_to`; `evaluate_pathway` groups by route and aggregates per rules 3–5;
-   `Verdict` gains the route it used and the per-route outcomes.
-4. `not_applicable` through `packages/types`, the fixtures, and the gateway.
+1. ~~`applies_to.route` in `packages/types`' `SourcedRequirement`, and route ids in both German
+   connectors, replacing `category` and the prose `route`.~~ **Done** — `abs1-s1` / `abs1-s2`.
+2. ~~The gateway carries `applies_to` — a fourteenth field in `#inputs`.~~ **Done.**
+3. ~~`Requirement` gains `applies_to`; `evaluate_pathway` groups by route and aggregates per rules
+   3–5; `Verdict` gains the route it used and the per-route outcomes.~~ **Done.**
+4. ~~`not_applicable` through `packages/types`, the fixtures, and the gateway.~~ **Done**, including
+   the label `apps/web` renders for it — *"Does not apply to you"*, never "not met".
 5. **The § 18g provisions themselves** — Abs. 1 S. 2 Nr. 2, Abs. 1 S. 5, Abs. 2, and the
    Bundesagentur consent asymmetry (`employment_clearance`, a domain that already exists and has no
    rows).

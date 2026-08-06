@@ -25,11 +25,21 @@ look authoritative and are subtly wrong — the worst outcome available for immi
 
 **Extracted** — literal and self-contained:
 
-| Requirement | Basis | Shape |
-|---|---|---|
-| `de.eu-blue-card.employment-duration` | Abs. 3 | ≥ 6 months, `numeric-gte` |
-| `de.eu-blue-card.qualification` | Abs. 1 S. 1 | academic qualification, `boolean` |
-| `de.eu-blue-card.reduced-threshold-occupations` | Abs. 1 S. 2 | ISCO-08 groups, `set-member`, `kind: right` |
+| Requirement | Basis | Shape | Route |
+|---|---|---|---|
+| `de.eu-blue-card.employment-duration` | Abs. 3 | ≥ 6 months, `numeric-gte` | — pathway-wide |
+| `de.eu-blue-card.qualification` | Abs. 1 S. 1 | academic qualification, `boolean` | — pathway-wide, see below |
+| `de.eu-blue-card.reduced-threshold-occupations` | Abs. 1 S. 2 | ISCO-08 groups, `set-member`, `kind: right` | `abs1-s2` |
+
+**The duration is stored as `{ amount: 6, unit: 'months' }`, not `{ months: 6 }`.** The evaluator
+compares `value.amount`; written the other way the rule parsed, stored, and then evaluated
+`undetermined` forever — on file and impossible to satisfy, which is the quietest failure available.
+
+**The qualification row is pathway-wide, and that is correct only while Abs. 2 is unmodelled.**
+Abs. 1 S. 2 incorporates the condition by reference — *"Fachkräften mit akademischer Ausbildung"* —
+so it governs both Abs. 1 routes. Abs. 2 is the route that does **not** require it. The day that
+route lands, this row must become route-scoped, or it will demand a degree of exactly the population
+Abs. 2 exists to admit without one.
 
 **Not extracted, on purpose:**
 

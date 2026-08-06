@@ -128,6 +128,29 @@ describe('normalize', () => {
     expect(amountOf(general!).amount).toBe(50700);
   });
 
+  it('routes each threshold to the provision that grants it (ADR-0024)', () => {
+    // The two figures are not alternatives to be conjoined — they belong to different ways in.
+    // Before routes existed both were evaluated together and the general one always bound, so an
+    // ISCO-25 professional at €47 000 was told they did not qualify. This is that join key.
+    const rows = connector().normalize(FIXTURE);
+    const routeOf = (suffix: string) =>
+      (rows.find((r) => r.requirementId.endsWith(suffix))!.appliesTo as { route?: string }).route;
+
+    expect(routeOf('.general')).toBe('abs1-s1');
+    expect(routeOf('.reduced')).toBe('abs1-s2');
+  });
+
+  it('keeps the legal citation out of the route id', () => {
+    // The id is a stable join key; the citation is display text and may be reworded. A route id
+    // containing a space or a section symbol is the citation leaking into the key.
+    for (const row of connector().normalize(FIXTURE)) {
+      const route = (row.appliesTo as { route?: unknown }).route;
+      expect(typeof route).toBe('string');
+      expect(route as string).not.toMatch(/[\s§]/);
+      expect(route).not.toBe(row.domainDetail['legalBasis']);
+    }
+  });
+
   it('carries provenance, tier, and the authority to contact', () => {
     const [row] = connector().normalize(FIXTURE);
 

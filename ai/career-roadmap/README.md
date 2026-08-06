@@ -31,6 +31,25 @@ being noisy rather than fixed.
 3. **Every `undetermined` names the input that would resolve it** — `needs_from_user`, which turns a
    dead end into a next action. That is M2's milestone test.
 
+## Routes: a pathway can have more than one way in (ADR-0024)
+
+A rule declaring `applies_to.route` belongs to that route; one declaring none is **pathway-wide** and
+belongs to every route. **The pathway is `met` when any route is**, and the verdict names which.
+
+This exists because Germany's Blue Card has two salary thresholds that are not both requirements —
+they belong to different provisions. Conjoined, the higher one always bound, and an ISCO-25
+professional earning €47 000 was told `not_met` when § 18g Abs. 1 S. 2 makes them eligible.
+
+| Concept | Rule |
+|---|---|
+| `not_applicable` | a rule on a route this person cannot use. **Never a failure, never a blocker, never a question.** |
+| a `right` | gates the route it belongs to. It never blocks the pathway — another route can carry it. |
+| `needs_from_user` | comes from the **nearest open route**: the undetermined one asking fewest further questions. Every other route is still reported in full. |
+| a routeless pathway | behaves exactly as it did before routes existed, asserted by test. That is what makes the model additive. |
+
+**Route ids are opaque here.** They arrive in the data. This module never constructs one, infers
+one, or branches on a particular value — an AST test keeps it that way.
+
 ## Applicability is containment, never a null end date
 
 ```python

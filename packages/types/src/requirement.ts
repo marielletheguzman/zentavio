@@ -31,7 +31,14 @@ export const DOMAIN_EVALUATION_ORDER: readonly RequirementDomain[] = [
   'language',
 ] as const;
 
-export const REQUIREMENT_RESULTS = ['met', 'not_met', 'undetermined'] as const;
+/**
+ * What evaluating one rule against a person's facts can conclude.
+ *
+ * `not_applicable` is a rule on a route this person cannot use (ADR-0024) — Germany's experience
+ * route to someone who holds a degree. **A surface must never render it as a failure.** They were
+ * never on that route, and "you failed the experience route" is a false statement about a person.
+ */
+export const REQUIREMENT_RESULTS = ['met', 'not_met', 'undetermined', 'not_applicable'] as const;
 export type RequirementResult = (typeof REQUIREMENT_RESULTS)[number];
 
 export const REQUIREMENT_KINDS = [
@@ -170,6 +177,17 @@ export interface EvaluatedRequirementWire {
   readonly needs_input: readonly string[];
 }
 
+/** One way into a pathway, reported whether or not it is the one that applies (ADR-0024). */
+export interface RouteOutcomeWire {
+  readonly route: string;
+  readonly status: RequirementResult;
+  readonly blockers: readonly string[];
+  readonly needs_from_user: readonly string[];
+  readonly requirement_ids: readonly string[];
+  /** Why the route is closed. Null whenever it is open. */
+  readonly reason?: string | null;
+}
+
 export interface EligibilityResponseWire {
   readonly pathway_id: string | null;
   readonly status: EligibilityStatus;
@@ -182,6 +200,10 @@ export interface EligibilityResponseWire {
   readonly disclaimer: string;
   readonly notes: readonly string[];
   readonly evaluator_version: string;
+  /** The route this verdict is about. Null for a pathway whose rules declare none. */
+  readonly route?: string | null;
+  /** Every route. Empty for a pathway with no routes, which is how every pathway starts. */
+  readonly routes?: readonly RouteOutcomeWire[];
 }
 
 const ELIGIBILITY_STATUSES: readonly string[] = ['met', 'not_met', 'undetermined', 'unknown'];
