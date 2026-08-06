@@ -38,7 +38,7 @@ look authoritative and are subtly wrong — the worst outcome available for immi
   Recorded in the qualification row's `domainDetail` as `alternativeRouteNotModelled`, so that row
   is never read as *"no degree means no Blue Card"*. **Its text is on this page**; what is missing
   is a model that can express a rule whose precondition is another rule not applying —
-  [ADR-0024](../../../docs/architecture/decisions/0024-alternative-routes.md), `Proposed`. Abs. 1
+  [ADR-0024](../../../docs/architecture/decisions/0024-alternative-routes.md), **Accepted**. Abs. 1
   S. 2 Nr. 2 (a degree earned within three years) and Abs. 1 S. 5 (tertiary programme at ISCED 2011
   / EQF level 6) are unextracted for the same reason, not for a source reason.
 - Dependent rights, residence and the job-change provisions — not eligibility.

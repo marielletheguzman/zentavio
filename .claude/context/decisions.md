@@ -93,7 +93,7 @@ An ADR is numbered sequentially and never renumbered.
 | [0021](../../docs/architecture/decisions/0021-object-storage.md) | Source documents in S3-compatible object storage (R2), behind a port | Accepted |
 | [0022](../../docs/architecture/decisions/0022-viability-composition.md) | Viability is two axes with the binding constraint named, not a single score | Accepted |
 | [0023](../../docs/architecture/decisions/0023-tailwind-css-adoption.md) | Tailwind CSS v4, with `packages/ui/src/tokens.css` as its theme source | Accepted |
-| [0024](../../docs/architecture/decisions/0024-alternative-routes.md) | A pathway has routes, and a verdict names the one it used | Proposed |
+| [0024](../../docs/architecture/decisions/0024-alternative-routes.md) | A pathway has routes, and a verdict names the one it used | Accepted |
 
 0001–0004 define the boundaries every skill and context file assumes: one repository, sources as
 plugins, a polyglot contract at the `ai/` boundary, and a vector store that is an index rather

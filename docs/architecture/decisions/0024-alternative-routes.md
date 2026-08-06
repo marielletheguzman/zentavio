@@ -1,6 +1,7 @@
 # ADR-0024: A pathway has routes, and a verdict names the one it used
 
-- **Status:** Proposed
+- **Status:** Accepted
+- **Accepted:** 2026-08-06
 - **Date:** 2026-08-06
 - **Deciders:** project lead
 - **Affects:** `ai/career-roadmap`, `services/api-gateway`, `packages/types`,
@@ -168,6 +169,25 @@ must not contain it.
 8. **The evaluator never learns a route's meaning.** Route ids are opaque strings from data. The
    existing AST test that forbids a hardcoded jurisdiction is the guard, and it already passes over
    this module.
+9. **Route identifiers are stable, and changing one is a breaking data change.** Not a rename, not a
+   documentation edit. Stored rows, superseded versions and any recorded outcome referencing a route
+   all key on it, and the Bundesanzeiger rows are re-ingested every year against ids that must still
+   match. **Legal wording may change without the id changing** — that is the point of separating the
+   id from `domain_detail.legalBasis`. A provision that genuinely becomes a different route gets a
+   new id and the old one is superseded, never edited in place.
+10. **The evaluator never invents a route.** Every route it reports came from connector data. It may
+    group by route, aggregate across routes, and compare them. It may **not** generate an id, infer
+    a route that no row declares, or derive one from a legal citation. A pathway whose rows declare
+    no route has exactly one implicit route — the pathway itself — and that is rule 2, not an
+    invention.
+
+**On the vocabulary, stated exactly.** The requirement-level `Result` is
+`met | not_met | undetermined`, and this ADR adds `not_applicable` to it — **`not_met`, not
+`unmet`**. The pathway-level `Status` is `met | not_met | undetermined | unknown`; `unknown` stays
+pathway-only and keeps its existing meaning (nothing on file, or a licence-gated profession with no
+recognition rule). `not_applicable` is **not** added to `Status`: a pathway with no applicable route
+is `not_met` for this person, and saying otherwise would let "no way in exists for you" read as "we
+have no data".
 
 ### What acceptance does not approve
 
@@ -233,6 +253,9 @@ function, and the ADR should be amended rather than superseded.
 - **A route id is never prose.** A connector test rejects any `applies_to.route` containing a space
   or `§`. The legal citation lives in `domain_detail.legalBasis`; a check asserts the two are not
   the same string.
+- **No route id is constructed in `ai/` or `services/`.** Route ids appear only in connector source
+  and in stored rows. A reviewer greps both trees for a string-built route; the AST test that
+  forbids a hardcoded jurisdiction covers the evaluator's half.
 - **A routeless pathway is unchanged.** An existing-behaviour test evaluates a pathway with no
   routed rows and asserts the verdict is identical to the conjunctive one — the property the
   reversal cost depends on.
