@@ -500,6 +500,31 @@ existed. Both hold.
 **Verified by:** a user sees one market marked `unknown` on salary while another is complete, and the
 comparison is still usable — partial coverage rendered as a designed state rather than a blank.
 
+### Coverage verification passed, 2026-08-11
+
+The comparison shape and its composition are built, and **the verification is the test file** rather
+than a claim beside it (`services/api-gateway/src/comparison/compose.test.ts`, 20 cases). All five
+cell states are exercised against the destinations that actually produce them:
+
+| State | Exercised by |
+|---|---|
+| `met` / `not_met` | a fully evaluated destination on both axes |
+| `undetermined` | Switzerland — most of its conditions are an authority's judgement |
+| `unmodelled` | a country with nothing ingested, saying **whose** gap it is |
+| `not_applicable` | `REMOTE` — a fact about remote work, not about our coverage |
+
+**`not_applicable` and `unmodelled` are produced by different branches with different sentences**,
+because they look alike in a table and mean opposite things.
+
+Every compliance clause ADR-0026 and ADR-0028 wrote down is asserted rather than described:
+reordering the input leaves the output byte-identical; within-group order is alphabetical and
+declared arbitrary **on the wire**; no `score`, `rank`, `position`, `weight` or `total` appears at
+any depth; a group nobody is in is omitted rather than rendered empty; and the quota sits beside the
+cells with no state, because no state is true of a capacity limit (ADR-0027).
+
+**Still to build: the surface.** The shape, the composition and the verification exist; nothing
+renders them yet.
+
 ---
 
 ## M5 — Regulated professions get a real verdict

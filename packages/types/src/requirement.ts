@@ -239,11 +239,25 @@ export function isEligibilityResponse(value: unknown): value is EligibilityRespo
 }
 
 /** The two axes and the one that binds (ADR-0022). **Deliberately has no score field.** */
+/**
+ * Which axis stops this being a pathway worth pursuing (ADR-0022).
+ *
+ * A closed set, so a new one is a type error rather than a string that quietly appears in a
+ * response nobody validates. `REMOTE` draws from a **subset** of it (ADR-0028) — no member means
+ * "not that kind of destination", and none is added for one.
+ */
+export type BindingConstraint =
+  | 'eligibility'
+  | 'employability'
+  | 'recognition'
+  | 'unmodelled'
+  | 'none';
+
 export interface ViabilityResponseWire {
   readonly pathway_id: string | null;
   readonly eligibility: EligibilityResponseWire;
   readonly employability: Readonly<Record<string, unknown>>;
-  readonly binding: 'eligibility' | 'employability' | 'recognition' | 'unmodelled' | 'none';
+  readonly binding: BindingConstraint;
   readonly binding_reason: string;
   readonly as_of: string;
   readonly disclaimer: string;
