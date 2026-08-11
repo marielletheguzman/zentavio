@@ -26,10 +26,15 @@ experience route, which admits ICT and IT professionals with no degree.
 person at the moment they recorded it, and outcomes recorded against it carry that prediction
 forward. Nothing reads the data yet: `CLAIMED_CREDIT` stays an assumption until enough accumulates.
 
-**What M2 still lacks** is in `docs/roadmap/milestones.md`: the DE reference file under
-`.claude/skills/immigration/references/countries/`, and ADR-0021's production bucket. Not the whole
-of § 18g — § 19f's rejection grounds and the Bundesagentur's consent stay unmodelled on purpose,
-and the connector's README says why.
+**What M2 still lacks** is in `docs/roadmap/milestones.md`: only ADR-0021's production bucket
+(Cloudflare R2), which blocks deployment rather than the milestone. Not the whole of § 18g —
+§ 19f's rejection grounds and the Bundesagentur's consent stay unmodelled on purpose, and the
+connector's README says why.
+
+**`de.md` is the worked example of a country model** (`.claude/skills/immigration/references/
+countries/`). One pathway sourced end to end; labour market, compensation, cost of living and
+culture all marked `unknown` and unsourced, because a plausible guess in those sections is the
+most harmful and least detectable thing this repository could contain.
 
 13 tables. **1 124 tests — 474 unit, 252 integration, 398 pytest** (measured 2026-08-11 by running
 all three suites, integration included, against local PostgreSQL and MinIO — not estimated). CI
