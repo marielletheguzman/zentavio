@@ -38,6 +38,7 @@ already ruled out and how the rule is enforced.
 | [0022](0022-viability-composition.md) | Viability is two axes with the binding constraint named, not a single score | Accepted | 2026-08-04 |
 | [0023](0023-tailwind-css-adoption.md) | Tailwind CSS v4, with `packages/ui/src/tokens.css` as its theme source | Accepted | 2026-08-05 |
 | [0024](0024-alternative-routes.md) | A pathway has routes, and a verdict names the one it used | Accepted | 2026-08-06 |
+| [0025](0025-derived-thresholds.md) | A threshold no authority publishes is computed by the connector and cites every instrument it came from | Proposed | 2026-08-11 |
 
 **0010 is Accepted, and the rename is done** — `immigration_rules` is now `requirements`, with `domain`,
 `imposed_by`, and `authority`. Regulated professions remain blocked on **data**, not schema: nursing,
