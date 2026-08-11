@@ -39,6 +39,7 @@ already ruled out and how the rule is enforced.
 | [0023](0023-tailwind-css-adoption.md) | Tailwind CSS v4, with `packages/ui/src/tokens.css` as its theme source | Accepted | 2026-08-05 |
 | [0024](0024-alternative-routes.md) | A pathway has routes, and a verdict names the one it used | Accepted | 2026-08-06 |
 | [0025](0025-derived-thresholds.md) | A threshold no authority publishes is computed by the connector and cites every instrument it came from | Accepted | 2026-08-11 |
+| [0026](0026-destination-comparison.md) | Destinations are compared, grouped and explained — never ranked by a score | Proposed | 2026-08-11 |
 
 **0010 is Accepted, and the rename is done** — `immigration_rules` is now `requirements`, with `domain`,
 `imposed_by`, and `authority`. Regulated professions remain blocked on **data**, not schema: nursing,
