@@ -1,6 +1,6 @@
 # ADR-0026: Destinations are compared, grouped and explained — never ranked by a score
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-08-11
 - **Deciders:** project lead
 - **Affects:** `packages/types`, `services/api-gateway`, `apps/web`, `ai/career-roadmap` (read-only),
@@ -190,6 +190,17 @@ have chosen a country against it is not.
   rule M3 established.
 - **No composite score**, here or anywhere. ADR-0022's compliance rule extends to this surface.
 
+### The composite may not return without a new decision
+
+Stated as its own clause because this is the option that will be re-proposed, and it will be
+re-proposed as something modest. **A global composite score may not be reintroduced as a default, a
+"sensible default", a temporary implementation, or a fallback when user preferences are absent.**
+Any of those requires a new ADR that argues the case on its merits.
+
+The reason is one sentence and it does not weaken with familiarity: a composite would rank a
+destination lower for having a rule we have not ingested yet, which measures our coverage and
+presents it as the world.
+
 ## Compliance
 
 - **No score field exists in the comparison shape**, and no `viability_score`-equivalent column. A
@@ -201,6 +212,10 @@ have chosen a country against it is not.
   `not_applicable` and that `not_applicable` and `unmodelled` render differently.
 - **The jurisdiction-free AST test in `ai/career-roadmap/tests/` keeps passing.** If this decision
   ever requires touching the evaluator, it has been implemented wrongly.
+- **The M4 correctness invariant, asserted rather than assumed:** *incomplete knowledge must not
+  become negative evidence.* A test adds a destination with no ingested rules and asserts it is
+  grouped as `unmodelled` and positioned no worse than a destination whose rules failed — because
+  those are different statements about different things.
 
 ## Related
 

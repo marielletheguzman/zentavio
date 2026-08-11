@@ -95,7 +95,7 @@ An ADR is numbered sequentially and never renumbered.
 | [0023](../../docs/architecture/decisions/0023-tailwind-css-adoption.md) | Tailwind CSS v4, with `packages/ui/src/tokens.css` as its theme source | Accepted |
 | [0024](../../docs/architecture/decisions/0024-alternative-routes.md) | A pathway has routes, and a verdict names the one it used | Accepted |
 | [0025](../../docs/architecture/decisions/0025-derived-thresholds.md) | A threshold no authority publishes is computed by the connector and cites every instrument it came from | Accepted |
-| [0026](../../docs/architecture/decisions/0026-destination-comparison.md) | Destinations are compared, grouped and explained — never ranked by a score | Proposed |
+| [0026](../../docs/architecture/decisions/0026-destination-comparison.md) | Destinations are compared, grouped and explained — never ranked by a score | Accepted |
 
 0001–0004 define the boundaries every skill and context file assumes: one repository, sources as
 plugins, a polyglot contract at the `ai/` boundary, and a vector store that is an index rather
