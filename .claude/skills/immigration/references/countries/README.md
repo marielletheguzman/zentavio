@@ -56,7 +56,8 @@ wrong — see ADR-0002 and the `immigration` skill.
 |---|---|
 | `de.md` | **Authored 2026-08-11.** One pathway (`de.eu-blue-card`) modelled and sourced end to end; every other section marked `unknown` and unsourced, which is the honest state rather than a to-do list. |
 | `lu.md` | **Authored 2026-08-11** from the consolidated statute and the two instruments its salary threshold depends on, ahead of any connector — the order step 1 prescribes. **No rule is ingested yet.** Its threshold is a *product* of a multiplier and an annually-published average, which is the open modelling question recorded in the file. |
-| `nz.md` · `ch.md` | Not authored. |
+| `nz.md` | **Authored 2026-08-11** from the current Immigration Instructions, ahead of any connector. **No rule is ingested yet.** Its operative rules are **not in its statute** — the Act empowers, the instructions decide — and its AEWV pay operand (a Minimum Wage Order) has not been located on a permitted source. |
+| `ch.md` | Not authored. |
 
 `_TEMPLATE.md` defines the shape. **Read `de.md` before writing the next one** — it is the worked
 example of a country whose rules are actually ingested, and of how to say `unknown` at length
