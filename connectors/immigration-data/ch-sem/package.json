@@ -1,0 +1,17 @@
+{
+  "name": "@zentavio/connector-ch-sem",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Switzerland's third-country work admission — SEM's Weisungen AIG, Kapitel 4.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zentavio/connectors-core": "workspace:*",
+    "@zentavio/types": "workspace:*"
+  }
+}

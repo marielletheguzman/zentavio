@@ -45,7 +45,6 @@ export type ImposedByColumn = 'origin' | 'destination' | 'bilateral';
 export type RequirementKindColumn =
   | 'eligibility'
   | 'threshold'
-  | 'quota'
   | 'document'
   | 'timeline'
   | 'condition'

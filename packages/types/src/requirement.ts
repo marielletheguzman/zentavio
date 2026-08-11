@@ -41,10 +41,17 @@ export const DOMAIN_EVALUATION_ORDER: readonly RequirementDomain[] = [
 export const REQUIREMENT_RESULTS = ['met', 'not_met', 'undetermined', 'not_applicable'] as const;
 export type RequirementResult = (typeof REQUIREMENT_RESULTS)[number];
 
+/**
+ * What kind of requirement this is.
+ *
+ * **`quota` is deliberately absent** (ADR-0027). A cap on a destination is not something a person
+ * satisfies or fails, so it is a property of the pathway rather than a requirement — storing one
+ * here would either freeze a verdict at `undetermined` or tell somebody they failed a capacity
+ * limit.
+ */
 export const REQUIREMENT_KINDS = [
   'eligibility',
   'threshold',
-  'quota',
   'document',
   'timeline',
   'condition',

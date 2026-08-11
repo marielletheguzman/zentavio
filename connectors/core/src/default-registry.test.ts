@@ -17,6 +17,9 @@ const stubDeps = {
   nzInz: {
     fetchInstructions: async () => null,
   },
+  chSem: {
+    fetchDirective: async () => null,
+  },
 };
 
 describe('createRegistry', () => {
@@ -47,6 +50,17 @@ describe('createRegistry', () => {
     expect(registry.ids()).toContain('nz-inz');
     expect(registry.byRegion('NZ').map((c) => c.meta.id)).toEqual(['nz-inz']);
     expect(registry.byRegion('DE').map((c) => c.meta.id)).not.toContain('nz-inz');
+  });
+
+  it('registers Switzerland, completing the four M4 destinations', () => {
+    const registry = createRegistry(stubDeps);
+
+    expect(registry.ids()).toContain('ch-sem');
+    expect(registry.byRegion('CH').map((c) => c.meta.id)).toEqual(['ch-sem']);
+    // Four countries, four regions, no connector answering for a country that is not its own.
+    expect(new Set(registry.all().flatMap((c) => c.meta.regions))).toEqual(
+      new Set(['DE', 'LU', 'NZ', 'CH']),
+    );
   });
 
   it('returns a fresh registry each call, so callers cannot share mutable state', () => {
