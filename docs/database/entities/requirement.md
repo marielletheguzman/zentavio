@@ -243,11 +243,47 @@ checksum, and no way to tell a missing archive from a mistyped path. It is **nul
 ADR-0021's enforcement phase**: the requirements already stored were accepted before archival
 existed, and they are backfilled before the flip rather than deleted.*
 
+## A requirement may have more than one source (ADR-0025)
+
+`source_url` and `document_id` name **the primary instrument** — the one that states the rule. That
+was the whole model until Luxembourg, and it held only because every rule had one source.
+
+A **derived** requirement does not. Luxembourg's Blue Card threshold is a product of two
+instruments: a règlement grand-ducal states a multiple of the average gross annual salary, an annual
+règlement ministériel states the average, and **no official act states the result**. A rule computed
+from both can satisfy `document_id IS NOT NULL` while citing one of them — enforceable-looking and
+unrecomputable.
+
+`requirement_sources` is the answer, and it is **general infrastructure rather than Luxembourg's**:
+
+> A legal requirement may depend on several authoritative instruments, each of which must be
+> independently archived and attributable.
+
+| Column | Holds |
+|---|---|
+| `document_id` | the archived original **for this instrument** — `NOT NULL`, which is the point |
+| `role` | `primary` states the rule · `formula` states the arithmetic · `operand` supplies a figure |
+| `instrument_id` | which legal act the bytes are — an ELI where the jurisdiction publishes one |
+| `source_url`, `retrieved_at` | where it came from, and when it was read |
+
+The operand *values* and the multiplier live in `domain_detail.derivedFrom`, so the arithmetic is
+re-performable without a join and without re-fetching. **The evaluator sees none of this**: it
+receives an absolute value, exactly as it does for a published figure.
+
+**Enforcement.** `unarchivedRequirements()` still means "no primary document".
+`unevidencedRequirements()` is its counterpart: a rule whose `domain_detail.derivedFrom` names more
+instruments than it has `requirement_sources` rows. Single-source rules — every German one — are
+untouched by both.
+
+**A future derived threshold reuses this.** A second country-specific provenance mechanism would be
+a regression rather than a parallel solution.
+
 ## Invariants
 
 - `source_tier = 1`, in every domain.
 - One live row per `requirement_id`.
 - Never `UPDATE` a value — new version, `supersedes` set.
+- A rule claiming a derivation evidences **every** instrument it names (ADR-0025).
 - One evaluable requirement per row.
 - Scope matches domain: immigration has a pathway; recognition and credential have a profession.
 - `authority` is always populated.
