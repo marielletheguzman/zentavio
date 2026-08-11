@@ -5,9 +5,8 @@
 > `knowledge-engine/immigration`, not here.**
 
 _Status: authored 2026-08-11 from the consolidated statute and the two instruments the threshold
-depends on. **No connector exists and no rule is ingested** — this file is the model a connector
-will be written against, which is the order `README.md` prescribes. Everything below is either read
-from a source or marked `unknown`._
+depends on. **`lu-legilux` is built and the salary rules are ingested and evaluated** as of the same
+day (ADR-0025). Everything below is either read from a source or marked `unknown`._
 
 **This is M3's country** (`docs/roadmap/milestones.md`): adding it is meant to cost no code. Read
 `de.md` first if you are new to these files — Germany is the one whose rules are actually ingested,
@@ -73,11 +72,11 @@ from Germany, where BMI publishes euro amounts directly and a connector only has
 Luxembourg publishes a multiplier in one instrument and a base in another, and something has to
 multiply them.
 
-**That is an open modelling question and should be settled before a connector is written.** Storing
-a computed product is defensible only if the stored rule's provenance names **both** instruments and
-their dates — otherwise the number in `requirements` is arithmetic nobody can audit, which is the
-thing `docs/architecture/immigration.md` exists to prevent. The alternative is a derived-value shape
-the requirement model does not currently have.
+**Settled by ADR-0025 (Accepted 2026-08-11).** The connector multiplies, and the stored rule cites
+**every** instrument it came from through `requirement_sources`, each with its own archived
+document. Storing a computed product is defensible only with that provenance — otherwise the number
+is arithmetic nobody can audit. The operands and the multiplier are recorded in
+`domain_detail.derivedFrom` so the result can be re-derived without re-fetching.
 
 **The base figure lags by design.** The February 2026 ministerial regulation states the average for
 **2024**. Which year's average applies to an application made today is a question the statute

@@ -13,6 +13,7 @@
 
 import { AufenthgConnector, type AufenthgDeps } from '@zentavio/connector-de-aufenthg';
 import { BundesanzeigerConnector, type BundesanzeigerDeps } from '@zentavio/connector-de-bundesanzeiger';
+import { LegiluxConnector, type LegiluxDeps } from '@zentavio/connector-lu-legilux';
 
 import { ConnectorRegistry } from './registry.ts';
 
@@ -24,6 +25,7 @@ import { ConnectorRegistry } from './registry.ts';
 export interface ConnectorDeps {
   readonly deBundesanzeiger: BundesanzeigerDeps;
   readonly deAufenthg: AufenthgDeps;
+  readonly luLegilux: LegiluxDeps;
 }
 
 /**
@@ -33,5 +35,6 @@ export interface ConnectorDeps {
 export function createRegistry(deps: ConnectorDeps): ConnectorRegistry {
   return new ConnectorRegistry()
     .register(new BundesanzeigerConnector(deps.deBundesanzeiger))
-    .register(new AufenthgConnector(deps.deAufenthg));
+    .register(new AufenthgConnector(deps.deAufenthg))
+    .register(new LegiluxConnector(deps.luLegilux));
 }

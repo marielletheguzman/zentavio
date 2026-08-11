@@ -429,6 +429,30 @@ export interface DocumentsTable {
   updated_at: Generated<Timestamp>;
 }
 
+/** What an instrument contributed to a derived requirement (ADR-0025). */
+export type RequirementSourceRole = 'primary' | 'formula' | 'operand';
+
+/**
+ * Every instrument a requirement was derived from.
+ *
+ * **Additive.** `requirements.document_id` still means the primary instrument, so a rule with one
+ * source may have no rows here. What this holds is the thing `domain_detail` cannot: a foreign key
+ * to an archived document per operand, so each one's evidence is as retrievable as any other
+ * rule's — the half-evidenced state ADR-0025 exists to prevent.
+ */
+export interface RequirementSourcesTable {
+  id: string;
+  requirement_id: string;
+  /** NOT NULL by design: an operand with no retrievable evidence is the failure being prevented. */
+  document_id: string;
+  role: RequirementSourceRole;
+  /** Which legal act the archived bytes are — an ELI where the jurisdiction publishes one. */
+  instrument_id: string;
+  source_url: string;
+  retrieved_at: Timestamp;
+  created_at: Generated<Timestamp>;
+}
+
 export type CompanyStatusColumn = 'active' | 'defunct' | 'merged';
 
 /**
@@ -556,6 +580,7 @@ export interface Database {
   career_skills: CareerSkillsTable;
   user_targets: UserTargetsTable;
   documents: DocumentsTable;
+  requirement_sources: RequirementSourcesTable;
   companies: CompaniesTable;
   company_aliases: CompanyAliasesTable;
   applications: ApplicationsTable;

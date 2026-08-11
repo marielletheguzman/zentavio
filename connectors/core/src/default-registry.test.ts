@@ -11,6 +11,9 @@ const stubDeps = {
     knownDocuments: ['AufenthG-18g'],
     fetchDocument: async () => null,
   },
+  luLegilux: {
+    fetchInstruments: async () => null,
+  },
 };
 
 describe('createRegistry', () => {
@@ -22,6 +25,17 @@ describe('createRegistry', () => {
     expect(registry.ids()).toContain('de-aufenthg');
     expect(registry.byKind('immigration').map((c) => c.meta.id)).toContain('de-bundesanzeiger');
     expect(registry.byRegion('DE').map((c) => c.meta.id)).toContain('de-bundesanzeiger');
+  });
+
+  it('registers Luxembourg, and keeps it out of the German region', () => {
+    // The registry is how a second country arrives without a code change anywhere else (ADR-0002).
+    // Region scoping is what makes `byRegion` usable for "what do we know about DE?" — a connector
+    // answering for the wrong country would be worse than one missing.
+    const registry = createRegistry(stubDeps);
+
+    expect(registry.ids()).toContain('lu-legilux');
+    expect(registry.byRegion('LU').map((c) => c.meta.id)).toEqual(['lu-legilux']);
+    expect(registry.byRegion('DE').map((c) => c.meta.id)).not.toContain('lu-legilux');
   });
 
   it('returns a fresh registry each call, so callers cannot share mutable state', () => {

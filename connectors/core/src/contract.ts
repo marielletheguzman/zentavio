@@ -182,6 +182,34 @@ export interface Connector<TRaw, TNormalized> {
    * does not store them.
    */
   archivable?(raw: TRaw): ArchivableSource | null;
+
+  /**
+   * Every instrument a payload's rules were derived from, when there is more than one (ADR-0025).
+   *
+   * Luxembourg's Blue Card threshold is a product of two published instruments and no official act
+   * states the result, so a connector computing it must be able to hand over **both** originals —
+   * otherwise the stored rule cites one and is half-evidenced, which passes ADR-0021's check while
+   * being unrecomputable.
+   *
+   * Optional and additive. A connector with one source implements `archivable` alone and nothing
+   * about it changes. **Still not persistence**: this returns bytes, ingestion stores them.
+   */
+  archivableSources?(raw: TRaw): readonly DerivedSource[];
+}
+
+/** One instrument behind a derived rule, with the part it played (ADR-0025). */
+export interface DerivedSource {
+  readonly source: ArchivableSource;
+  /**
+   * `primary` states the rule, `formula` states the arithmetic, `operand` supplies a figure it
+   * consumes. Matches `requirement_sources.role`.
+   */
+  readonly role: 'primary' | 'formula' | 'operand';
+  /** The legal act these bytes are — an ELI where the jurisdiction publishes one. */
+  readonly instrumentId: string;
+  readonly sourceUrl: string;
+  /** ISO-8601 UTC, recorded at fetch time so `normalize` stays pure. */
+  readonly retrievedAt: string;
 }
 
 /** True when nothing in the result blocks ingestion. Warnings do not block. */
