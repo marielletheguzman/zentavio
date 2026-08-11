@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@zentavio/config": "workspace:*",
+    "@zentavio/types": "workspace:*",
     "kysely": "^0.29.4",
     "pg": "^8.22.0"
   }

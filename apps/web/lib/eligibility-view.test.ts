@@ -1,5 +1,33 @@
-import type { EligibilityResponseWire } from '@zentavio/types';
+import type { EligibilityResponseWire, PersonFactKindWire } from '@zentavio/types';
 import { describe, expect, it } from 'vitest';
+
+/** A catalogue entry as the gateway serves it, so tests use the real shape rather than a stub. */
+function kind(overrides: Partial<PersonFactKindWire> & { key: string }): PersonFactKindWire {
+  return {
+    valueType: 'integer',
+    unit: 'years',
+    prompt: overrides.key,
+    rationale: 'because a rule asks for it',
+    sensitive: false,
+    allowedValues: [],
+    ...overrides,
+  };
+}
+
+const SALARY = kind({
+  key: 'expected_gross_annual_salary_eur',
+  valueType: 'monetary',
+  unit: 'EUR/year',
+  prompt: 'What gross annual salary do you expect?',
+  sensitive: true,
+});
+
+const DEGREE = kind({
+  key: 'has_recognised_academic_degree',
+  valueType: 'boolean',
+  unit: null,
+  prompt: 'Do you hold a recognised higher-education degree?',
+});
 
 import {
   toEligibilityView,
@@ -57,15 +85,14 @@ describe('undetermined is never rendered as a no', () => {
   });
 
   it('offers the question in words, from the catalogue', () => {
-    const view = toEligibilityView(verdict(), {
-      expected_gross_annual_salary_eur: 'What gross annual salary do you expect?',
-    });
+    const view = toEligibilityView(verdict(), { [SALARY.key]: SALARY });
     if (view.kind !== 'verdict') return;
 
     expect(view.questions).toEqual([
       {
         key: 'expected_gross_annual_salary_eur',
         prompt: 'What gross annual salary do you expect?',
+        kind: SALARY,
       },
     ]);
   });
@@ -75,6 +102,9 @@ describe('undetermined is never rendered as a no', () => {
     if (view.kind !== 'verdict') return;
 
     expect(view.questions[0]?.prompt).toBe('expected_gross_annual_salary_eur');
+    // And the control is refused rather than guessed: a question the catalogue does not define is
+    // one nothing knows how to shape an answer for.
+    expect(view.questions[0]?.kind).toBeNull();
   });
 });
 
@@ -228,9 +258,11 @@ describe('the ways in are rendered as routes, not flattened (ADR-0024)', () => {
   it('carries each open routes own questions, in words', () => {
     // The product leads with the shortest set of questions; it does not get to hide that another
     // way in exists and has its own (ADR-0024 rule 5).
-    const view = toEligibilityView(routed(), {
-      years_since_degree_awarded: 'How many years ago was your degree awarded?',
+    const graduated = kind({
+      key: 'years_since_degree_awarded',
+      prompt: 'How many years ago was your degree awarded?',
     });
+    const view = toEligibilityView(routed(), { [graduated.key]: graduated });
     if (view.kind !== 'verdict') return;
 
     const reduced = view.routes.find((route) => route.route === 'abs1-s2');
@@ -238,6 +270,7 @@ describe('the ways in are rendered as routes, not flattened (ADR-0024)', () => {
       {
         key: 'years_since_degree_awarded',
         prompt: 'How many years ago was your degree awarded?',
+        kind: graduated,
       },
     ]);
     // The verdict itself is `met` and asks nothing. The route still says what would move it.
@@ -263,36 +296,79 @@ describe('the ways in are rendered as routes, not flattened (ADR-0024)', () => {
   });
 });
 
-describe('toFactValue', () => {
-  it('shapes a monetary answer with its currency and period', () => {
-    // A bare number against a EUR threshold is a confident wrong answer, so the unit from the
-    // catalogue is attached before sending.
-    expect(toFactValue('expected_gross_annual_salary_eur', '60000', 'EUR/year')).toEqual({
+describe('toFactValue shapes an answer to its catalogue kind', () => {
+  it('shapes a monetary answer with the currency and period the catalogue declares', () => {
+    // A bare number against a EUR threshold is a confident wrong answer, so the unit comes from
+    // the catalogue rather than from a table in the component.
+    expect(toFactValue(SALARY, '60000')).toEqual({
       ok: true,
       value: { amount: 60000, currency: 'EUR', period: 'year', basis: 'gross' },
     });
   });
 
   it('accepts a number typed with separators', () => {
-    expect(toFactValue('k', '60 000', 'EUR/year')).toMatchObject({ ok: true });
-    expect(toFactValue('k', '60,000', 'EUR/year')).toMatchObject({ ok: true });
+    expect(toFactValue(SALARY, '60 000')).toMatchObject({ ok: true });
+    expect(toFactValue(SALARY, '60,000')).toMatchObject({ ok: true });
   });
 
   it('refuses an empty answer', () => {
-    expect(toFactValue('k', '   ', 'EUR/year')).toEqual({ ok: false, message: 'Enter a value.' });
+    expect(toFactValue(SALARY, '   ')).toEqual({ ok: false, message: 'Enter a value.' });
   });
 
   it('refuses something that is not a number where a number is required', () => {
-    expect(toFactValue('k', 'about sixty thousand', 'EUR/year')).toMatchObject({ ok: false });
+    expect(toFactValue(SALARY, 'about sixty thousand')).toMatchObject({ ok: false });
   });
 
   it('refuses zero or negative pay rather than sending it', () => {
-    expect(toFactValue('k', '0', 'EUR/year')).toMatchObject({ ok: false });
-    expect(toFactValue('k', '-5', 'EUR/year')).toMatchObject({ ok: false });
+    expect(toFactValue(SALARY, '0')).toMatchObject({ ok: false });
+    expect(toFactValue(SALARY, '-5')).toMatchObject({ ok: false });
   });
 
-  it('passes a unitless answer through as text', () => {
-    expect(toFactValue('k', ' B2 ', null)).toEqual({ ok: true, value: 'B2' });
+  it('sends a real boolean for a boolean kind', () => {
+    // The defect a browser found on 2026-08-11: "no" was sent as the string 'no', which read as
+    // `true` downstream and told someone they held a degree they had just said they lacked.
+    expect(toFactValue(DEGREE, 'false')).toEqual({ ok: true, value: false });
+    expect(toFactValue(DEGREE, 'true')).toEqual({ ok: true, value: true });
+  });
+
+  it('never interprets a word as a boolean', () => {
+    // Not a yes/no parser. Interpreting words is the thing that went wrong; the control emits the
+    // two values this accepts and nothing else is guessed at.
+    for (const typed of ['no', 'yes', 'No', '0', '1', 'nope']) {
+      expect(toFactValue(DEGREE, typed)).toMatchObject({ ok: false });
+    }
+  });
+
+  it('sends a whole number for an integer kind, not a string', () => {
+    const months = kind({ key: 'employment_contract_months', unit: 'months' });
+
+    expect(toFactValue(months, '12')).toEqual({ ok: true, value: 12 });
+    expect(toFactValue(months, '12.5')).toMatchObject({ ok: false });
+  });
+
+  it('constrains an enum to the permitted values the catalogue names', () => {
+    const level = kind({
+      key: 'german_language_level',
+      valueType: 'enum',
+      unit: null,
+      allowedValues: ['A1', 'A2', 'B1', 'B2'],
+    });
+
+    expect(toFactValue(level, 'B2')).toEqual({ ok: true, value: 'B2' });
+    expect(toFactValue(level, 'C2')).toMatchObject({ ok: false });
+  });
+
+  it('passes text through for a string kind', () => {
+    const isco = kind({ key: 'isco_08_group', valueType: 'string', unit: null });
+
+    expect(toFactValue(isco, ' 25 ')).toEqual({ ok: true, value: '25' });
+  });
+
+  it('refuses a value type it does not know how to shape', () => {
+    // Fail closed. Falling back to free text is how the wrong shape reached the database before.
+    const unknown = { ...kind({ key: 'x' }), valueType: 'quaternion' } as unknown as PersonFactKindWire;
+
+    expect(toFactValue(unknown, 'whatever')).toMatchObject({ ok: false });
   });
 });
 

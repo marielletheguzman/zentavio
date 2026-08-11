@@ -16,17 +16,28 @@
  *    is unverifiable, and one with no disclaimer is advice.
  */
 
-import type {
-  EligibilityResponseWire,
-  EvaluatedRequirementWire,
-  RouteOutcomeWire,
+import {
+  validatePersonFactValue,
+  type EligibilityResponseWire,
+  type EvaluatedRequirementWire,
+  type PersonFactKindWire,
+  type RouteOutcomeWire,
 } from '@zentavio/types';
 
 export interface AnswerableQuestion {
   /** The catalogue key to POST back. */
   readonly key: string;
-  /** What to ask, in words. Falls back to the key only when the catalogue has no prompt. */
+  /** What to ask, in words. Falls back to the key only when the catalogue has no entry. */
   readonly prompt: string;
+  /**
+   * The catalogue entry, which decides the control and the shape of the answer.
+   *
+   * **Null when the catalogue does not define this key**, and that is a state the surface must
+   * render as unanswerable rather than as a text box. A rule asking for a fact the product cannot
+   * accept is a `needsFromUser` nobody can act on; guessing a control for it would let a wrongly
+   * shaped answer through, which is the defect this whole path was rebuilt to close.
+   */
+  readonly kind: PersonFactKindWire | null;
 }
 
 export interface RequirementView {
@@ -108,8 +119,20 @@ export type EligibilityViewState =
       readonly disclaimer: string;
     };
 
-/** Prompts from the catalogue, so a question reads as a question rather than as a column name. */
-export type PromptLookup = Readonly<Record<string, string>>;
+/**
+ * The catalogue, keyed by fact key.
+ *
+ * Served by the gateway from `person_fact_kinds`. A surface holds no opinion about what a question
+ * says, what unit it is in, or what values it permits — all three are properties of the question,
+ * and a component that restates them is a copy that goes stale silently.
+ */
+export type FactCatalogue = Readonly<Record<string, PersonFactKindWire>>;
+
+/** One question, resolved against the catalogue. */
+function toQuestion(key: string, catalogue: FactCatalogue): AnswerableQuestion {
+  const kind = catalogue[key];
+  return { key, prompt: kind?.prompt ?? key, kind: kind ?? null };
+}
 
 function requirementLabel(requirement: EvaluatedRequirementWire): string {
   switch (requirement.result) {
@@ -160,7 +183,7 @@ function routeLabel(status: RouteOutcomeWire['status']): string {
 function toRouteView(
   outcome: RouteOutcomeWire,
   usedRoute: string | null,
-  prompts: PromptLookup,
+  catalogue: FactCatalogue,
 ): RouteView {
   return {
     route: outcome.route,
@@ -171,7 +194,7 @@ function toRouteView(
     // Carried for every open route, not only the one being asked about. The product leads with the
     // shortest set of questions (ADR-0024 rule 5); it does not get to hide that another way in
     // exists and has its own.
-    questions: outcome.needs_from_user.map((key) => ({ key, prompt: prompts[key] ?? key })),
+    questions: outcome.needs_from_user.map((key) => toQuestion(key, catalogue)),
     used: outcome.route === usedRoute,
   };
 }
@@ -214,7 +237,7 @@ function headlineFor(verdict: EligibilityResponseWire): { headline: string; expl
 
 export function toEligibilityView(
   verdict: EligibilityResponseWire,
-  prompts: PromptLookup = {},
+  catalogue: FactCatalogue = {},
 ): EligibilityViewState {
   const { headline, explanation } = headlineFor(verdict);
 
@@ -225,14 +248,14 @@ export function toEligibilityView(
     status: verdict.status,
     requirements: verdict.requirements.map(toRequirementView),
     routes: (verdict.routes ?? []).map((outcome) =>
-      toRouteView(outcome, verdict.route ?? null, prompts),
+      toRouteView(outcome, verdict.route ?? null, catalogue),
     ),
     usedRoute: verdict.route ?? null,
     // Only `undetermined` produces questions. A `not_met` verdict is not resolved by answering
     // something — offering a question there would imply the answer could change the outcome.
     questions:
       verdict.status === 'undetermined'
-        ? verdict.needs_from_user.map((key) => ({ key, prompt: prompts[key] ?? key }))
+        ? verdict.needs_from_user.map((key) => toQuestion(key, catalogue))
         : [],
     blockers: verdict.blockers,
     notes: verdict.notes,
@@ -243,35 +266,74 @@ export function toEligibilityView(
 }
 
 /**
- * How the answer should be shaped before it is sent.
+ * Turn what a control produced into the domain value its kind requires.
  *
- * A monetary kind must carry its currency and period or the evaluator refuses to compare it —
- * correctly, since 60 000 of an unstated currency against a EUR threshold is a confident wrong
- * answer. The UI knows the unit from the catalogue; it must not send a bare number and hope.
+ * **The kind comes from the catalogue, never from a map in this file.** A local table of units and
+ * prompts is a second source of truth, and it drifted the moment § 18g added five questions: every
+ * one of them rendered as its raw key in a free-text box, and a boolean answered "no" was sent as
+ * the string `'no'`.
+ *
+ * The shaped value is checked with `validatePersonFactValue` — **the same function the write
+ * boundary enforces**. Not because the client's check protects anything (it does not; the server
+ * is authoritative and refuses the same values), but because a message at the keyboard beats a 400
+ * after a round trip, and one implementation cannot disagree with itself.
  */
 export function toFactValue(
-  key: string,
+  kind: PersonFactKindWire,
   raw: string,
-  unit: string | null,
 ): { readonly ok: true; readonly value: unknown } | { readonly ok: false; readonly message: string } {
   const trimmed = raw.trim();
   if (trimmed === '') return { ok: false, message: 'Enter a value.' };
 
-  if (unit === null) return { ok: true, value: trimmed };
-
-  const [currency, period] = unit.split('/');
-  const amount = Number(trimmed.replace(/[\s,]/g, ''));
-  if (!Number.isFinite(amount)) return { ok: false, message: 'Enter a number.' };
-  if (amount <= 0) return { ok: false, message: 'Enter an amount greater than zero.' };
-
-  if (currency === undefined || period === undefined) {
-    return { ok: true, value: amount };
+  const value = shapeForKind(kind, trimmed);
+  if (value === UNSHAPEABLE) {
+    return { ok: false, message: `Enter a valid ${kind.valueType === 'monetary' ? 'amount' : kind.valueType}.` };
   }
 
-  return {
-    ok: true,
-    value: { amount, currency, period, basis: 'gross' },
-  };
+  const check = validatePersonFactValue(kind, value);
+  return check.ok ? { ok: true, value } : { ok: false, message: check.message };
+}
+
+/** Distinct from `null` and `undefined`, either of which could be a legitimate shaped value. */
+const UNSHAPEABLE = Symbol('unshapeable');
+
+function shapeForKind(kind: PersonFactKindWire, trimmed: string): unknown {
+  switch (kind.valueType) {
+    case 'boolean':
+      // Only the two strings the control itself emits. **Not** a yes/no/1/0 parser: the moment
+      // this file starts interpreting words, it is deciding what "no" means, which is exactly the
+      // interpretation that produced the defect.
+      if (trimmed === 'true') return true;
+      if (trimmed === 'false') return false;
+      return UNSHAPEABLE;
+
+    case 'integer':
+    case 'decimal': {
+      const parsed = Number(trimmed.replace(/[\s,]/g, ''));
+      return Number.isFinite(parsed) ? parsed : UNSHAPEABLE;
+    }
+
+    case 'monetary': {
+      const amount = Number(trimmed.replace(/[\s,]/g, ''));
+      if (!Number.isFinite(amount)) return UNSHAPEABLE;
+      const [currency, period] = (kind.unit ?? '/').split('/');
+      // `basis: 'gross'` because the prompt asks for gross pay and the thresholds are gross. It is
+      // stated rather than left off so the evaluator's unit check has something to compare.
+      return { amount, currency, period, basis: 'gross' };
+    }
+
+    case 'string':
+    case 'enum':
+      return trimmed;
+
+    case 'date':
+      return trimmed;
+
+    default:
+      // A kind this build does not know how to shape. Refused rather than sent as text and hoped
+      // over — the server would refuse it too, and saying so here is the honest order.
+      return UNSHAPEABLE;
+  }
 }
 
 /**
@@ -360,9 +422,9 @@ export interface ViabilityWire {
 
 export function toViabilityView(
   wire: ViabilityWire,
-  prompts: PromptLookup = {},
+  catalogue: FactCatalogue = {},
 ): ViabilityViewState {
-  const eligibility = toEligibilityView(wire.eligibility, prompts);
+  const eligibility = toEligibilityView(wire.eligibility, catalogue);
   // `toEligibilityView` only ever returns a verdict; the narrowing keeps the union honest.
   if (eligibility.kind !== 'verdict') return { kind: 'error', message: 'Unreadable verdict.', retryable: false };
 

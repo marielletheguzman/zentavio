@@ -93,6 +93,13 @@ export {
 } from './sponsorship.ts';
 
 export {
+  validatePersonFactValue,
+  type PersonFactKindWire,
+  type PersonFactValueCheck,
+  type PersonFactValueType,
+} from './person-fact.ts';
+
+export {
   isGapResponse,
   type GapCluster,
   type GapHeldWire,

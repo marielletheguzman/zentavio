@@ -15,12 +15,13 @@
  * layer that cannot be tested without a browser.
  */
 
-import { useId, useState } from 'react';
+import type { PersonFactKindWire } from '@zentavio/types';
+import { useCallback, useEffect, useId, useState } from 'react';
 
 import {
   toFactValue,
   toViabilityView,
-  type PromptLookup,
+  type FactCatalogue,
   type ViabilityViewState,
 } from '../../lib/eligibility-view.ts';
 
@@ -34,14 +35,80 @@ function devAuthHeader(devUserId: string): Record<string, string> {
   return { 'x-zentavio-dev-user': devUserId };
 }
 
-/** Prompts the catalogue owns. Hardcoding the wording here would fork it from the database. */
-const FALLBACK_PROMPTS: PromptLookup = {
-  expected_gross_annual_salary_eur: 'What gross annual salary do you expect, in euros?',
-};
+/**
+ * The control a question gets, decided by its catalogue type and nothing else.
+ *
+ * **This is the fix for the defect a browser found on 2026-08-11.** Every question used to render
+ * as the same free-text box, so answering "no" to *"do you hold a recognised degree?"* sent the
+ * string `'no'`, which read as `true` downstream and told the person the rule was met. A boolean
+ * now has a boolean control, and an unshaped answer never leaves the page.
+ *
+ * A kind this build cannot render is rendered as **unanswerable**, not as a text box. Falling back
+ * to free text is how the wrong shape got through the first time.
+ */
+function FactControl({
+  kind,
+  value,
+  onChange,
+}: {
+  kind: PersonFactKindWire;
+  value: string;
+  onChange: (next: string) => void;
+}) {
+  const shared = {
+    id: kind.key,
+    value,
+    onChange: (event: { target: { value: string } }) => {
+      onChange(event.target.value);
+    },
+  };
 
-const UNITS: Readonly<Record<string, string | null>> = {
-  expected_gross_annual_salary_eur: 'EUR/year',
-};
+  switch (kind.valueType) {
+    case 'boolean':
+      return (
+        // A select, not a checkbox. An unticked checkbox is indistinguishable from an unanswered
+        // question, and here those are `false` and `undetermined` — a no and a not-yet, which the
+        // whole verdict model exists to keep apart.
+        <select {...shared}>
+          <option value="">Choose…</option>
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </select>
+      );
+
+    case 'enum':
+      return (
+        <select {...shared}>
+          <option value="">Choose…</option>
+          {kind.allowedValues.map((allowed) => (
+            <option key={allowed} value={allowed}>
+              {allowed}
+            </option>
+          ))}
+        </select>
+      );
+
+    case 'integer':
+      return <input {...shared} type="number" step="1" inputMode="numeric" />;
+
+    case 'decimal':
+    case 'monetary':
+      return <input {...shared} type="number" step="any" inputMode="decimal" />;
+
+    case 'date':
+      return <input {...shared} type="date" />;
+
+    case 'string':
+      return <input {...shared} type="text" />;
+
+    default:
+      return (
+        <p className="hint">
+          This question cannot be answered here yet. Nothing is stored until it can be.
+        </p>
+      );
+  }
+}
 
 export function EligibilityPanel({
   gatewayUrl,
@@ -66,9 +133,34 @@ export function EligibilityPanel({
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [note, setNote] = useState<string | null>(null);
   const [asOf, setAsOf] = useState(today);
+  const [catalogue, setCatalogue] = useState<FactCatalogue>({});
   const asOfId = useId();
 
-  async function evaluate(date: string) {
+  // Fetched once, not baked in. The catalogue is a table with prompts, units and permitted values
+  // in it; a copy in this file is a second source of truth that goes stale the moment a rule adds
+  // a question — which is exactly what happened before this was wired.
+  useEffect(() => {
+    let live = true;
+    void (async () => {
+      try {
+        const response = await fetch(`${gatewayUrl}/v1/person-fact-kinds`, {
+          headers: devAuthHeader(devUserId),
+        });
+        if (!response.ok) return;
+        const body = (await response.json()) as { kinds: readonly PersonFactKindWire[] };
+        if (!live) return;
+        setCatalogue(Object.fromEntries(body.kinds.map((kind) => [kind.key, kind])));
+      } catch {
+        // Left empty on purpose. Without the catalogue every question renders as unanswerable
+        // rather than as a guessed control, which is the fail-closed direction.
+      }
+    })();
+    return () => {
+      live = false;
+    };
+  }, [gatewayUrl, devUserId]);
+
+  const evaluate = useCallback(async function evaluate(date: string) {
     setState({ kind: 'loading' });
     setNote(null);
     try {
@@ -102,7 +194,7 @@ export function EligibilityPanel({
         return;
       }
 
-      setState(toViabilityView(body, FALLBACK_PROMPTS));
+      setState(toViabilityView(body, catalogue));
     } catch {
       setState({
         kind: 'error',
@@ -110,10 +202,17 @@ export function EligibilityPanel({
         retryable: true,
       });
     }
-  }
+  }, [gatewayUrl, devUserId, pathway, catalogue]);
 
-  async function submitAnswer(key: string) {
-    const shaped = toFactValue(key, answers[key] ?? '', UNITS[key] ?? null);
+  async function submitAnswer(kind: PersonFactKindWire | null, key: string) {
+    if (kind === null) {
+      // The catalogue does not define this key, so nothing here knows what a valid answer looks
+      // like. Refused rather than sent as text: the server would refuse it too.
+      setNote('We cannot record an answer to that question yet.');
+      return;
+    }
+
+    const shaped = toFactValue(kind, answers[key] ?? '');
     if (!shaped.ok) {
       setNote(shaped.message);
       return;
@@ -127,7 +226,17 @@ export function EligibilityPanel({
     });
 
     if (!response.ok) {
-      setNote('That answer could not be saved.');
+      // A 400 here is the write boundary refusing the value, and it names the field. Showing its
+      // message beats "could not be saved", which tells whoever is typing nothing about what to do.
+      // The gateway's envelope is `{ error: { message } }` (`http/error-envelope.ts`).
+      const body = (await response.json().catch(() => null)) as {
+        error?: { message?: unknown };
+      } | null;
+      setNote(
+        typeof body?.error?.message === 'string'
+          ? body.error.message
+          : 'That answer could not be saved.',
+      );
       return;
     }
 
@@ -268,16 +377,30 @@ export function EligibilityPanel({
                 <div className="question" key={question.key}>
                   <div>
                     <label htmlFor={question.key}>{question.prompt}</label>
-                    <input
-                      id={question.key}
-                      inputMode="decimal"
-                      value={answers[question.key] ?? ''}
-                      onChange={(event) => {
-                        setAnswers((previous) => ({ ...previous, [question.key]: event.target.value }));
-                      }}
-                    />
+                    {question.kind === null ? (
+                      <p className="hint">
+                        This question is not one we can accept an answer to yet.
+                      </p>
+                    ) : (
+                      <FactControl
+                        kind={question.kind}
+                        value={answers[question.key] ?? ''}
+                        onChange={(next) => {
+                          setAnswers((previous) => ({ ...previous, [question.key]: next }));
+                        }}
+                      />
+                    )}
+                    {/* Why we are asking, from the catalogue. A product that asks for a salary
+                        without naming the rule that needs it reads as data collection. */}
+                    {question.kind !== null && (
+                      <p className="hint">{question.kind.rationale}</p>
+                    )}
                   </div>
-                  <button type="button" onClick={() => void submitAnswer(question.key)}>
+                  <button
+                    type="button"
+                    disabled={question.kind === null}
+                    onClick={() => void submitAnswer(question.kind, question.key)}
+                  >
                     Save and re-check
                   </button>
                 </div>

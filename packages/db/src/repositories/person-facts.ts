@@ -8,6 +8,7 @@
  * looks intact.
  */
 
+import { validatePersonFactValue, type PersonFactValueType } from '@zentavio/types';
 import type { Insertable, Kysely, Selectable } from 'kysely';
 import type { Database, PersonFactsTable } from '../schema.ts';
 import { uuidv7 } from '../uuid.ts';
@@ -24,6 +25,22 @@ export class UnknownFactKindError extends Error {
         'accept — otherwise needsFromUser names something nobody can answer.',
     );
     this.name = 'UnknownFactKindError';
+    this.key = key;
+  }
+}
+
+/**
+ * The value does not satisfy the kind the catalogue declares.
+ *
+ * A separate error from `UnknownFactKindError` because they are different sentences: one is a
+ * question nobody can answer, the other an answer in the wrong shape.
+ */
+export class InvalidFactValueError extends Error {
+  readonly key: string;
+
+  constructor(key: string, message: string) {
+    super(message);
+    this.name = 'InvalidFactValueError';
     this.key = key;
   }
 }
@@ -77,13 +94,28 @@ export async function recordFact(
   return db.transaction().execute(async (trx) => {
     const kind = await trx
       .selectFrom('person_fact_kinds')
-      .select('key')
+      .select(['key', 'value_type', 'unit', 'allowed_values'])
       .where('key', '=', options.key)
       .executeTakeFirst();
 
     // Checked here rather than left to the foreign key, so the caller gets a message naming the
     // rule instead of a constraint name it has to decode.
     if (kind === undefined) throw new UnknownFactKindError(options.key);
+
+    // **The write boundary is where a fact becomes typed.** Enforced in the repository rather than
+    // in the gateway's DTO so it holds for every caller — a script, a seed, an import — and not
+    // only for the one that arrives over HTTP. The DTO cannot do it anyway: the type is a property
+    // of the kind, which is a row, and restating it in a decorator would fork the catalogue.
+    const check = validatePersonFactValue(
+      {
+        key: kind.key,
+        valueType: kind.value_type as PersonFactValueType,
+        unit: kind.unit,
+        allowedValues: kind.allowed_values,
+      },
+      options.value,
+    );
+    if (!check.ok) throw new InvalidFactValueError(options.key, check.message);
 
     const highest = await trx
       .selectFrom('person_facts')
