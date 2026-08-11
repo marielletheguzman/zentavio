@@ -273,8 +273,24 @@ The path is real end to end: `BAnz AT 18.12.2025 B3` → `connectors/immigration
   the Bundesagentur für Arbeit's consent, recorded as a note because nobody can answer it in
   advance; and the dependent, residence and job-change provisions, which are not eligibility. So
   "every rule we checked" remains a claim about what is ingested, not about § 18g entire.
-- **Outcome recording** (ADR-0019) and **archived provenance** (ADR-0021, phases 2–6) are both
-  scoped to M2 and unbuilt.
+- ~~**Outcome recording** (ADR-0019).~~ **Built.** `packages/db/src/repositories/applications.ts`
+  records an application with **what was predicted at that moment** and records outcomes against
+  it; the gateway serves `POST /v1/applications`, `GET /v1/applications` and
+  `POST /v1/applications/:id/outcomes`; `apps/web/app/applications` is the one-tap surface. The
+  prediction is captured when the person acts rather than when the result arrives, because a score
+  recorded late has already moved — that is ADR-0019's argument and the reason the column exists.
+  Erasure detaches the outcome and deletes the application, asserted against rows the real write
+  path produced.
+
+  **What this does not yet do is read the data.** `CLAIMED_CREDIT` stays an assumption until enough
+  outcomes accumulate to observe the rate, exactly as ADR-0019 says. A calibration reader with zero
+  rows could only answer "not enough data yet", which is why it is not built here.
+- ~~**Archived provenance** (ADR-0021, phases 2–6).~~ **Built and enforced.** Every stored
+  requirement cites an archived original; `unarchivedRequirements()` returns empty; a rule whose
+  source could not be archived is rejected by `services/ingestion`, asserted against real MinIO in
+  `tests/integration/db/ingestion-archival.test.ts`. **Only the production bucket (Cloudflare R2)
+  is unprovisioned, and that blocks deployment rather than this milestone.** *This bullet said
+  phases 2–6 were unbuilt until 2026-08-11; they landed on 2026-08-05.*
 
 ---
 

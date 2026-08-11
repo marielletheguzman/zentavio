@@ -22,8 +22,11 @@ that resolves it, then `met` once answered — **browser-verified 2026-08-04**.
 three routes (ADR-0024): the qualification, both gates on the reduced-threshold route, and Abs. 2's
 experience route, which admits ICT and IT professionals with no degree.
 
-**What M2 still lacks** is in `docs/roadmap/milestones.md` and matters before calling it done:
-outcome recording (ADR-0019), the DE reference file under
+**Outcome recording is built** (ADR-0019) — an application carries what was predicted about the
+person at the moment they recorded it, and outcomes recorded against it carry that prediction
+forward. Nothing reads the data yet: `CLAIMED_CREDIT` stays an assumption until enough accumulates.
+
+**What M2 still lacks** is in `docs/roadmap/milestones.md`: the DE reference file under
 `.claude/skills/immigration/references/countries/`, and ADR-0021's production bucket. Not the whole
 of § 18g — § 19f's rejection grounds and the Bundesagentur's consent stay unmodelled on purpose,
 and the connector's README says why.
@@ -41,7 +44,7 @@ blocking on `main`.
 | `connectors/core`, `connectors/immigration-data/de-bundesanzeiger`, `connectors/immigration-data/de-aufenthg` | every other connector, all of `knowledge-engine/` |
 | the seeded skill graph — in `packages/db/seeds/` and four tables, **not** `knowledge-engine/` (ADR-0020) | |
 
-Not built at all: outcome recording, any deployed environment. ADR-0015's Supabase project is
+Not built at all: any deployed environment. ADR-0015's Supabase project is
 decided but not provisioned; ADR-0017's authentication is implemented but needs a provider, so the
 dev header is a stand-in refused in production; ADR-0021 is implemented against MinIO and enforced
 — a rule whose source could not be archived is rejected — but its production bucket (Cloudflare R2)

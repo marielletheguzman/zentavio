@@ -97,6 +97,19 @@ export type {
 } from './schema.ts';
 
 export {
+  UnknownApplicationError,
+  applicationOutcomes,
+  recordApplication,
+  recordOutcome,
+  userApplications,
+  type ApplicationRow,
+  type OutcomeRow,
+  type PredictionAtApply,
+  type RecordApplicationOptions,
+  type RecordOutcomeOptions,
+} from './repositories/applications.ts';
+
+export {
   InvalidFactValueError,
   UnknownFactKindError,
   currentFacts,
