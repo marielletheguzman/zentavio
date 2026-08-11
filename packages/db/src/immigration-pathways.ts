@@ -94,4 +94,29 @@ export const IMMIGRATION_PATHWAYS: readonly ImmigrationPathwaySeed[] = [
       },
     ],
   },
+  {
+    pathwayId: 'nz.aewv',
+    jurisdiction: 'NZ',
+    name: 'Accredited Employer Work Visa (New Zealand)',
+    description:
+      'Work visa for employment with an INZ-accredited employer, under the Immigration ' +
+      'Instructions certified beneath the Immigration Act 2009. **The Act is empowering; the ' +
+      'instructions are operative**, which is why the sourced rules come from INZ rather than ' +
+      'from legislation. Its remuneration rule is stated by INZ and its figure by MBIE, so the ' +
+      'stored threshold cites both instruments (ADR-0025) — with no arithmetic between them.',
+    officialSources: [
+      {
+        url: 'https://www.immigration.govt.nz/opsmanual/',
+        authoritativeFor:
+          'the operative immigration instructions — employer accreditation (WA2), the Job Check ' +
+          'and its remuneration and market-rate requirements (WA3), and the visa itself (WA4)',
+      },
+      {
+        url: 'https://www.employment.govt.nz/pay-and-hours/pay-and-wages/minimum-wage/',
+        authoritativeFor:
+          'the adult minimum wage, per hour, which WA3.15.5 sets as the remuneration floor — ' +
+          'published by MBIE, which administers the Minimum Wage Act',
+      },
+    ],
+  },
 ];

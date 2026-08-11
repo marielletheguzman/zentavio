@@ -20,7 +20,7 @@ a way that matters: **its operative rules are not in its statute.**
 |---|---|---|---|
 | Immigration New Zealand — Operational Manual | **the operative immigration instructions** | `immigration.govt.nz/opsmanual/` | per section; each carries its own `Effective` date |
 | Stats NZ | the median wage, where an instruction is pegged to it | `stats.govt.nz` | as published; **crawl-delay 10** |
-| Minimum Wage Order | the adult minimum wage, where an instruction is pegged to it | **not yet located** — see below | annual in practice |
+| Employment New Zealand (MBIE) | **the adult minimum wage**, where an instruction is pegged to it | `employment.govt.nz/pay-and-hours/pay-and-wages/minimum-wage/` | annual — rates change on **1 April** |
 
 ### The statute is not where the rules are
 
@@ -127,19 +127,45 @@ mixing the two into one pathway would produce a verdict about neither.
 
 ## The derived thresholds, and how they differ from Luxembourg's
 
-**Both NZ thresholds are derived, and ADR-0025 already covers the shape** — connector-side
-arithmetic, every contributing instrument archived and cited through `requirement_sources`. No new
-architectural decision is needed. What differs is the *operand*:
+**Both NZ thresholds are derived, and ADR-0025 already covers the shape** — every contributing
+instrument archived and cited through `requirement_sources`. No new architectural decision is
+needed.
+
+**The AEWV rule needs no arithmetic at all**, which is a case ADR-0025's vocabulary turns out to
+cover without stretching. The instruction states the rule and MBIE states the figure, so the
+instruction is `role: primary` and MBIE is `role: operand`; there is no `formula` row because
+nothing is multiplied. Luxembourg needed one because its RGD supplies a multiplier.
+
+**And the figure is hourly**, which removes a step both European rules have. `WA3.25` assesses
+remuneration as *guaranteed payment per hour*, so there is no annualisation to get wrong — the
+threshold and the answer are in the same unit as published.
+
+What differs between the two NZ pathways is the *operand*:
 
 | Pathway | Instruction says | Operand comes from |
 |---|---|---|
-| AEWV | at or above the **adult minimum wage** | a **Minimum Wage Order** — a regulation, not INZ |
+| AEWV | at or above the **adult minimum wage** | **MBIE** (`employment.govt.nz`) — located 2026-08-11 |
 | Skilled Residence | at least **twice the median wage** | **Stats NZ** |
 
-**The AEWV operand is a live gap.** The Minimum Wage Order is made under the Minimum Wage Act and
-published where we cannot currently reach it — `legislation.govt.nz` — so the instrument stating
-the figure has **not been located on a permitted source**. Until it is, the AEWV remuneration rule
-cannot be written honestly, exactly as Luxembourg's could not before its règlement was found.
+**The AEWV operand was located on 2026-08-11 and the gap is closed.** The legal instrument — the
+Minimum Wage Order — is made under the Minimum Wage Act and published on `legislation.govt.nz`,
+which we cannot reach. **MBIE publishes the rate itself** on `employment.govt.nz`, and MBIE
+administers that Act: this is the responsible authority stating its own figure, structurally the
+BMI/Bundesanzeiger case rather than the `guichet.public.lu` case.
+
+It passes the test `guichet` failed. **Three MBIE pages state one figure** — the rates table, the
+change announcement, and the historical table — and the historical table carries an `In force from`
+date for every rate back to 1997, which is a supersession chain neither Germany nor Luxembourg
+hands over so readily.
+
+**The honest caveat, recorded so it can be overruled:** the Bundesanzeiger *is* the official gazette
+and publication there is the legal act; `employment.govt.nz` is the ministry's website. Weaker in
+that one respect, and treated as tier 1 on the strength of *whose* figure it is.
+
+**Also checked and ruled out:** `mbie.govt.nz` itself serves an Incapsula challenge — off-limits,
+like `data.govt.nz`. `gazette.govt.nz` permits `/notice/` paths but disallows `*/pdf`, and a
+Minimum Wage Order is a legislative instrument rather than a Gazette notice, so it is not the
+channel regardless.
 
 **A note for whoever picks this up.** The AEWV pay rule was pegged to the **median wage** until
 recently and is now pegged to the **minimum wage** (`WA3.15 Effective 08/12/2025`). Anything

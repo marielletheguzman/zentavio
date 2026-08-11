@@ -474,6 +474,29 @@ computed from two instruments neither of which states that number.
 
 *Phase 2 complete.* DE, LU, NZ, CH, plus `REMOTE`, side by side.
 
+**Comparison semantics are decided** — ADR-0026, Accepted 2026-08-11: destinations are compared,
+grouped by binding constraint, and **never ranked by a score**. The surface is gated on data.
+
+### New Zealand cost less than Luxembourg, and that is the point
+
+Ingested 2026-08-11. **`ai/`, `apps/`, `services/` and the schema were all untouched** — the diff is
+the connector, its registry line, and two seed rows:
+
+| Area | Files |
+|---|---|
+| `ai/` · `apps/` · `services/` | **0** |
+| `packages/db` | 2 — a pathway row and two person-fact kinds, **no migration** |
+| `connectors/` | the new connector, the registry entry |
+
+Luxembourg cost a migration because it exposed the single-source provenance assumption. **New
+Zealand reused that infrastructure unchanged**, which is what ADR-0025 claimed it would and the
+first evidence for it. A third country whose rules come from two publishers now costs a connector.
+
+New Zealand also exercises two things neither European country did: a rule the evaluator
+**refuses to decide** (`market-rate`, `evaluation: 'manual'` — an immigration officer's judgement),
+and a **routeless pathway**, which ADR-0024 said would behave exactly as pathways did before routes
+existed. Both hold.
+
 **Verified by:** a user sees one market marked `unknown` on salary while another is complete, and the
 comparison is still usable — partial coverage rendered as a designed state rather than a blank.
 

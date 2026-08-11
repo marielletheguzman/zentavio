@@ -1,0 +1,17 @@
+{
+  "name": "@zentavio/connector-nz-inz",
+  "version": "0.0.0",
+  "private": true,
+  "description": "New Zealand's Accredited Employer Work Visa — Immigration Instructions plus MBIE's minimum wage.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zentavio/connectors-core": "workspace:*",
+    "@zentavio/types": "workspace:*"
+  }
+}

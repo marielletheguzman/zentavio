@@ -14,6 +14,9 @@ const stubDeps = {
   luLegilux: {
     fetchInstruments: async () => null,
   },
+  nzInz: {
+    fetchInstructions: async () => null,
+  },
 };
 
 describe('createRegistry', () => {
@@ -36,6 +39,14 @@ describe('createRegistry', () => {
     expect(registry.ids()).toContain('lu-legilux');
     expect(registry.byRegion('LU').map((c) => c.meta.id)).toEqual(['lu-legilux']);
     expect(registry.byRegion('DE').map((c) => c.meta.id)).not.toContain('lu-legilux');
+  });
+
+  it('registers New Zealand in its own region', () => {
+    const registry = createRegistry(stubDeps);
+
+    expect(registry.ids()).toContain('nz-inz');
+    expect(registry.byRegion('NZ').map((c) => c.meta.id)).toEqual(['nz-inz']);
+    expect(registry.byRegion('DE').map((c) => c.meta.id)).not.toContain('nz-inz');
   });
 
   it('returns a fresh registry each call, so callers cannot share mutable state', () => {
