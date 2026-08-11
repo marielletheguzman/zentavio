@@ -304,6 +304,14 @@ entry. **Nothing in `services/` or `ai/`.**
 If the diff is larger, ADR-0002's central claim is false and the design is fixed before NZ and CH follow.
 This is the cheapest possible moment to discover that.
 
+**Germany's reference file exists as of 2026-08-11** (`.claude/skills/immigration/references/
+countries/de.md`), which is what makes this milestone measurable: Luxembourg's diff can be compared
+against a real one rather than against an idea of one. Note what Germany's own history says about
+the claim being tested — § 18g needed **ADR-0024 and a change to `ai/career-roadmap`** before its
+Abs. 2 route could be expressed at all. That was a genuine gap in the model rather than a country
+detail, and the honest reading is that the first country to need a new *shape* of rule will always
+cost code. Luxembourg tests whether a country needing no new shape costs none.
+
 ---
 
 ## M4 — Four destinations, honestly compared

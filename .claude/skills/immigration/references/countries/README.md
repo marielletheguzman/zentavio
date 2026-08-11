@@ -52,4 +52,11 @@ wrong — see ADR-0002 and the `immigration` skill.
 
 ## Status
 
-No country reference files authored yet. `_TEMPLATE.md` defines the shape.
+| File | State |
+|---|---|
+| `de.md` | **Authored 2026-08-11.** One pathway (`de.eu-blue-card`) modelled and sourced end to end; every other section marked `unknown` and unsourced, which is the honest state rather than a to-do list. |
+| `lu.md` · `nz.md` · `ch.md` | Not authored. |
+
+`_TEMPLATE.md` defines the shape. **Read `de.md` before writing the next one** — it is the worked
+example of a country whose rules are actually ingested, and of how to say `unknown` at length
+without it reading as an apology.
