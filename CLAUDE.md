@@ -6,8 +6,7 @@ viability — using structured knowledge rather than keyword matching.
 
 ## Current state
 
-**M1 and M2 are both complete** (M2 met 2026-08-11, `docs/roadmap/milestones.md`). Nothing of M3
-is started.
+**M1, M2 and M3 are complete** (M2 and M3 both met 2026-08-11, `docs/roadmap/milestones.md`).
 
 M1: a résumé uploads, becomes a versioned profile with a verbatim source span on every claim, is
 correctable, and can be compared against a career track to produce a dependency-ordered gap and a
@@ -37,12 +36,21 @@ unmodelled on purpose, and the connector's README says why.
 `/applications`. Unit-tested only. Recorded as a verification limitation in `milestones.md`, not as
 unfinished work — but load them before building on them.
 
+**M3's result, and the rule it sets for future work.** Luxembourg's rules were absorbed with
+**zero changes to `ai/`, `apps/` and `services/api-gateway`** — the evaluator took a second
+country's two-route pathway unmodified. The one gap Luxembourg exposed was **provenance
+cardinality**: `requirements` assumed one authoritative source per rule, which a derived threshold
+breaks. `requirement_sources` (ADR-0025) is the fix and is **general infrastructure** — a future
+derived threshold reuses it, and a second country-specific provenance mechanism would be a
+regression. **No country-specific branch may enter the evaluator**; the jurisdiction-free AST test
+enforces it.
+
 **`de.md` is the worked example of a country model** (`.claude/skills/immigration/references/
 countries/`). One pathway sourced end to end; labour market, compensation, cost of living and
 culture all marked `unknown` and unsourced, because a plausible guess in those sections is the
 most harmful and least detectable thing this repository could contain.
 
-13 tables. **1 124 tests — 474 unit, 252 integration, 398 pytest** (measured 2026-08-11 by running
+14 tables. **1 262 tests — 567 unit, 286 integration, 409 pytest** (measured 2026-08-11 by running
 all three suites, integration included, against local PostgreSQL and MinIO — not estimated). CI
 blocking on `main`.
 
@@ -52,7 +60,7 @@ blocking on `main`.
 | `services/api-gateway`, `services/ingestion` — requirement ingest only | `matching`, `notifications`, `billing`; ingestion's job-listing and scheduling half |
 | `ai/resume-parser`, `ai/skill-gap`, `ai/shared`, `ai/career-roadmap` — eligibility, routes, viability | `embeddings`, `interview-prep`, `learning-paths` |
 | `apps/web` — upload, gap, eligibility with its routes | `apps/admin`, `apps/mobile` |
-| `connectors/core`, `connectors/immigration-data/de-bundesanzeiger`, `connectors/immigration-data/de-aufenthg` | every other connector, all of `knowledge-engine/` |
+| `connectors/core`, `connectors/immigration-data/` — `de-bundesanzeiger`, `de-aufenthg`, `lu-legilux` | every other connector, all of `knowledge-engine/` |
 | the seeded skill graph — in `packages/db/seeds/` and four tables, **not** `knowledge-engine/` (ADR-0020) | |
 
 Not built at all: any deployed environment. ADR-0015's Supabase project is

@@ -352,6 +352,8 @@ Production deployment → still requires R2 provisioning
 
 ## M3 — Adding a country costs no code
 
+**Status: Met** (2026-08-11).
+
 *Phase 2 entry gate.* Luxembourg is added.
 
 **Verified by:** the diff touches a reference file, connector coverage, ingested rules, and a registry
@@ -367,6 +369,15 @@ the claim being tested — § 18g needed **ADR-0024 and a change to `ai/career-r
 Abs. 2 route could be expressed at all. That was a genuine gap in the model rather than a country
 detail, and the honest reading is that the first country to need a new *shape* of rule will always
 cost code. Luxembourg tests whether a country needing no new shape costs none.
+
+### Evidence
+
+- Luxembourg connector implemented — `connectors/immigration-data/lu-legilux`.
+- Luxembourg pathway seeded and registered — `lu.eu-blue-card`, `createRegistry`.
+- Luxembourg rules ingested, with **multi-source provenance enforced**.
+- Luxembourg eligibility evaluated end to end.
+- **Live: ISCO group 2 at €80 000 → `met` via `citp-1-2`, `general` → `not_met`.**
+- The evaluator, `ai/`, `apps/` and `services/api-gateway` required **zero changes**.
 
 ### The measured diff, 2026-08-11
 
@@ -384,18 +395,74 @@ thing ADR-0024 promised and this is the first evidence for it.
 | `connectors/` | 6 | the new connector, the contract's optional `archivableSources`, the registry entry |
 | `services/ingestion` | 2 | archiving every contributing instrument, not just the primary |
 
-**So the criterion is not met as literally written, and the reason is worth more than a pass would
-have been.** Luxembourg's threshold is a product of two instruments and no official act states it
-(ADR-0025). That broke an assumption nothing had tested: `requirements` allowed **one source per
-rule** — `source_url` singular, `document_id` a single foreign key — so a derived rule could satisfy
-ADR-0021's archival check while being half-evidenced. Fixing that is a schema change and an
-ingestion change, and both are *provenance* work rather than country work: the next country whose
-threshold is derived pays none of it.
+### Criterion deviation, recorded rather than hidden
+
+> **M3's literal file-scope criterion was not met**, because Luxembourg exposed a previously
+> untested single-source provenance assumption in the requirement model. The resulting change is
+> isolated to persistence, provenance and ingestion. **No change was required in the evaluator,
+> `ai/`, the web application, or the API gateway.**
+
+The assumption was that a requirement has **one authoritative source**: `source_url` singular,
+`document_id` a single foreign key. It held while every rule had one source, and nothing had tested
+it. Luxembourg's threshold is a product of two instruments and no official act states the result
+(ADR-0025), which makes this failure reachable:
+
+```text
+instrument A ── archived ── requirement ── enforcement passes
+instrument B ── only named ── not archived
+```
+
+The rule looks enforceable and is **unrecomputable**. Correcting it was provenance infrastructure,
+not country logic.
+
+**This deviation is part of M3's value, not a caveat on it.** A milestone that had passed literally
+would have told us nothing; this one found the single place the design was built for one case.
 
 **What a country actually costs, on this evidence:** a reference file, a connector, a pathway seed,
 a registry line — and nothing in the reasoning layers. The design claim ADR-0002 makes survives;
 what M3 found instead is that the *provenance* model, not the rule model, was the one built for a
 single case.
+
+### `requirement_sources` is general infrastructure, not Luxembourg's
+
+Describing it as "Luxembourg's provenance" would invite the next country to build a second one. The
+abstraction it encodes is country-independent:
+
+> **A legal requirement may depend on several authoritative instruments, each of which must be
+> independently archived and attributable.**
+
+Any future derived threshold reuses it. A second country-specific provenance mechanism would be a
+regression, not a parallel solution.
+
+### The architectural result
+
+```text
+country-specific complexity
+        ↓
+connector · ingestion · provenance
+        ↓
+normalized requirement + routes
+        ↓
+country-independent evaluator
+```
+
+The evaluator absorbed a second country's two-route pathway **without modification** — the first
+evidence that ADR-0024's route abstraction generalises past the country it was written for.
+**Nothing in future work may weaken this by adding a country-specific branch to the evaluator**; the
+jurisdiction-free AST test in `ai/career-roadmap/tests/` is what keeps it honest.
+
+### Three parser traps, kept permanently
+
+Each protects against a **plausible but legally wrong value**, not against an error:
+
+| Trap | Wrong reading it prevents |
+|---|---|
+| `une fois et demie`, split by consolidation markers | the rule discarded, or the digit `1` read as the multiplier |
+| `65.652` — a French thousands separator | `Number()` giving sixty-five, a threshold almost anyone clears |
+| a consolidation's year taken from the act rather than the consolidation | separate consolidations colliding under one object key |
+
+Their tests assert the *incorrect* reading is not produced, which is the only form of this test that
+catches a silent regression.
 
 **Verified live**, not only by tests: ISCO group 2 at €80 000 evaluates `met` through the `citp-1-2`
 route while the general route is `not_met` — the derogation doing exactly what it exists for,
