@@ -4,9 +4,10 @@
 > rules constitute them, and which official sources are authoritative. **Values live in
 > `knowledge-engine/immigration`, not here.**
 
-_Status: authored 2026-08-11 from the consolidated statute. **No connector exists and no rule is
-ingested** — this file is the model that a connector will be written against, which is the order
-`README.md` prescribes. Everything below is either read from the statute text or marked `unknown`._
+_Status: authored 2026-08-11 from the consolidated statute and the two instruments the threshold
+depends on. **No connector exists and no rule is ingested** — this file is the model a connector
+will be written against, which is the order `README.md` prescribes. Everything below is either read
+from a source or marked `unknown`._
 
 **This is M3's country** (`docs/roadmap/milestones.md`): adding it is meant to cost no code. Read
 `de.md` first if you are new to these files — Germany is the one whose rules are actually ingested,
@@ -19,7 +20,8 @@ and the differences between the two are the substance of what M3 is testing.
 | Source | Authoritative for | URL | Refresh window |
 |---|---|---|---|
 | Legilux — Journal officiel du Grand-Duché de Luxembourg | the immigration statute and its consolidations | `legilux.public.lu` (documents via `data.legilux.public.lu`) | on amendment; the consolidation chain is queryable, so a new consolidation *is* the trigger |
-| Règlement grand-ducal fixing the Blue Card remuneration threshold | **the salary amount** | **not yet located** — see below | `unknown` until located |
+| Règlement grand-ducal du 26 septembre 2008 (consolidated) | the **multiplier** that defines the threshold, and the occupation list that lowers it | ELI `eli/etat/leg/rgd/2008/09/26/n3` | on amendment — last modified by the RGD of 20 June 2024 |
+| Règlement ministériel, annual | the **average gross annual salary** the multiplier applies to | ELI `eli/etat/leg/rmin/…` — most recent 23 February 2026 | **annual**, and it lags: the 2026 instrument states the average for 2024 |
 
 ### The source situation, which is not Germany's
 
@@ -50,10 +52,36 @@ followed — the manifestation URL answers `303`, not `200`.
 endpoint where the identical single-line query returned `200`; and `format=` as a query parameter
 was ignored, so content negotiation has to go in the `Accept` header. Neither is documented.
 
-**The salary figure is delegated and has not been found yet.** Art. 45 (1) 3. sets the condition as
-*"une rémunération au moins égale à un montant à fixer par règlement grand-ducal"* — the statute
-names **no percentage and no amount**, unlike § 18g which at least fixes the percentages. Until that
-instrument is located and read, Luxembourg has a pathway whose salary rule cannot be written.
+### The salary threshold is three instruments deep
+
+Found 2026-08-11, and it is the structural fact that matters most here. Germany's rule is two
+sources; Luxembourg's is **three**, and no single one of them states a threshold:
+
+```text
+Loi 29.08.2008, Art. 45 (1) 3.   "une rémunération au moins égale à un montant à fixer
+                                  par règlement grand-ducal"        ← delegates, states nothing
+        ↓
+RGD 26.09.2008 (consolidated)    a multiplier of the average gross annual salary,
+                                  and a LOWER multiplier for listed occupations
+        ↓
+Règlement ministériel, annual    the average gross annual salary itself, from IGSS data
+                                  as determined by STATEC
+```
+
+**The threshold is therefore a product, not a published figure.** This is the sharpest difference
+from Germany, where BMI publishes euro amounts directly and a connector only has to read them.
+Luxembourg publishes a multiplier in one instrument and a base in another, and something has to
+multiply them.
+
+**That is an open modelling question and should be settled before a connector is written.** Storing
+a computed product is defensible only if the stored rule's provenance names **both** instruments and
+their dates — otherwise the number in `requirements` is arithmetic nobody can audit, which is the
+thing `docs/architecture/immigration.md` exists to prevent. The alternative is a derived-value shape
+the requirement model does not currently have.
+
+**The base figure lags by design.** The February 2026 ministerial regulation states the average for
+**2024**. Which year's average applies to an application made today is a question the statute
+answers and this file does not — read it before assuming.
 
 Nothing below tier 1 may produce a rule for this country. See
 `.claude/context/knowledge-sources.md`.
@@ -79,7 +107,7 @@ Provisional pathway id, matching `de.eu-blue-card`'s shape. **Not yet seeded.**
   **Art. 45 to 45-4** of the *Loi du 29 août 2008 sur la libre circulation des personnes et
   l'immigration*.
 - **Legal basis:** Art. 45 (1) for the conditions; Art. 45-1 for the permit itself; the remuneration
-  threshold by règlement grand-ducal.
+  threshold through the RGD and the annual ministerial regulation, as above.
 
 #### Constituent rules, as the statute states them
 
@@ -87,17 +115,38 @@ Provisional pathway id, matching `de.eu-blue-card`'s shape. **Not yet seeded.**
 |---|---|---|
 | A valid contract for highly-qualified employment of **at least six months** | Art. 45 (1) 1. | `numeric-gte`, months |
 | **High professional qualifications** for the occupation — or, for a regulated profession, the conditions for practising it | Art. 45 (1) 2. | `boolean`, with a recognition dimension for regulated professions |
-| Remuneration **at least equal to an amount fixed by règlement grand-ducal** | Art. 45 (1) 3. | `monetary`, `numeric-gte` — **the amount is in another instrument** |
+| Remuneration at or above the threshold — the **general** multiplier | Art. 45 (1) 3. + RGD 26.09.2008 Art. 1er | `monetary`, `numeric-gte` |
+| Remuneration at or above the **lower** threshold, for a listed occupation | RGD 26.09.2008 Art. 1er, derogation | `monetary`, `numeric-gte`, scoped to its route |
+| The occupation being in **CITP (ISCO) group 1 or 2**, enumerated in the RGD itself | RGD 26.09.2008 Art. 1er | `set-member`, `kind: right` — a gate, not a hurdle |
 | The general entry conditions | Art. 34 (1)–(2), incorporated by Art. 45 (1) | travel document, visa or ETIAS authorisation |
 | **Appropriate accommodation**, for the permit to issue | Art. 45-1 (1) | `boolean` |
 
-**The likely modelling difference from Germany, and it is the interesting one.** § 18g creates three
-populations and needed ADR-0024 before the third could be expressed. Art. 45 as read creates **one**:
-there is no ISCO-08 occupation list, no reduced threshold, and no experience route in the statute.
-If the règlement grand-ducal turns out to set a single amount, **`lu.eu-blue-card` is a routeless
-pathway** — which ADR-0024 says behaves exactly as pathways did before routes existed, asserted by
-test. That would make Luxembourg the additive case the ADR promised, and it is the single most
-useful thing to confirm before writing a connector.
+#### Two routes, and they are a shape the model already has
+
+**Corrected 2026-08-11, the same day this file was written.** The first draft said Luxembourg was
+*likely a routeless pathway* on the grounds that Art. 45 names no occupation list. **That was wrong,
+and it was wrong for an instructive reason: the statute is not where Luxembourg puts its
+occupation list.** The RGD's derogation sets a lower multiplier for professions in **CITP groups 1
+and 2**, and enumerates them in its own text.
+
+So `lu.eu-blue-card` has two routes, and they map onto Germany's almost exactly:
+
+| Luxembourg | Germany | Shape |
+|---|---|---|
+| general multiplier | § 18g Abs. 1 S. 1 | the default route |
+| lower multiplier, gated on the enumerated occupation groups | § 18g Abs. 1 S. 2 Nr. 1 | a `kind: right` gate opening a route with its own threshold |
+
+**Nothing here needs a new rule shape.** `applies_to.route` and `kind: right` already express it,
+and both arrived with ADR-0024 for Germany. That is a real answer to M3's question — but note what
+it means: the model absorbed Luxembourg **because Germany had already forced the general case**. A
+country arriving before ADR-0024 would have cost the same ADR.
+
+**Two caveats before this is treated as settled.** The derogation's wording qualifies the list —
+the lower threshold is for occupations *"pour lesquelles un besoin particulier de travailleurs
+ressortissants de pays tiers est constaté par le Gouvernement"*. Whether that finding is a separate
+published act, or is satisfied by the enumeration itself, is **not yet read**. And Germany's Abs. 2
+equivalent — a route for people *without* the qualification — has no counterpart found in Art. 45,
+which is a genuine difference rather than an unread gap.
 
 #### Permit, and what it leads to
 
