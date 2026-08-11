@@ -92,6 +92,13 @@ export {
   type SponsorshipStatus,
 } from './sponsorship.ts';
 
+export type {
+  ApplicationStatus,
+  ApplicationWire,
+  OutcomeKind,
+  OutcomeWire,
+} from './application.ts';
+
 export {
   validatePersonFactValue,
   type PersonFactKindWire,

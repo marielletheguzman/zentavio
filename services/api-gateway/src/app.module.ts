@@ -29,6 +29,8 @@ import { EligibilityService } from './eligibility/eligibility.service.ts';
 import { GapClient } from './gap/gap-client.ts';
 import { GapController } from './gap/gap.controller.ts';
 import { GapService } from './gap/gap.service.ts';
+import { ApplicationsController } from './applications/applications.controller.ts';
+import { ApplicationsService } from './applications/applications.service.ts';
 import { HealthController } from './health/health.controller.ts';
 import { ParserClient } from './resume/parser-client.ts';
 import { ResumeController } from './resume/resume.controller.ts';
@@ -36,7 +38,13 @@ import { ResumeService } from './resume/resume.service.ts';
 import { DATABASE, ELIGIBILITY_CLIENT, GAP_CLIENT, PARSER_CLIENT, SUBJECT_RESOLVER } from './tokens.ts';
 
 @Module({
-  controllers: [ResumeController, GapController, EligibilityController, HealthController],
+  controllers: [
+    ResumeController,
+    GapController,
+    EligibilityController,
+    ApplicationsController,
+    HealthController,
+  ],
   providers: [
     {
       provide: DATABASE,
@@ -65,6 +73,9 @@ import { DATABASE, ELIGIBILITY_CLIENT, GAP_CLIENT, PARSER_CLIENT, SUBJECT_RESOLV
         new EligibilityClient({ baseUrl: load(parserSchema).careerRoadmapUrl }),
     },
     EligibilityService,
+    // Depends on `GapService` by class, like `EligibilityService`: the prediction stored with an
+    // application is the readiness score computed by the same code that shows it (ADR-0019).
+    ApplicationsService,
     {
       provide: SUBJECT_RESOLVER,
       useFactory: (db: Kysely<Database>): SubjectResolver => {
