@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@zentavio/connector-ch-sem": "workspace:*",
     "@zentavio/connector-de-aufenthg": "workspace:*",
     "@zentavio/connector-de-bundesanzeiger": "workspace:*",
     "@zentavio/connector-lu-legilux": "workspace:*",

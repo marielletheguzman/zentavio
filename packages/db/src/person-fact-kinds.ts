@@ -139,6 +139,37 @@ export const PERSON_FACT_KINDS: readonly PersonFactKindSeed[] = [
     allowedValues: [],
   },
   {
+    key: 'vacancy_reported_to_public_employment_service',
+    valueType: 'boolean',
+    unit: null,
+    // The duty is the employer's, and it applies only in occupations above a stated national
+    // unemployment level (AIG art. 21a). The applicant can answer it — their employer tells them —
+    // but the question is about the vacancy rather than about them.
+    prompt: 'Was this vacancy reported to the public employment service before it was offered?',
+    rationale:
+      'Switzerland requires vacancies in occupations with high unemployment to be reported to the ' +
+      'public employment service before a third-country national may be admitted to them ' +
+      '(AIG art. 21a; Weisungen AIG Ziff. 4.3.3).',
+    sensitive: false,
+    allowedValues: [],
+  },
+  {
+    key: 'has_recognised_professional_qualification',
+    valueType: 'boolean',
+    unit: null,
+    // Deliberately broader than the German degree question: Switzerland accepts qualification at
+    // several levels — university, higher vocational training, or years of relevant experience —
+    // and which suffices is judged per occupation. One question, decided in context.
+    prompt:
+      'Do you hold a professional qualification — a degree, higher vocational training, or ' +
+      'equivalent experience — for the work you would be doing?',
+    rationale:
+      'AIG art. 23 admits managers, specialists and other qualified workers, and the Weisungen ' +
+      '(Ziff. 4.3.5) accept qualification at several levels depending on the occupation.',
+    sensitive: false,
+    allowedValues: [],
+  },
+  {
     key: 'isco_08_group',
     valueType: 'string',
     unit: null,

@@ -131,7 +131,18 @@ describe('the closed-set constraints', () => {
     expect(violation.constraint).toBe('ck_req__imposed_by');
   });
 
-  it('rejects a kind outside the eight', async () => {
+  it('rejects a quota, because a person cannot fail a capacity limit', async () => {
+    // ADR-0027. The value was permitted from 2026-07-29 and never written; Switzerland's
+    // Höchstzahlen would have been the first, and a row for one either freezes the verdict at
+    // `undetermined` forever or tells somebody they failed a cap on a canton. The cap lives on
+    // `immigration_pathways.quota` instead.
+    const violation = await expectViolation(pool, () =>
+      insertRequirement(pool, validRequirement({ kind: 'quota' })),
+    );
+    expect(violation.constraint).toBe('ck_req__kind');
+  });
+
+  it('rejects a kind outside the seven', async () => {
     const violation = await expectViolation(pool, () =>
       insertRequirement(pool, validRequirement({ kind: 'suggestion' })),
     );

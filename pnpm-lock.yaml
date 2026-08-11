@@ -72,6 +72,9 @@ importers:
 
   connectors/core:
     dependencies:
+      '@zentavio/connector-ch-sem':
+        specifier: workspace:*
+        version: link:../immigration-data/ch-sem
       '@zentavio/connector-de-aufenthg':
         specifier: workspace:*
         version: link:../immigration-data/de-aufenthg
@@ -84,6 +87,15 @@ importers:
       '@zentavio/connector-nz-inz':
         specifier: workspace:*
         version: link:../immigration-data/nz-inz
+
+  connectors/immigration-data/ch-sem:
+    dependencies:
+      '@zentavio/connectors-core':
+        specifier: workspace:*
+        version: link:../../core
+      '@zentavio/types':
+        specifier: workspace:*
+        version: link:../../../packages/types
 
   connectors/immigration-data/de-aufenthg:
     dependencies:

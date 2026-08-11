@@ -27,12 +27,37 @@ export interface OfficialSource {
   readonly authoritativeFor: string;
 }
 
+/**
+ * The cap on a pathway, where one exists (ADR-0027).
+ *
+ * **A quota is a property of the pathway, never a requirement.** A capacity limit is not something
+ * a person satisfies or fails — storing one as a rule would either freeze a verdict at
+ * `undetermined` or tell somebody they failed something that was never theirs to satisfy.
+ */
+export interface PathwayQuota {
+  /** What allocates it — the instrument, and the level it is allocated at. */
+  readonly allocatedBy: string;
+  readonly period: string;
+  /**
+   * The number of places, when we have sourced one.
+   *
+   * **`null` means unsourced, and renders as capped-and-unsourced — never as uncapped.** That
+   * distinction is the whole reason this field is nullable rather than absent.
+   */
+  readonly places: number | null;
+  /** Why the value is missing, when it is. A gap with a stated reason is not the same as silence. */
+  readonly unsourcedReason?: string;
+  readonly sourceUrl: string;
+}
+
 export interface ImmigrationPathwaySeed {
   readonly pathwayId: string;
   readonly jurisdiction: string;
   readonly name: string;
   readonly description: string | null;
   readonly officialSources: readonly OfficialSource[];
+  /** Absent where the pathway has no cap. Present with `places: null` where it has one we cannot read. */
+  readonly quota?: PathwayQuota;
 }
 
 export const IMMIGRATION_PATHWAYS: readonly ImmigrationPathwaySeed[] = [
@@ -118,5 +143,42 @@ export const IMMIGRATION_PATHWAYS: readonly ImmigrationPathwaySeed[] = [
           'published by MBIE, which administers the Minimum Wage Act',
       },
     ],
+  },
+  {
+    pathwayId: 'ch.third-country-worker',
+    jurisdiction: 'CH',
+    name: 'Aufenthalt mit Erwerbstätigkeit (third-country nationals, Switzerland)',
+    description:
+      'Admission to gainful employment for third-country nationals under AIG art. 18–23, as ' +
+      'implemented by SEM’s Weisungen AIG Kapitel 4. **Almost every condition is a judgement** — ' +
+      'wider economic interest, priority for domestic workers, and pay customary for the place, ' +
+      'profession and sector — so a verdict here is largely `undetermined` with its reasons ' +
+      'named. Switzerland has no national minimum wage, so there is no threshold to compare ' +
+      'against at all.',
+    officialSources: [
+      {
+        url: 'https://www.sem.admin.ch/sem/de/home/publiservice/weisungen-kreisschreiben/auslaenderbereich.html',
+        authoritativeFor:
+          'the operative admission conditions — Weisungen AIG Kapitel 4, which binds the cantonal ' +
+          'authorities that decide these permits',
+      },
+      {
+        url: 'https://www.fedlex.admin.ch/eli/cc/2007/758/de',
+        authoritativeFor:
+          'the Act the directives implement (AIG). **Metadata only**: Fedlex disallows its own ' +
+          'document files, so the text is not retrievable and the directives are what is read',
+      },
+    ],
+    // ADR-0027. The cap is real and its value is not reachable: Höchstzahlen are set in VZAE
+    // Anhang 1 und 2, on a host whose robots.txt disallows the documents.
+    quota: {
+      allocatedBy: 'VZAE Anhang 1 und 2 — set by the Federal Council, allocated to the cantons',
+      period: 'calendar year',
+      places: null,
+      unsourcedReason:
+        'The annex is published on fedlex.admin.ch, whose robots.txt disallows /filestore/*. The ' +
+        'cap is known to exist and its size is not readable from a permitted source.',
+      sourceUrl: 'https://www.fedlex.admin.ch/eli/cc/2007/758/de',
+    },
   },
 ];

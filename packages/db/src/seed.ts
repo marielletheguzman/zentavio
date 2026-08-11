@@ -584,8 +584,8 @@ export async function applySeed(
     // happened to hold. Changing a pathway is a deliberate edit, not a side effect of re-seeding.
     for (const pathway of IMMIGRATION_PATHWAYS) {
       const result = await client.query(
-        `INSERT INTO immigration_pathways (id, pathway_id, jurisdiction, name, description, official_sources)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO immigration_pathways (id, pathway_id, jurisdiction, name, description, official_sources, quota)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
          ON CONFLICT (pathway_id) DO NOTHING`,
         [
           uuidv7(),
@@ -596,6 +596,18 @@ export async function applySeed(
           JSON.stringify(
             pathway.officialSources.map((s) => ({ url: s.url, authoritative_for: s.authoritativeFor })),
           ),
+          // ADR-0027: the cap lives here rather than as a requirement, and `null` means this
+          // pathway has none — distinct from a quota whose *value* we could not source, which is
+          // an object with `places: null`.
+          pathway.quota === undefined
+            ? null
+            : JSON.stringify({
+                allocated_by: pathway.quota.allocatedBy,
+                period: pathway.quota.period,
+                places: pathway.quota.places,
+                unsourced_reason: pathway.quota.unsourcedReason ?? null,
+                source_url: pathway.quota.sourceUrl,
+              }),
         ],
       );
       pathwaysInserted += result.rowCount ?? 0;
