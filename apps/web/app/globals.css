@@ -308,6 +308,19 @@ label {
   border-left-style: var(--shape-uncertain);
 }
 
+/*
+ * Not applicable is muted, and deliberately neither the failure colour nor the caution one.
+ *
+ * A rule on a way in that is not this person's was never theirs to satisfy (ADR-0024). Styling it
+ * as a failure would say "you failed the experience route" to someone who holds a degree — false
+ * about a person, not a cosmetic slip. Muted rather than hidden, because the closure is part of
+ * the reasoning and hiding it makes the verdict unexplainable.
+ */
+.requirement-not_applicable {
+  border-left-color: var(--border);
+  color: var(--fg-muted);
+}
+
 .requirement-label {
   font-weight: var(--weight-semibold);
 }

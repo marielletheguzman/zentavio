@@ -50,11 +50,14 @@ ingestion from the Bundesanzeiger through a connector, versioned dated `requirem
 per-rule eligibility as of a stated date, the `undetermined` → `needsFromUser` → answer → re-evaluate
 loop, and a browser surface carrying each rule's authority, effective date and source link.
 
-Not built, and the gap is wider than the built half: **viability** — the feature's own question is
-"am I eligible to work there?", and eligibility alone does not answer it, because visa-eligible and
-unemployable at the threshold salary is not an opportunity (`docs/architecture/immigration.md`).
-Also missing: everything in § 18g beyond the two salary thresholds, every other jurisdiction, all
-recognition/credential/authentication/language rules, and archived source documents (ADR-0021).
+**Viability is built** (`f60f821`, ADR-0022): both axes with the binding constraint named, so
+visa-eligible and unemployable at the threshold salary is caught rather than reported as an
+opportunity (`docs/architecture/immigration.md`). **§ 18g is modelled** as three routes (ADR-0024) —
+the qualification, both gates on the reduced-threshold route, and the Abs. 2 experience route.
+
+Still missing: § 19f's rejection grounds and the Bundesagentur's consent, every other jurisdiction,
+all recognition/credential/authentication/language rules, and outcome recording (ADR-0019).
+Source documents **are** archived (ADR-0021, enforced); only the production bucket is unprovisioned.
 
 ## The chain
 

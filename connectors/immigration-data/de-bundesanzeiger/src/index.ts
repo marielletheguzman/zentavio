@@ -75,34 +75,46 @@ export const SOURCE_ID = 'de-bundesanzeiger';
  * graduates. Matching on the percentage rather than on document order means a year in which BMI
  * reorders the paragraphs does not silently swap the two thresholds.
  */
-const CATEGORY_BY_PERCENT: ReadonlyMap<number, { readonly suffix: string; readonly legalBasis: string; readonly appliesTo: Readonly<Record<string, unknown>> }> =
-  new Map([
-    [
-      50,
-      {
-        suffix: 'general',
-        legalBasis: 'AufenthG § 18g Abs. 1 S. 1',
-        // `route` is the join key the evaluator reads (ADR-0024). It is an opaque, stable id — not
-        // the citation, which stays in `domainDetail.legalBasis` where it can be reworded freely.
-        appliesTo: { route: 'abs1-s1' },
-      },
-    ],
-    [
-      45.3,
-      {
-        suffix: 'reduced',
-        legalBasis: 'AufenthG § 18g Abs. 1 S. 2, § 18g Abs. 2',
-        // The ISCO-08 groups and the recent-graduate window live in the statute, not in this
-        // announcement. Naming them here would be this connector inventing them.
-        //
-        // **One announcement, one figure, two routes.** § 18g Abs. 1 S. 2 and Abs. 2 share the
-        // 45,3 % minimum but are different ways in, and a row carries one route. This row is
-        // `abs1-s2`; the Abs. 2 route needs its own row when that provision is modelled, because
-        // the two can diverge the moment BMI announces different figures for them.
-        appliesTo: { route: 'abs1-s2', groupsDefinedIn: 'AufenthG § 18g' },
-      },
-    ],
-  ]);
+interface Category {
+  readonly suffix: string;
+  readonly legalBasis: string;
+  /**
+   * The routes this figure governs, in the announcement's own order.
+   *
+   * **One figure can govern more than one route, and then it is emitted once per route.** The
+   * document says the 45,3 % minimum applies "nach § 18 g Absatz 1 Satz 2 sowie nach § 18g
+   * Absatz 2" — so two rows report what the document states, rather than this connector inferring
+   * the statute's structure. They can diverge the moment BMI announces different figures.
+   */
+  readonly routes: readonly string[];
+  readonly appliesTo: Readonly<Record<string, unknown>>;
+}
+
+const CATEGORY_BY_PERCENT: ReadonlyMap<number, Category> = new Map([
+  [
+    50,
+    {
+      suffix: 'general',
+      legalBasis: 'AufenthG § 18g Abs. 1 S. 1',
+      // `route` is the join key the evaluator reads (ADR-0024). It is an opaque, stable id — not
+      // the citation, which stays in `domainDetail.legalBasis` where it can be reworded freely.
+      routes: ['abs1-s1'],
+      appliesTo: {},
+    },
+  ],
+  [
+    45.3,
+    {
+      suffix: 'reduced',
+      legalBasis: 'AufenthG § 18g Abs. 1 S. 2, § 18g Abs. 2',
+      routes: ['abs1-s2', 'abs2'],
+      // The ISCO-08 groups, the recent-graduate window and the experience test live in the
+      // statute, not in this announcement. Naming them here would be this connector inventing
+      // them; naming where they are defined is a pointer, not a claim.
+      appliesTo: { groupsDefinedIn: 'AufenthG § 18g' },
+    },
+  ],
+]);
 
 export interface BundesanzeigerDeps {
   /** Injected so tests never touch the network. */
@@ -190,36 +202,44 @@ export class BundesanzeigerConnector implements Connector<BekanntmachungRaw, rea
         basis: 'gross',
       };
 
-      rows.push({
-        requirementId: `de.eu-blue-card.salary-threshold.${category.suffix}`,
-        domain: 'immigration',
-        imposedBy: 'destination',
-        jurisdiction: 'DE',
-        pathwayId: 'de.eu-blue-card',
-        profession: null,
-        kind: 'threshold',
-        value,
-        appliesTo: category.appliesTo,
-        domainDetail: {
-          legalBasis: category.legalBasis,
-          percentOfBeitragsbemessungsgrenze: threshold.percent,
-          announcedIn: raw.publicationId,
-        },
-        evaluation: 'numeric-gte',
-        needsInput: ['expected_gross_annual_salary_eur'],
-        sourceTier: 1,
-        sourceUrl: raw.sourceUrl,
-        retrievedAt: raw.fetchedAt,
-        authority: 'Bundesministerium des Innern',
-        authorityUrl: 'https://www.bmi.bund.de',
-        effectiveFrom: `${String(year)}-01-01`,
-        effectiveTo: `${String(year)}-12-31`,
-        version: String(year),
-        contested: false,
-        // § 18g Abs. 7 obliges BMI to publish the following year's minimums by 31 December of
-        // the preceding year, so the refresh window is written by the statute rather than chosen.
-        refreshAfter: `${String(year - 1)}-12-31`,
-      });
+      for (const route of category.routes) {
+        rows.push({
+          // The first route keeps the historical id unchanged. A route id is stable and so is a
+          // requirement id — renaming either is a breaking data change (ADR-0024), and the
+          // superseding chain for previous years keys on this string.
+          requirementId:
+            route === category.routes[0]
+              ? `de.eu-blue-card.salary-threshold.${category.suffix}`
+              : `de.eu-blue-card.salary-threshold.${category.suffix}.${route}`,
+          domain: 'immigration',
+          imposedBy: 'destination',
+          jurisdiction: 'DE',
+          pathwayId: 'de.eu-blue-card',
+          profession: null,
+          kind: 'threshold',
+          value,
+          appliesTo: { ...category.appliesTo, route },
+          domainDetail: {
+            legalBasis: category.legalBasis,
+            percentOfBeitragsbemessungsgrenze: threshold.percent,
+            announcedIn: raw.publicationId,
+          },
+          evaluation: 'numeric-gte',
+          needsInput: ['expected_gross_annual_salary_eur'],
+          sourceTier: 1,
+          sourceUrl: raw.sourceUrl,
+          retrievedAt: raw.fetchedAt,
+          authority: 'Bundesministerium des Innern',
+          authorityUrl: 'https://www.bmi.bund.de',
+          effectiveFrom: `${String(year)}-01-01`,
+          effectiveTo: `${String(year)}-12-31`,
+          version: String(year),
+          contested: false,
+          // § 18g Abs. 7 obliges BMI to publish the following year's minimums by 31 December of
+          // the preceding year, so the refresh window is written by the statute rather than chosen.
+          refreshAfter: `${String(year - 1)}-12-31`,
+        });
+      }
     }
 
     return rows;

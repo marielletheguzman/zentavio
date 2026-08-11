@@ -123,9 +123,24 @@ are what people actually plan around.
 1  retrieve the pathway's rules as of today (or as of a stated date)
 2  evaluate each rule against the person's facts → met | not_met | undetermined
 3  undetermined never collapses to met or not_met
-4  aggregate: undetermined dominates; not_met produces a named blocker
-5  return per-rule results, what would change them, the evidence, and the disclaimer
+4  group by route: a rule naming applies_to.route belongs to it, one naming none is pathway-wide
+5  a route's gates (kind: right) are ANY — one met gate opens it; its conditions are then ALL
+6  aggregate per route, then across routes: met if any route is met, undetermined dominates
+7  a route no gate opens is not_applicable, and so is every rule that sits only on it
+8  return per-rule results, per-route outcomes, what would change them, the evidence, disclaimer
 ```
+
+**A pathway with more than one way in is evaluated per route** ([ADR-0024]
+(decisions/0024-alternative-routes.md)). § 18g AufenthG is the case that forced it: Abs. 1 S. 2
+gives a listed occupation *or* a recent graduate a reduced salary threshold, and Abs. 2 admits ICT
+and IT professionals with experience and **no degree at all**. Evaluated as one flat set, those
+provisions block each other — a qualifying professional was told `not_met` by a threshold the
+statute does not apply to them.
+
+`not_applicable` is the fourth result this needs, and it is **not a failure**. Someone holding a
+degree was never on the experience route; reporting its rules as `not_met` would be a false
+statement about a person. Every route is reported, open or not, so the verdict names the way in it
+used and the alternatives stay inspectable.
 
 ```json
 {

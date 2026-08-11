@@ -44,12 +44,23 @@ the real document.
 
 ## What it emits
 
-Two `SourcedRequirement` rows per announcement, one per category:
+Two announced figures, **three rows** — one per route each figure governs (ADR-0024):
 
-| `requirementId` | Basis | 2026 |
-|---|---|---|
-| `de.eu-blue-card.salary-threshold.general` | § 18g Abs. 1 S. 1 — 50 % | 50 700 EUR/year gross |
-| `de.eu-blue-card.salary-threshold.reduced` | § 18g Abs. 1 S. 2, § 18g Abs. 2 — 45.3 % | 45 934,20 EUR/year gross |
+| `requirementId` | Basis | Route | 2026 |
+|---|---|---|---|
+| `de.eu-blue-card.salary-threshold.general` | § 18g Abs. 1 S. 1 — 50 % | `abs1-s1` | 50 700 EUR/year gross |
+| `de.eu-blue-card.salary-threshold.reduced` | § 18g Abs. 1 S. 2 — 45.3 % | `abs1-s2` | 45 934,20 EUR/year gross |
+| `de.eu-blue-card.salary-threshold.reduced.abs2` | § 18g Abs. 2 — 45.3 % | `abs2` | 45 934,20 EUR/year gross |
+
+**The two reduced rows report what the document says, not what this connector infers.** The
+announcement itself states the 45,3 % minimum applies *"nach § 18 g Absatz 1 Satz 2 sowie nach
+§ 18g Absatz 2"* — two provisions, and a row carries one route. Emitting it once would leave the
+Abs. 2 route with no salary rule at all, so it would open on occupation and experience alone. The
+figures can diverge the moment BMI announces different ones.
+
+**The first route a figure governs keeps the historical id.** A requirement id is as stable as a
+route id — the superseding chain for previous years keys on the string — so only the second row
+carries a suffix.
 
 Categories are matched **by percentage, not document order**, so a year in which BMI reorders the
 paragraphs cannot silently swap the two thresholds. A percentage matching no known category is

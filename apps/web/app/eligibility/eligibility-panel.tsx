@@ -304,6 +304,36 @@ export function EligibilityPanel({
             </div>
           )}
 
+          {state.eligibility.routes.length > 0 && (
+            <div>
+              {/* A pathway with more than one way in (ADR-0024). Rendered as its own structure
+                  rather than folded into the rule list: "this way in is not yours" and "this rule
+                  is not satisfied" are different sentences, and a flat list can only say one. */}
+              <h4>The ways in</h4>
+              <ul className="requirements">
+                {state.eligibility.routes.map((route) => (
+                  <li className={`requirement requirement-${route.status}`} key={route.route}>
+                    <span className="requirement-label">{route.label}</span>{' '}
+                    <span className="requirement-id">{route.route}</span>
+                    {route.used && (
+                      <p className="requirement-detail">This is the one the answer above uses.</p>
+                    )}
+                    {route.detail !== null && <p className="requirement-detail">{route.detail}</p>}
+                    {route.questions.length > 0 && (
+                      <p className="requirement-detail">
+                        Answering would move this way in:{' '}
+                        {route.questions.map((question) => question.prompt).join('; ')}
+                      </p>
+                    )}
+                    <p className="requirement-source">
+                      Rules checked here: {route.requirementIds.join(', ')}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <h4>Every rule we checked</h4>
           <ul className="requirements">
             {state.eligibility.requirements.map((requirement) => (

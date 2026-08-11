@@ -255,14 +255,24 @@ The path is real end to end: `BAnz AT 18.12.2025 B3` → `connectors/immigration
 
 **Not yet met, and this milestone is not complete without it:**
 
-- **Viability.** The line above says *"viability with the binding constraint named"*, and viability
-  is **eligibility × employability** (`docs/architecture/immigration.md`). Only eligibility is
-  built. The evaluator names the binding *domain* within eligibility, but nothing yet joins
-  readiness and market demand, so **visa-eligible and unemployable at the threshold salary is not
-  caught** — which that document calls misleading in a way that costs people money.
-- **Coverage is every requirement *ingested*, not every statutory requirement.** Two salary
-  thresholds are on file. § 18g's ISCO-08 groups, qualification rules, and six-month employment
-  duration are not, so "every rule we checked" is currently two rules.
+- ~~**Viability.**~~ **Built** (`f60f821`, PR #75). `ai/career-roadmap/viability.py` pairs the two
+  axes and names the binding constraint; the gateway serves `GET /v1/viability` computing both
+  halves in one call; `/eligibility` leads with the binding constraint rather than the eligibility
+  status. Visa-eligible and unemployable at the threshold salary is caught — it renders as *"You
+  qualify — the gap is readiness, not the rules"*. **No composite score**, per ADR-0022. *This
+  bullet said only eligibility was built until 2026-08-11; the code landed on 2026-08-05 and the
+  milestone was never updated.*
+- **Coverage is every requirement *ingested*, not every statutory requirement.** § 18g itself is
+  now on file through `connectors/immigration-data/de-aufenthg`: the six-month employment duration
+  (Abs. 3), the academic qualification (Abs. 1 S. 1, widened by S. 5), both gates on the reduced
+  route (Abs. 1 S. 2 Nr. 1's ISCO-08 groups and Nr. 2's three-year graduate window), and the
+  experience route (Abs. 2 — its own two ISCO-08 groups and three years' experience within seven).
+  Three routes are evaluated, `abs1-s1` · `abs1-s2` · `abs2`, per ADR-0024.
+
+  **Still not on file:** § 19f's rejection grounds, whose substance is on another provision;
+  the Bundesagentur für Arbeit's consent, recorded as a note because nobody can answer it in
+  advance; and the dependent, residence and job-change provisions, which are not eligibility. So
+  "every rule we checked" remains a claim about what is ingested, not about § 18g entire.
 - **Outcome recording** (ADR-0019) and **archived provenance** (ADR-0021, phases 2–6) are both
   scoped to M2 and unbuilt.
 

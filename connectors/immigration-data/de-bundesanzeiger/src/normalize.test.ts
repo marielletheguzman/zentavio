@@ -106,12 +106,32 @@ describe('parseBekanntmachung', () => {
 });
 
 describe('normalize', () => {
-  it('produces one row per announced threshold, with the verified 2026 figures', () => {
+  it('produces one row per route an announced threshold governs, with the verified 2026 figures', () => {
+    // Three rows from two figures. The document itself says the 45,3 % minimum applies "nach
+    // § 18 g Absatz 1 Satz 2 sowie nach § 18g Absatz 2" — two provisions, two routes, and a row
+    // carries one route. Reporting it once would leave the Abs. 2 route with no salary rule.
     const rows = connector().normalize(FIXTURE);
+    const byId = (id: string) => rows.find((r) => r.requirementId === id);
 
-    expect(rows).toHaveLength(2);
-    expect(amountOf(rows[0]!)).toEqual({ amount: 50700, currency: 'EUR', period: 'year', basis: 'gross' });
-    expect(amountOf(rows[1]!)).toEqual({ amount: 45934.2, currency: 'EUR', period: 'year', basis: 'gross' });
+    expect(rows).toHaveLength(3);
+    expect(amountOf(byId('de.eu-blue-card.salary-threshold.general')!)).toEqual({
+      amount: 50700, currency: 'EUR', period: 'year', basis: 'gross',
+    });
+    expect(amountOf(byId('de.eu-blue-card.salary-threshold.reduced')!)).toEqual({
+      amount: 45934.2, currency: 'EUR', period: 'year', basis: 'gross',
+    });
+    expect(amountOf(byId('de.eu-blue-card.salary-threshold.reduced.abs2')!)).toEqual({
+      amount: 45934.2, currency: 'EUR', period: 'year', basis: 'gross',
+    });
+  });
+
+  it('keeps the historical requirement id on the first route it governs', () => {
+    // A requirement id is as stable as a route id: the superseding chain for previous years keys
+    // on this string, and renaming it is a breaking data change (ADR-0024).
+    const ids = connector().normalize(FIXTURE).map((r) => r.requirementId);
+
+    expect(ids).toContain('de.eu-blue-card.salary-threshold.general');
+    expect(ids).toContain('de.eu-blue-card.salary-threshold.reduced');
   });
 
   it('identifies the category by percentage, not by document order', () => {

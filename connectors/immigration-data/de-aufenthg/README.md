@@ -28,37 +28,52 @@ look authoritative and are subtly wrong — the worst outcome available for immi
 | Requirement | Basis | Shape | Route |
 |---|---|---|---|
 | `de.eu-blue-card.employment-duration` | Abs. 3 | ≥ 6 months, `numeric-gte` | — pathway-wide |
-| `de.eu-blue-card.qualification` | Abs. 1 S. 1 | academic qualification, `boolean` | — pathway-wide, see below |
-| `de.eu-blue-card.reduced-threshold-occupations` | Abs. 1 S. 2 | ISCO-08 groups, `set-member`, `kind: right` | `abs1-s2` |
+| `de.eu-blue-card.qualification` | Abs. 1 S. 1 | academic qualification, `boolean` | `abs1-s1` |
+| `de.eu-blue-card.qualification.abs1-s2` | Abs. 1 S. 2, incorporating S. 1 | the same condition, second row | `abs1-s2` |
+| `de.eu-blue-card.reduced-threshold-occupations` | Abs. 1 S. 2 Nr. 1 | ISCO-08 groups, `set-member`, `kind: right` | `abs1-s2` |
+| `de.eu-blue-card.recent-graduate` | Abs. 1 S. 2 Nr. 2 | ≤ 3 years since the degree, `numeric-lte`, `kind: right` | `abs1-s2` |
+| `de.eu-blue-card.experience-route-occupations` | Abs. 2 | ISCO-08 groups **133 and 25 only**, `set-member`, `kind: right` | `abs2` |
+| `de.eu-blue-card.professional-experience` | Abs. 2 Nr. 3 a) | ≥ 3 years, acquired within 7, `numeric-gte` | `abs2` |
 
 **The duration is stored as `{ amount: 6, unit: 'months' }`, not `{ months: 6 }`.** The evaluator
 compares `value.amount`; written the other way the rule parsed, stored, and then evaluated
 `undetermined` forever — on file and impossible to satisfy, which is the quietest failure available.
 
-**The qualification row is pathway-wide, and that is correct only while Abs. 2 is unmodelled.**
-Abs. 1 S. 2 incorporates the condition by reference — *"Fachkräften mit akademischer Ausbildung"* —
-so it governs both Abs. 1 routes. Abs. 2 is the route that does **not** require it. The day that
-route lands, this row must become route-scoped, or it will demand a degree of exactly the population
-Abs. 2 exists to admit without one.
+**The qualification is stated once per route that requires it, and never pathway-wide.** Abs. 1 S. 2
+incorporates the condition by reference — *"Fachkräften mit akademischer Ausbildung"* — so it
+governs both Abs. 1 routes; Abs. 2 is precisely the route that does **not** require it. A row
+carries one route, so a condition governing two is two rows with distinct ids. It was pathway-wide
+while Abs. 2 was unmodelled, which was correct then and became a false positive the moment `abs2`
+landed: it would have demanded a degree of exactly the population Abs. 2 exists to admit without
+one. `normalize.test.ts` asserts the set of routes asking for a degree, and
+`ai/career-roadmap/tests/test_routes.py` asserts the same scope from the evaluator's side.
+
+**`abs1-s2` has two gates and either one opens it.** Nr. 1 is the occupation list, Nr. 2 is a degree
+earned within three years, and the statute reads *"Nr. 1 oder Nr. 2"* — ADR-0024 rule 6, gates are
+ANY. Requiring both would deny every recent graduate outside the listed groups.
+
+**Abs. 2's ISCO list is anchored on Abs. 2's own sentence.** The statute repeats the ISCO-08
+boilerplate, and reading Abs. 1's wording here would open the no-degree route to ten groups where
+the provision names two. Asserted directly: the parsed list is exactly `['133', '25']`.
 
 **Not extracted, on purpose:**
 
 - **§ 19f rejection grounds** — the substance is in another provision.
-- **§ 18g Abs. 2's experience route** — three years in seven for ISCO 133 and 25 without a degree.
-  Recorded in the qualification row's `domainDetail` as `alternativeRouteNotModelled`, so that row
-  is never read as *"no degree means no Blue Card"*. **Its text is on this page**; what is missing
-  is a model that can express a rule whose precondition is another rule not applying —
-  [ADR-0024](../../../docs/architecture/decisions/0024-alternative-routes.md), **Accepted**. Abs. 1
-  S. 2 Nr. 2 (a degree earned within three years) and Abs. 1 S. 5 (tertiary programme at ISCED 2011
-  / EQF level 6) are unextracted for the same reason, not for a source reason.
 - Dependent rights, residence and the job-change provisions — not eligibility.
+- **The Bundesagentur für Arbeit's consent** (Abs. 1 S. 1 grants the Blue Card *ohne Zustimmung*;
+  the S. 2 and Abs. 2 routes need it). Recorded as `domainDetail.requiresLabourMarketConsent`
+  rather than made a rule: nobody can answer it in advance, so a rule would leave those routes
+  permanently `undetermined`.
 
 A provision this cannot read produces **no row**, never a guessed one.
 
-## The occupation list is a right, not a hurdle
+## The occupation lists are rights, not hurdles
 
-`kind: 'right'`. It *lowers* the salary threshold. An evaluator treating it as something a person
-can fail would reject exactly the people the statute is being generous to.
+`kind: 'right'`. They *open* a route — Abs. 1 S. 2's list lowers the salary threshold, Abs. 2's
+admits someone with no degree at all. An evaluator treating either as something a person can fail
+would reject exactly the people the statute is being generous to. What a right does do is gate its
+own route: `not_met` on every gate of a route makes that route `not_applicable`, never a blocker on
+the pathway, because another route may carry it.
 
 ## Two traps
 
