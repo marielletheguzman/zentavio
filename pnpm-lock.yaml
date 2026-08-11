@@ -110,6 +110,9 @@ importers:
       '@zentavio/config':
         specifier: workspace:*
         version: link:../config
+      '@zentavio/types':
+        specifier: workspace:*
+        version: link:../types
       kysely:
         specifier: ^0.29.4
         version: 0.29.4

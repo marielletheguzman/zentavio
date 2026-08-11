@@ -67,6 +67,37 @@ forever with no action available to the user — a dead end that looks like a wo
 > database yet. It is written now because it becomes load-bearing the moment ingestion lands, and
 > adding it afterwards means adding it after the first violation.
 
+### A fact is typed at the write boundary
+
+**`value_type` is enforced when the answer is written, not interpreted when it is read.**
+`recordFact` loads the kind, checks the value against it with `validatePersonFactValue`
+(`packages/types`), and refuses anything that does not satisfy it. The evaluator therefore receives
+values that are already what they claim to be, and coerces nothing.
+
+This was not true until 2026-08-11, and the failure is worth keeping written down. The catalogue
+held six kinds; the eligibility panel carried its own map of prompts and units that knew about
+**one**. Every question added after it rendered as a free-text box, so answering *"no"* to *"do you
+hold a recognised degree?"* stored the **string** `'no'` — and `bool('no')` is `True`, so the
+qualification rule evaluated **met** for somebody who had just said they had no degree. Four layers,
+each assuming another had checked: no control type, no client shaping, no write validation, and a
+read that coerced.
+
+What the invariant costs, and why it is worth it:
+
+- **A boolean is `true` or `false`.** `'true'`, `'yes'`, `1` are refused, not coerced. A string that
+  means yes to a reader means nothing to a comparison.
+- **A monetary answer carries the currency and period its `unit` declares.** The evaluator's own
+  unit check only catches a *declared* mismatch; an undeclared one passes as if it agreed.
+- **An unknown `value_type` fails closed.** If this table's CHECK constraint gains a type the
+  validator does not know, the answer is refused rather than stored unchecked.
+- **A surface renders from the catalogue** — served by the gateway at `GET /v1/person-fact-kinds`.
+  A prompt, a unit, or a permitted-value list restated in a component is a second source of truth,
+  and the drift is silent.
+
+The evaluator refuses a non-boolean for a boolean rule as well, returning `undetermined` rather than
+guessing. That is **defence in depth, not the fix**: it exists so a row written before this boundary
+did cannot be reinterpreted into a verdict.
+
 ## Versioned, never updated in place
 
 The same rule `user_profiles` follows, for the same reason. An eligibility verdict computed against
@@ -117,6 +148,8 @@ decision recorded in `erasure.ts`, not an emergent property of the schema.
 ## Invariants
 
 - Every `requirements.needs_input` value has a `person_fact_kinds` row.
+- **Every stored value satisfies its kind's `value_type`**, checked at the write boundary. A
+  `boolean` kind holds `true` or `false`, never a string that reads like one.
 - One live answer per `(user_id, kind_key)`.
 - Versions dense per `(user_id, kind_key)`, never reused.
 - Never `UPDATE` a value — new version, `is_current` moved.

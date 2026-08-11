@@ -23,7 +23,14 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import type { Subject } from '@zentavio/auth';
-import { UnknownFactKindError, recordFact, type Database } from '@zentavio/db';
+import {
+  InvalidFactValueError,
+  UnknownFactKindError,
+  factKinds,
+  recordFact,
+  type Database,
+} from '@zentavio/db';
+import type { PersonFactKindWire, PersonFactValueType } from '@zentavio/types';
 import { Inject } from '@nestjs/common';
 import type { Kysely } from 'kysely';
 
@@ -131,6 +138,37 @@ export class EligibilityController {
   }
 
   /**
+   * The catalogue of questions the product can accept an answer to.
+   *
+   * **A surface renders from this, never from its own copy.** The eligibility panel used to carry
+   * a local map of prompts and units, which knew about one of the six kinds — so every question
+   * added since rendered as its raw key in a free-text box, and a boolean answered "no" was stored
+   * as the string `'no'`. The catalogue already held the type; nothing was reading it.
+   *
+   * `rationale` is served with the prompt on purpose: asking for a salary without saying which
+   * rule needs it reads as data collection.
+   */
+  @Get('person-fact-kinds')
+  @HttpCode(HttpStatus.OK)
+  async factKinds(): Promise<{ readonly kinds: readonly PersonFactKindWire[] }> {
+    const rows = await factKinds(this.#db);
+
+    return {
+      kinds: rows.map((row) => ({
+        key: row.key,
+        valueType: row.value_type as PersonFactValueType,
+        unit: row.unit,
+        prompt: row.prompt,
+        rationale: row.rationale,
+        // Carried so a surface can treat an answer with the care it deserves. Not a secret — it is
+        // a property of the question, not of anybody's answer.
+        sensitive: row.sensitive,
+        allowedValues: row.allowed_values,
+      })),
+    };
+  }
+
+  /**
    * Answer something `needsFromUser` asked for.
    *
    * A correction is a **new version**, never an edit — the repository enforces that. The response
@@ -154,11 +192,16 @@ export class EligibilityController {
       });
       return { key: row.kind_key, version: row.version };
     } catch (error) {
-      if (error instanceof UnknownFactKindError) {
-        // Names the key. "Bad request" without saying which field is a dead end for whoever is
-        // debugging the client.
-        throw new BadRequestException(error.message);
-      }
+      // Both name the key. "Bad request" without saying which field is a dead end for whoever is
+      // debugging the client — and this route is reachable from a browser console, so the client
+      // that sent it may not be ours at all.
+      if (error instanceof UnknownFactKindError) throw new BadRequestException(error.message);
+
+      // A value in the wrong shape is refused here rather than stored and interpreted later. The
+      // string 'no' stored against a boolean kind read as `true` downstream and told somebody they
+      // held a degree they had said they did not.
+      if (error instanceof InvalidFactValueError) throw new BadRequestException(error.message);
+
       throw error;
     }
   }

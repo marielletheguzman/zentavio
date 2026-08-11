@@ -254,13 +254,7 @@ def evaluate_requirement(
         return _evaluate_set_member(requirement, facts, common)
 
     if requirement.evaluation == "boolean":
-        fact = facts[requirement.needs_input[0]]
-        met = bool(fact.value) is bool(requirement.value)
-        return EvaluatedRequirement(
-            **common,
-            result="met" if met else "not_met",
-            basis=f"{requirement.needs_input[0]} is {fact.value!r}",
-        )
+        return _evaluate_boolean(requirement, facts, common)
 
     # `document-present` and `manual` are deliberately not decided here. A document check needs the
     # document, and `manual` means an authority decides — asserting either would be inventing a
@@ -270,6 +264,37 @@ def evaluate_requirement(
         result="undetermined",
         reason=f"'{requirement.evaluation}' requires review that this evaluator does not perform",
         needs_input=requirement.needs_input,
+    )
+
+
+def _evaluate_boolean(
+    requirement: Requirement, facts: dict[str, PersonFact], common: dict[str, Any]
+) -> EvaluatedRequirement:
+    """Decide a yes-or-no rule, and only from an actual yes or no.
+
+    ``bool("no")`` is ``True``. A presentation string reaching here decided the rule **met** for
+    somebody who had just said the opposite — a browser found exactly that on 2026-08-11, against
+    Germany's qualification rule.
+
+    **The fix is at the write boundary**, where a fact is typed against its catalogue ``value_type``
+    (`docs/database/entities/person-fact.md`). This refusal is the same one the numeric path already
+    makes for an uncomparable value, and it exists so a row written before that boundary did cannot
+    be reinterpreted into a verdict here.
+    """
+    fact = facts[requirement.needs_input[0]]
+
+    if not isinstance(fact.value, bool) or not isinstance(requirement.value, bool):
+        return EvaluatedRequirement(
+            **common,
+            result="undetermined",
+            reason="the answer on file is not a yes or a no, so it cannot decide this rule",
+            needs_input=requirement.needs_input,
+        )
+
+    return EvaluatedRequirement(
+        **common,
+        result="met" if fact.value is requirement.value else "not_met",
+        basis=f"{requirement.needs_input[0]} is {fact.value!r}",
     )
 
 

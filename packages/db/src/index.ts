@@ -97,6 +97,7 @@ export type {
 } from './schema.ts';
 
 export {
+  InvalidFactValueError,
   UnknownFactKindError,
   currentFacts,
   factKinds,

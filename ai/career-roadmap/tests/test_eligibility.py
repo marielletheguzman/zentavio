@@ -352,3 +352,76 @@ class TestARightNeverBlocks:
         verdict = evaluate_pathway("de.eu-blue-card", [threshold(), self.right()], [], AS_OF)
         assert verdict.status == "undetermined"
         assert verdict.needs_from_user == ("expected_gross_annual_salary_eur",)
+
+
+class TestAYesOrNoAnswer:
+    """The rule a browser proved was not holding, asserted at the layer that must not decide it.
+
+    Answering *"no"* to the degree question stored the string ``'no'``, and ``bool('no')`` is
+    ``True`` — so the qualification rule read **met** for somebody who had just said they had no
+    degree. The fix is at the write boundary, where a fact is typed against its catalogue kind.
+    What is asserted here is the other half: this evaluator decides a yes-or-no rule **only** from
+    a real boolean, so a row written before that boundary existed cannot be reinterpreted into a
+    verdict.
+    """
+
+    @staticmethod
+    def qualification() -> Requirement:
+        return threshold(
+            requirement_id="de.eu-blue-card.qualification",
+            kind="eligibility",
+            evaluation="boolean",
+            value=True,
+            needs_input=("has_recognised_academic_degree",),
+        )
+
+    def test_no_does_not_satisfy_the_qualification(self):
+        verdict = evaluate_pathway(
+            "de.eu-blue-card",
+            [self.qualification()],
+            [PersonFact(key="has_recognised_academic_degree", value=False)],
+            AS_OF,
+        )
+
+        assert verdict.status == "not_met"
+        assert verdict.blockers == ("de.eu-blue-card.qualification",)
+
+    def test_yes_does_satisfy_it(self):
+        verdict = evaluate_pathway(
+            "de.eu-blue-card",
+            [self.qualification()],
+            [PersonFact(key="has_recognised_academic_degree", value=True)],
+            AS_OF,
+        )
+
+        assert verdict.status == "met"
+        assert verdict.blockers == ()
+
+    @pytest.mark.parametrize("answer", ["no", "false", "yes", "true", 0, 1, "", None])
+    def test_a_value_that_is_not_a_boolean_decides_nothing(self, answer):
+        # Every one of these is truthy or falsy in Python, and each would produce a confident
+        # verdict from a value nobody typed as a yes or a no. `undetermined` is the honest reading:
+        # we hold something, and it is not an answer to this question.
+        verdict = evaluate_pathway(
+            "de.eu-blue-card",
+            [self.qualification()],
+            [PersonFact(key="has_recognised_academic_degree", value=answer)],
+            AS_OF,
+        )
+
+        assert verdict.status == "undetermined"
+        assert verdict.blockers == ()
+
+    def test_the_string_no_is_never_read_as_yes(self):
+        # The exact defect, named. Before the boundary was typed this returned `met`.
+        verdict = evaluate_pathway(
+            "de.eu-blue-card",
+            [self.qualification()],
+            [PersonFact(key="has_recognised_academic_degree", value="no")],
+            AS_OF,
+        )
+
+        assert verdict.status != "met"
+        result = next(r for r in verdict.requirements if r.requirement_id.endswith("qualification"))
+        assert result.result == "undetermined"
+        assert "not a yes or a no" in (result.reason or "")
