@@ -41,6 +41,7 @@ already ruled out and how the rule is enforced.
 | [0025](0025-derived-thresholds.md) | A threshold no authority publishes is computed by the connector and cites every instrument it came from | Accepted | 2026-08-11 |
 | [0026](0026-destination-comparison.md) | Destinations are compared, grouped and explained — never ranked by a score | Accepted | 2026-08-11 |
 | [0027](0027-quota-semantics.md) | A quota is a property of the pathway, never a requirement a person can fail | Accepted | 2026-08-11 |
+| [0028](0028-remote-as-a-destination.md) | `REMOTE` compares on employability alone, and its eligibility is `not_applicable` rather than unknown | Proposed | 2026-08-11 |
 
 **0010 is Accepted, and the rename is done** — `immigration_rules` is now `requirements`, with `domain`,
 `imposed_by`, and `authority`. Regulated professions remain blocked on **data**, not schema: nursing,
