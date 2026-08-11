@@ -1,6 +1,6 @@
 # ADR-0027: A quota is a property of the pathway, never a requirement a person can fail
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-08-11
 - **Deciders:** project lead
 - **Affects:** `packages/db` (schema, seed), `connectors/immigration-data/*`, `ai/career-roadmap`
