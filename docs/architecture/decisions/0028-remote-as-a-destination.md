@@ -1,6 +1,6 @@
 # ADR-0028: `REMOTE` compares on employability alone, and its eligibility is `not_applicable` rather than unknown
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-08-11
 - **Deciders:** project lead
 - **Affects:** `packages/types`, `services/api-gateway`, `apps/web`, `.claude/context/countries.md`,

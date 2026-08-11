@@ -40,6 +40,19 @@ are employer policy, time zone overlap, contracting and tax treatment, and payme
 Philippines-based user it is often the *correct* answer and the fastest one, so it never renders as a
 country with an empty visa section.
 
+**How it compares (ADR-0028, Accepted 2026-08-11).** Its **eligibility axis is `not_applicable` by
+construction** — a statement about `REMOTE`, never `unknown` or `unmodelled`, which would claim we
+failed to source something that does not exist. Its **employability axis is exactly the one every
+country uses**, because readiness against a career track has no jurisdiction in it; for many users
+it will be the only complete row on screen, and that must not read as a recommendation.
+
+**Its own constraints are not a coverage gap.** Employer policy, time zones, contracting, tax and
+payments are properties of **an employer and a contract, not of a place** — no authority publishes
+them because there is no authority. They are named and left unsourced with that reason stated,
+never invented to make a table symmetrical. `backlog.md` sequences the tractable piece.
+
+**No `remote.*` pathway, ever**, and no connector for one.
+
 ## Origin-side rules
 
 A Filipino applicant's viability depends on requirements that are **not** destination rules:
