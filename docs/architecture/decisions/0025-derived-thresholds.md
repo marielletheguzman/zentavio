@@ -1,6 +1,6 @@
 # ADR-0025: A threshold no authority publishes is computed by the connector and cites every instrument it came from
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-08-11
 - **Deciders:** project lead
 - **Affects:** `packages/db` (schema, repositories), `connectors/immigration-data/*`,
