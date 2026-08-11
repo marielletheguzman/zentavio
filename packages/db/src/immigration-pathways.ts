@@ -61,4 +61,37 @@ export const IMMIGRATION_PATHWAYS: readonly ImmigrationPathwaySeed[] = [
       },
     ],
   },
+  {
+    pathwayId: 'lu.eu-blue-card',
+    jurisdiction: 'LU',
+    // The instrument's own term, untranslated, like Germany's.
+    name: 'Carte bleue européenne (EU Blue Card, Luxembourg)',
+    description:
+      'Autorisation de séjour aux fins d’exercer un emploi hautement qualifié under art. 45 of the ' +
+      'loi du 29 août 2008 sur la libre circulation des personnes et l’immigration. **No instrument ' +
+      'states the salary threshold**: art. 45, par. (1), point 3 delegates it, a règlement ' +
+      'grand-ducal sets it as a multiple of the average gross annual salary, and an annual ' +
+      'règlement ministériel states that average. The stored threshold is their product, computed ' +
+      'at ingest and citing both instruments (ADR-0025).',
+    officialSources: [
+      {
+        url: 'https://data.legilux.public.lu/eli/etat/leg/loi/2008/08/29/n1',
+        authoritativeFor:
+          'the conditions for highly-qualified employment — contract duration, professional ' +
+          'qualifications, and the delegation of the salary threshold (art. 45 to 45-4)',
+      },
+      {
+        url: 'https://data.legilux.public.lu/eli/etat/leg/rgd/2008/09/26/n3',
+        authoritativeFor:
+          'the multiple of the average gross annual salary that constitutes the threshold, and the ' +
+          'lower multiple for occupations in CITP groups 1 and 2',
+      },
+      {
+        url: 'https://data.legilux.public.lu/eli/etat/leg/rmin',
+        authoritativeFor:
+          'the average gross annual salary itself, republished annually from IGSS data as ' +
+          'determined by STATEC — the operand the multiple applies to',
+      },
+    ],
+  },
 ];

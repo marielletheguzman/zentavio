@@ -12,6 +12,7 @@
 
 export type {
   ArchivableSource,
+  DerivedSource,
   Connector,
   ConnectorKind,
   ConnectorMeta,

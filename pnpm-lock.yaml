@@ -78,6 +78,9 @@ importers:
       '@zentavio/connector-de-bundesanzeiger':
         specifier: workspace:*
         version: link:../immigration-data/de-bundesanzeiger
+      '@zentavio/connector-lu-legilux':
+        specifier: workspace:*
+        version: link:../immigration-data/lu-legilux
 
   connectors/immigration-data/de-aufenthg:
     dependencies:
@@ -89,6 +92,15 @@ importers:
         version: link:../../../packages/types
 
   connectors/immigration-data/de-bundesanzeiger:
+    dependencies:
+      '@zentavio/connectors-core':
+        specifier: workspace:*
+        version: link:../../core
+      '@zentavio/types':
+        specifier: workspace:*
+        version: link:../../../packages/types
+
+  connectors/immigration-data/lu-legilux:
     dependencies:
       '@zentavio/connectors-core':
         specifier: workspace:*
@@ -211,6 +223,9 @@ importers:
       '@zentavio/connector-de-bundesanzeiger':
         specifier: workspace:*
         version: link:../../connectors/immigration-data/de-bundesanzeiger
+      '@zentavio/connector-lu-legilux':
+        specifier: workspace:*
+        version: link:../../connectors/immigration-data/lu-legilux
       '@zentavio/db':
         specifier: workspace:*
         version: link:../../packages/db

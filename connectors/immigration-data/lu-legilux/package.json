@@ -1,0 +1,17 @@
+{
+  "name": "@zentavio/connector-lu-legilux",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Luxembourg's EU Blue Card salary threshold — computed from the two instruments that define it (ADR-0025).",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zentavio/connectors-core": "workspace:*",
+    "@zentavio/types": "workspace:*"
+  }
+}

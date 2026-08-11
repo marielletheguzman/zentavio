@@ -368,6 +368,39 @@ Abs. 2 route could be expressed at all. That was a genuine gap in the model rath
 detail, and the honest reading is that the first country to need a new *shape* of rule will always
 cost code. Luxembourg tests whether a country needing no new shape costs none.
 
+### The measured diff, 2026-08-11
+
+Luxembourg's Blue Card rules are ingested and evaluated. **`ai/` and `apps/` are untouched, and so
+is `services/api-gateway`** — the criterion's central claim holds where it matters most. The
+evaluator absorbed a second country's two-route pathway with **no change at all**, which is the
+thing ADR-0024 promised and this is the first evidence for it.
+
+| Area | Files | What |
+|---|---|---|
+| `ai/` | **0** | the evaluator was not touched |
+| `apps/` | **0** | no surface change |
+| `services/api-gateway` | **0** | no gateway change |
+| `packages/db` | 5 | ADR-0025's `requirement_sources` migration, schema, repository, pathway seed |
+| `connectors/` | 6 | the new connector, the contract's optional `archivableSources`, the registry entry |
+| `services/ingestion` | 2 | archiving every contributing instrument, not just the primary |
+
+**So the criterion is not met as literally written, and the reason is worth more than a pass would
+have been.** Luxembourg's threshold is a product of two instruments and no official act states it
+(ADR-0025). That broke an assumption nothing had tested: `requirements` allowed **one source per
+rule** — `source_url` singular, `document_id` a single foreign key — so a derived rule could satisfy
+ADR-0021's archival check while being half-evidenced. Fixing that is a schema change and an
+ingestion change, and both are *provenance* work rather than country work: the next country whose
+threshold is derived pays none of it.
+
+**What a country actually costs, on this evidence:** a reference file, a connector, a pathway seed,
+a registry line — and nothing in the reasoning layers. The design claim ADR-0002 makes survives;
+what M3 found instead is that the *provenance* model, not the rule model, was the one built for a
+single case.
+
+**Verified live**, not only by tests: ISCO group 2 at €80 000 evaluates `met` through the `citp-1-2`
+route while the general route is `not_met` — the derogation doing exactly what it exists for,
+computed from two instruments neither of which states that number.
+
 ---
 
 ## M4 — Four destinations, honestly compared

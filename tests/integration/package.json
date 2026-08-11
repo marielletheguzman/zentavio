@@ -5,14 +5,15 @@
   "description": "Integration tests against a real containerized PostgreSQL (ADR-0007).",
   "type": "module",
   "dependencies": {
-    "@zentavio/config": "workspace:*",
-    "@zentavio/db": "workspace:*",
+    "@aws-sdk/client-s3": "^3.741.0",
     "@zentavio/auth": "workspace:*",
-    "@zentavio/ingestion": "workspace:*",
-    "@zentavio/connector-de-bundesanzeiger": "workspace:*",
-    "kysely": "^0.29.4",
+    "@zentavio/config": "workspace:*",
     "@zentavio/connector-de-aufenthg": "workspace:*",
+    "@zentavio/connector-de-bundesanzeiger": "workspace:*",
+    "@zentavio/connector-lu-legilux": "workspace:*",
+    "@zentavio/db": "workspace:*",
+    "@zentavio/ingestion": "workspace:*",
     "@zentavio/storage": "workspace:*",
-    "@aws-sdk/client-s3": "^3.741.0"
+    "kysely": "^0.29.4"
   }
 }
