@@ -108,6 +108,37 @@ export const PERSON_FACT_KINDS: readonly PersonFactKindSeed[] = [
     allowedValues: [],
   },
   {
+    key: 'expected_gross_hourly_pay_nzd',
+    valueType: 'monetary',
+    unit: 'NZD/hour',
+    prompt: 'What gross hourly pay does the job offer, in New Zealand dollars?',
+    rationale:
+      'New Zealand assesses remuneration as guaranteed payment per hour (Immigration Instructions ' +
+      'WA3.25), and the Accredited Employer Work Visa floor is the adult minimum wage — also ' +
+      'published hourly. Asked in the same unit both instruments use, so nothing is converted.',
+    // Pay, like the German salary question, and for the same reason.
+    sensitive: true,
+    allowedValues: [],
+  },
+  {
+    key: 'has_offer_from_accredited_employer',
+    valueType: 'boolean',
+    // The subject of the underlying rule is the **employer and the job**, not the person — WA2 is
+    // accreditation and WA3 is the Job Check. The applicant can still answer it, which is why it
+    // is an ordinary fact rather than a new shape: they know who is hiring them, and INZ publishes
+    // the accredited-employer list.
+    unit: null,
+    prompt:
+      'Is your job offer from an employer accredited by Immigration New Zealand, for a role that ' +
+      'has passed a Job Check?',
+    rationale:
+      'The Accredited Employer Work Visa is granted on an offer that meets the requirements at ' +
+      'WA4.10.1 — which depend on the employer holding accreditation and the job holding an ' +
+      'approved Job Check. Without both, no AEWV can be granted however well the person qualifies.',
+    sensitive: false,
+    allowedValues: [],
+  },
+  {
     key: 'isco_08_group',
     valueType: 'string',
     unit: null,

@@ -81,6 +81,9 @@ importers:
       '@zentavio/connector-lu-legilux':
         specifier: workspace:*
         version: link:../immigration-data/lu-legilux
+      '@zentavio/connector-nz-inz':
+        specifier: workspace:*
+        version: link:../immigration-data/nz-inz
 
   connectors/immigration-data/de-aufenthg:
     dependencies:
@@ -101,6 +104,15 @@ importers:
         version: link:../../../packages/types
 
   connectors/immigration-data/lu-legilux:
+    dependencies:
+      '@zentavio/connectors-core':
+        specifier: workspace:*
+        version: link:../../core
+      '@zentavio/types':
+        specifier: workspace:*
+        version: link:../../../packages/types
+
+  connectors/immigration-data/nz-inz:
     dependencies:
       '@zentavio/connectors-core':
         specifier: workspace:*

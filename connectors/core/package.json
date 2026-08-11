@@ -14,6 +14,7 @@
   "dependencies": {
     "@zentavio/connector-de-aufenthg": "workspace:*",
     "@zentavio/connector-de-bundesanzeiger": "workspace:*",
-    "@zentavio/connector-lu-legilux": "workspace:*"
+    "@zentavio/connector-lu-legilux": "workspace:*",
+    "@zentavio/connector-nz-inz": "workspace:*"
   }
 }
