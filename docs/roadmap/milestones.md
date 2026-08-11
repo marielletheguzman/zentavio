@@ -236,6 +236,8 @@ is to finish a vertical, then deepen it — not to start three (`.claude/skills/
 
 ## M2 — Germany is answerable
 
+**Status: Met** (2026-08-11).
+
 *Phase 1 complete.* DE pathway rules ingested from tier-1 sources, dated and versioned; per-rule
 eligibility; viability with the binding constraint named.
 
@@ -253,27 +255,47 @@ M1c shipped without while every server-side check passed.
 The path is real end to end: `BAnz AT 18.12.2025 B3` → `connectors/immigration-data/de-bundesanzeiger`
 → `planIngest` → `executePlan` → `requirements` → gateway → `ai/career-roadmap` → browser.
 
-**Not yet met, and this milestone is not complete without it:**
+**The verification was re-run against the current rule set on 2026-08-11**, and it is a different
+test now than it was on 2026-08-04: § 18g is modelled as three routes rather than two salary
+thresholds. With no relevant facts answered, **all three routes returned `undetermined`, each
+naming its own unanswered question** — `abs1-s2` asking when the degree was awarded, `abs2` asking
+for experience in the last seven years. Supplying the facts produced a definite **`met` through
+`abs2`**: the route that admits an ICT professional with no degree at all.
 
-- ~~**Viability.**~~ **Built** (`f60f821`, PR #75). `ai/career-roadmap/viability.py` pairs the two
+### Completed
+
+Each of these was outstanding when this milestone was written and is now implemented:
+
+- **Viability** — PR #75
+- **§ 18g beyond the two salary thresholds** — PR #89
+- **Typed person-fact controls** — PR #90
+- **Outcome recording** — PR #91
+- **Archived provenance** — built and enforced
+
+What each one is, and the reasoning worth keeping:
+
+- **Viability** (`f60f821`, PR #75). `ai/career-roadmap/viability.py` pairs the two
   axes and names the binding constraint; the gateway serves `GET /v1/viability` computing both
   halves in one call; `/eligibility` leads with the binding constraint rather than the eligibility
   status. Visa-eligible and unemployable at the threshold salary is caught — it renders as *"You
   qualify — the gap is readiness, not the rules"*. **No composite score**, per ADR-0022. *This
   bullet said only eligibility was built until 2026-08-11; the code landed on 2026-08-05 and the
   milestone was never updated.*
-- **Coverage is every requirement *ingested*, not every statutory requirement.** § 18g itself is
-  now on file through `connectors/immigration-data/de-aufenthg`: the six-month employment duration
+- **§ 18g beyond the two salary thresholds** (ADR-0024, PR #89). The statute is
+  on file through `connectors/immigration-data/de-aufenthg`: the six-month employment duration
   (Abs. 3), the academic qualification (Abs. 1 S. 1, widened by S. 5), both gates on the reduced
   route (Abs. 1 S. 2 Nr. 1's ISCO-08 groups and Nr. 2's three-year graduate window), and the
   experience route (Abs. 2 — its own two ISCO-08 groups and three years' experience within seven).
   Three routes are evaluated, `abs1-s1` · `abs1-s2` · `abs2`, per ADR-0024.
 
-  **Still not on file:** § 19f's rejection grounds, whose substance is on another provision;
-  the Bundesagentur für Arbeit's consent, recorded as a note because nobody can answer it in
-  advance; and the dependent, residence and job-change provisions, which are not eligibility. So
-  "every rule we checked" remains a claim about what is ingested, not about § 18g entire.
-- ~~**Outcome recording** (ADR-0019).~~ **Built.** `packages/db/src/repositories/applications.ts`
+  **Coverage is every requirement *ingested*, not every statutory requirement.** Still not on file:
+  § 19f's rejection grounds, whose substance is on another provision; the Bundesagentur für Arbeit's
+  consent, recorded as a note because nobody can answer it in advance; and the dependent, residence
+  and job-change provisions, which are not eligibility. So "every rule we checked" remains a claim
+  about what is ingested, not about § 18g entire — which is a scoping statement, not an unmet
+  requirement. The country model is in
+  `.claude/skills/immigration/references/countries/de.md`.
+- **Outcome recording** (ADR-0019, PR #91). `packages/db/src/repositories/applications.ts`
   records an application with **what was predicted at that moment** and records outcomes against
   it; the gateway serves `POST /v1/applications`, `GET /v1/applications` and
   `POST /v1/applications/:id/outcomes`; `apps/web/app/applications` is the one-tap surface. The
@@ -285,12 +307,46 @@ The path is real end to end: `BAnz AT 18.12.2025 B3` → `connectors/immigration
   **What this does not yet do is read the data.** `CLAIMED_CREDIT` stays an assumption until enough
   outcomes accumulate to observe the rate, exactly as ADR-0019 says. A calibration reader with zero
   rows could only answer "not enough data yet", which is why it is not built here.
-- ~~**Archived provenance** (ADR-0021, phases 2–6).~~ **Built and enforced.** Every stored
-  requirement cites an archived original; `unarchivedRequirements()` returns empty; a rule whose
-  source could not be archived is rejected by `services/ingestion`, asserted against real MinIO in
-  `tests/integration/db/ingestion-archival.test.ts`. **Only the production bucket (Cloudflare R2)
-  is unprovisioned, and that blocks deployment rather than this milestone.** *This bullet said
-  phases 2–6 were unbuilt until 2026-08-11; they landed on 2026-08-05.*
+- **Archived provenance** (ADR-0021, phases 2–6). Every stored requirement cites an archived
+  original; `unarchivedRequirements()` returns empty; a rule whose source could not be archived is
+  **rejected** by `services/ingestion`, asserted against real MinIO in
+  `tests/integration/db/ingestion-archival.test.ts`. *This was listed as unbuilt until 2026-08-11;
+  it landed on 2026-08-05.* The production bucket is a deployment prerequisite and is recorded
+  below rather than here.
+- **Typed person-fact controls** (PR #90). An answer is validated against its catalogue
+  `value_type` at the write boundary, so a `needsFromUser` question cannot be answered with a value
+  the evaluator will misread. Found by a browser check: answering *"no"* to the degree question
+  stored the string `'no'`, which read as `true` and reported the qualification rule **met** for
+  somebody who had just said the opposite. M2's own verification statement depends on this — "the
+  one input that would resolve it" is only true if supplying that input resolves it *correctly*.
+
+### Verification limitations
+
+**Two surfaces merged without a browser check**, and neither is claimed as browser-verified: the
+`/eligibility` typed-control surface (PR #90) and `/applications` (PR #91). The browser extension
+was unavailable for the rest of that session and did not reconnect across a restart. Their logic is
+pure and unit-tested, and the write path behind #90 was exercised over HTTP.
+
+These are **verification limitations, not outstanding milestone requirements**. Recorded because
+this repository has been caught by exactly this gap before — the gateway shipped with no CORS at all
+through the whole of M1c while every server-side check passed — so the next session should load both
+pages rather than assume them.
+
+**Outcome data is recorded and not yet read**, and that is deliberate rather than unfinished.
+ADR-0019: a calibration reader with zero rows can only answer "not enough data yet", so
+`CLAIMED_CREDIT` stays a stated assumption until enough outcomes accumulate to observe the rate.
+Consumption is not an M2 requirement.
+
+### Deployment prerequisite
+
+**Cloudflare R2 is not provisioned** (ADR-0021). Archival is implemented and enforced against MinIO
+locally and in CI, so this is **not an M2 completion requirement** — but production storage does not
+exist, and nothing here should be read as deployment readiness.
+
+```text
+M2 milestone          → MET
+Production deployment → still requires R2 provisioning
+```
 
 ---
 
