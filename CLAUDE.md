@@ -6,16 +6,18 @@ viability — using structured knowledge rather than keyword matching.
 
 ## Current state
 
-**M1 is complete. M2's verification passed; M2 itself is not finished.**
+**M1 and M2 are both complete** (M2 met 2026-08-11, `docs/roadmap/milestones.md`). Nothing of M3
+is started.
 
 M1: a résumé uploads, becomes a versioned profile with a verbatim source span on every claim, is
 correctable, and can be compared against a career track to produce a dependency-ordered gap and a
 readiness score with its remainder.
 
-M2 so far: a real German statutory source (`BAnz AT 18.12.2025 B3`) is ingested through a connector,
-planned, executed, and stored as versioned tier-1 `requirements`; the gateway evaluates them against
-a person's facts through `ai/career-roadmap`; and the browser shows `undetermined` with the one input
-that resolves it, then `met` once answered — **browser-verified 2026-08-04**.
+M2: real German statutory sources (`BAnz AT 18.12.2025 B3` and § 18g AufenthG) are ingested through
+connectors, planned, executed, and stored as versioned tier-1 `requirements` citing archived
+originals; the gateway evaluates them against a person's facts through `ai/career-roadmap`; and the
+browser shows `undetermined` with the questions that resolve it, then `met` once answered —
+**re-verified against the three-route rule set on 2026-08-11**.
 
 **Viability is built** (`f60f821`) — both axes with the binding constraint named, no composite score
 (ADR-0022). **§ 18g is modelled** through `connectors/immigration-data/de-aufenthg`, evaluated as
@@ -26,10 +28,14 @@ experience route, which admits ICT and IT professionals with no degree.
 person at the moment they recorded it, and outcomes recorded against it carry that prediction
 forward. Nothing reads the data yet: `CLAIMED_CREDIT` stays an assumption until enough accumulates.
 
-**What M2 still lacks** is in `docs/roadmap/milestones.md`: only ADR-0021's production bucket
-(Cloudflare R2), which blocks deployment rather than the milestone. Not the whole of § 18g —
-§ 19f's rejection grounds and the Bundesagentur's consent stay unmodelled on purpose, and the
-connector's README says why.
+**M2 being met is not deployment readiness.** ADR-0021's production bucket (Cloudflare R2) is
+unprovisioned, and archival is enforced against MinIO only. Coverage is also every requirement
+*ingested*, not all of § 18g — § 19f's rejection grounds and the Bundesagentur's consent stay
+unmodelled on purpose, and the connector's README says why.
+
+**Two surfaces have never been loaded in a browser:** `/eligibility`'s typed controls and
+`/applications`. Unit-tested only. Recorded as a verification limitation in `milestones.md`, not as
+unfinished work — but load them before building on them.
 
 **`de.md` is the worked example of a country model** (`.claude/skills/immigration/references/
 countries/`). One pathway sourced end to end; labour market, compensation, cost of living and
