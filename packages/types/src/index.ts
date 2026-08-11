@@ -73,6 +73,7 @@ export {
   type RequirementEvaluation,
   type RequirementKind,
   type RequirementResult,
+  type BindingConstraint,
   type RouteOutcomeWire,
   type SourcedRequirement,
   type ViabilityResponseWire,
@@ -91,6 +92,19 @@ export {
   type SponsorshipSourceKind,
   type SponsorshipStatus,
 } from './sponsorship.ts';
+
+export {
+  GROUP_LABELS,
+  GROUP_ORDER,
+  ORDERING_NOTE,
+  type ComparisonCell,
+  type ComparisonCellState,
+  type ComparisonGroup,
+  type ComparisonQuota,
+  type ComparisonWire,
+  type DestinationClass,
+  type DestinationComparison,
+} from './comparison.ts';
 
 export type {
   ApplicationStatus,
