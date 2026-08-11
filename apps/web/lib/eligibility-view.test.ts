@@ -160,6 +160,109 @@ describe('nothing is shown without its provenance', () => {
   });
 });
 
+describe('the ways in are rendered as routes, not flattened (ADR-0024)', () => {
+  /** § 18g as it evaluates for a degree holder in an unlisted occupation. */
+  function routed(): EligibilityResponseWire {
+    return verdict({
+      status: 'met',
+      needs_from_user: [],
+      route: 'abs1-s1',
+      routes: [
+        {
+          route: 'abs1-s1',
+          status: 'met',
+          blockers: [],
+          needs_from_user: [],
+          requirement_ids: ['de.eu-blue-card.salary-threshold.general', 'de.eu-blue-card.qualification'],
+        },
+        {
+          route: 'abs1-s2',
+          status: 'undetermined',
+          blockers: [],
+          needs_from_user: ['years_since_degree_awarded'],
+          requirement_ids: ['de.eu-blue-card.salary-threshold.reduced'],
+        },
+        {
+          route: 'abs2',
+          status: 'not_applicable',
+          blockers: [],
+          needs_from_user: [],
+          requirement_ids: ['de.eu-blue-card.professional-experience'],
+          reason: 'no qualifying circumstance applies: de.eu-blue-card.experience-route-occupations',
+        },
+      ],
+    });
+  }
+
+  it('keeps every route, including the ones that do not apply', () => {
+    // Dropping the closed ones would leave the verdict unexplainable: "met by abs1-s1" means
+    // nothing if the reader cannot see what the alternatives were.
+    const view = toEligibilityView(routed());
+    if (view.kind !== 'verdict') return;
+
+    expect(view.routes.map((route) => route.route)).toEqual(['abs1-s1', 'abs1-s2', 'abs2']);
+    expect(view.routes.map((route) => route.status)).toEqual(['met', 'undetermined', 'not_applicable']);
+  });
+
+  it('names the route the verdict used', () => {
+    const view = toEligibilityView(routed());
+    if (view.kind !== 'verdict') return;
+
+    expect(view.usedRoute).toBe('abs1-s1');
+    expect(view.routes.filter((route) => route.used).map((route) => route.route)).toEqual(['abs1-s1']);
+  });
+
+  it('never words a closed route as a failure', () => {
+    // "You failed the experience route" is a false statement about someone who holds a degree.
+    // They were never on it.
+    const view = toEligibilityView(routed());
+    if (view.kind !== 'verdict') return;
+
+    const closed = view.routes.find((route) => route.route === 'abs2');
+    expect(closed?.label).toBe('Not a way in for you');
+    expect(closed?.label.toLowerCase()).not.toContain('fail');
+    expect(closed?.label.toLowerCase()).not.toContain('not met');
+    expect(closed?.detail).toContain('no qualifying circumstance applies');
+  });
+
+  it('carries each open routes own questions, in words', () => {
+    // The product leads with the shortest set of questions; it does not get to hide that another
+    // way in exists and has its own (ADR-0024 rule 5).
+    const view = toEligibilityView(routed(), {
+      years_since_degree_awarded: 'How many years ago was your degree awarded?',
+    });
+    if (view.kind !== 'verdict') return;
+
+    const reduced = view.routes.find((route) => route.route === 'abs1-s2');
+    expect(reduced?.questions).toEqual([
+      {
+        key: 'years_since_degree_awarded',
+        prompt: 'How many years ago was your degree awarded?',
+      },
+    ]);
+    // The verdict itself is `met` and asks nothing. The route still says what would move it.
+    expect(view.questions).toEqual([]);
+  });
+
+  it('shows which rules were checked on which route', () => {
+    const view = toEligibilityView(routed());
+    if (view.kind !== 'verdict') return;
+
+    expect(view.routes[0]?.requirementIds).toContain('de.eu-blue-card.qualification');
+    expect(view.routes[2]?.requirementIds).not.toContain('de.eu-blue-card.qualification');
+  });
+
+  it('renders no route structure for a pathway that declares none', () => {
+    // Every pathway starts here, and inventing a "default route" heading would be the screen
+    // asserting a model the data does not have.
+    const view = toEligibilityView(verdict());
+    if (view.kind !== 'verdict') return;
+
+    expect(view.routes).toEqual([]);
+    expect(view.usedRoute).toBeNull();
+  });
+});
+
 describe('toFactValue', () => {
   it('shapes a monetary answer with its currency and period', () => {
     // A bare number against a EUR threshold is a confident wrong answer, so the unit from the

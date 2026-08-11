@@ -537,32 +537,48 @@ def _route_outcomes(pairs: _Pairs) -> tuple[RouteOutcome, ...]:
             result for result, req in members if req.kind == "right" and req.route == route_id
         )
 
-        # A right gates the route it belongs to (ADR-0024 rule 6, amended during implementation).
-        # It opens this way in; it never blocks the pathway, because another route may carry it.
-        if any(g.result == "not_met" for g in gates):
-            closed_by = next(g for g in gates if g.result == "not_met")
+        # **Gates are ANY; conditions are ALL** (ADR-0024 rule 6). A gate answers *may this person
+        # attempt this route*; a condition answers *do they satisfy it*. § 18g Abs. 1 S. 2 reaches
+        # one legal consequence — the reduced salary threshold — through either a listed occupation
+        # **or** a degree earned within three years, so requiring both would deny every recent
+        # graduate outside the listed groups.
+        if gates and not any(g.result == "met" for g in gates):
+            unproven = tuple(g for g in gates if g.result == "undetermined")
+            if not unproven:
+                # Every way of opening this route has been asked and answered no. Closed — not
+                # failed. The person was never on it.
+                outcomes.append(
+                    RouteOutcome(
+                        route=route_id,
+                        status="not_applicable",
+                        blockers=(),
+                        needs_from_user=(),
+                        requirement_ids=tuple(result.requirement_id for result, _ in members),
+                        reason=(
+                            "no qualifying circumstance applies: "
+                            + ", ".join(g.requirement_id for g in gates)
+                        ),
+                    )
+                )
+                continue
+
+            # Some gate is still unanswered, so whether this route exists for this person is not
+            # yet known. Undetermined, never met — and its questions are worth asking, because an
+            # answer decides whether this way in is open at all.
+            _, blockers, needs = _aggregate(members)
+            gate_needs = tuple(key for g in unproven for key in g.needs_input)
             outcomes.append(
                 RouteOutcome(
                     route=route_id,
-                    status="not_applicable",
-                    blockers=(),
-                    needs_from_user=(),
+                    status="undetermined",
+                    blockers=blockers,
+                    needs_from_user=tuple(dict.fromkeys((*gate_needs, *needs))),
                     requirement_ids=tuple(result.requirement_id for result, _ in members),
-                    reason=f"{closed_by.requirement_id} does not apply to this person",
                 )
             )
             continue
 
         status, blockers, needs = _aggregate(members)
-        # An unanswered gate leaves the route open but unproven — undetermined, never met. Its
-        # input is worth asking for here, unlike a right inside an already-open route, because
-        # answering it is what decides whether this way in exists at all.
-        gate_needs = tuple(
-            key for g in gates if g.result == "undetermined" for key in g.needs_input
-        )
-        if gate_needs:
-            status = "undetermined"
-            needs = tuple(dict.fromkeys((*needs, *gate_needs)))
 
         outcomes.append(
             RouteOutcome(

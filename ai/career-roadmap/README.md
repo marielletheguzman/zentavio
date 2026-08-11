@@ -43,7 +43,11 @@ professional earning €47 000 was told `not_met` when § 18g Abs. 1 S. 2 makes 
 | Concept | Rule |
 |---|---|
 | `not_applicable` | a rule on a route this person cannot use. **Never a failure, never a blocker, never a question.** |
-| a `right` | gates the route it belongs to. It never blocks the pathway — another route can carry it. |
+| a `right` | a **gate**: it opens the route it belongs to. It never blocks the pathway — another route can carry it. |
+| **gates are ANY** | one met gate opens the route. § 18g Abs. 1 S. 2 reads *"Nr. 1 oder Nr. 2"* — a listed occupation **or** a degree earned within three years, so requiring both would deny every recent graduate outside the list. |
+| **conditions are ALL** | every non-`right` rule on an open route must hold. A gate says *may this person attempt this route*; a condition says *do they satisfy it*. |
+| an unanswered gate | leaves the route `undetermined`, never closed. A way in nobody has asked about has not been ruled out. |
+| every gate answered no | makes the route `not_applicable`, and the reason names each gate tried. |
 | `needs_from_user` | comes from the **nearest open route**: the undetermined one asking fewest further questions. Every other route is still reported in full. |
 | a routeless pathway | behaves exactly as it did before routes existed, asserted by test. That is what makes the model additive. |
 

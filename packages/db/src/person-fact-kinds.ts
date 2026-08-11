@@ -61,14 +61,49 @@ export const PERSON_FACT_KINDS: readonly PersonFactKindSeed[] = [
     allowedValues: [],
   },
   {
+    key: 'years_since_degree_awarded',
+    valueType: 'integer',
+    unit: 'years',
+    prompt: 'How many years ago was your degree awarded?',
+    rationale:
+      '§ 18g Abs. 1 S. 2 Nr. 2 AufenthG gives the reduced salary threshold to anyone whose degree ' +
+      'was awarded no more than three years before applying, whatever their occupation. It is a ' +
+      'second, independent way into the same threshold as the listed ISCO-08 groups.',
+    sensitive: false,
+    allowedValues: [],
+  },
+  {
+    key: 'years_relevant_experience_last_seven',
+    valueType: 'integer',
+    unit: 'years',
+    // The seven-year window is in the question deliberately. § 18g Abs. 2 Nr. 3 a) counts only
+    // experience acquired in the last seven years, and a bare career total would quietly admit
+    // three years earned a decade ago.
+    prompt:
+      'In the last seven years, how many years have you worked in this occupation group?',
+    rationale:
+      '§ 18g Abs. 2 AufenthG admits ICT and IT professionals (ISCO-08 groups 133 and 25) without ' +
+      'a degree, on at least three years of experience acquired within the last seven. This is ' +
+      'the route for people the degree question would otherwise wrongly exclude.',
+    sensitive: false,
+    allowedValues: [],
+  },
+  {
     key: 'has_recognised_academic_degree',
     valueType: 'boolean',
     unit: null,
-    prompt: 'Do you hold a recognised higher-education degree?',
+    // § 18g Abs. 1 S. 5 widens what counts, so the question has to widen with it. Asked as
+    // "a degree" alone, someone holding an equivalent tertiary qualification answers no and is
+    // excluded from a route the statute admits them to.
+    prompt:
+      'Do you hold a recognised higher-education degree, or an equivalent tertiary qualification ' +
+      'of at least three years at ISCED 2011 or EQF level 6?',
     rationale:
-      '§ 18g Abs. 1 S. 1 AufenthG addresses a Fachkraft mit akademischer Ausbildung. Whether a ' +
-      'particular qualification counts is decided by recognition rules we have not sourced, so a ' +
-      'no here means we cannot confirm this route rather than that no route exists.',
+      '§ 18g Abs. 1 S. 1 AufenthG addresses a Fachkraft mit akademischer Ausbildung, and Abs. 1 ' +
+      'S. 5 extends that to an equivalent tertiary programme of at least three years at ISCED ' +
+      '2011 or EQF level 6. Whether a particular qualification counts is decided by recognition ' +
+      'rules we have not sourced, so a no here means we cannot confirm this route rather than ' +
+      'that no route exists — § 18g Abs. 2 admits ICT and IT professionals without one.',
     sensitive: false,
     allowedValues: [],
   },

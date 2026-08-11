@@ -162,16 +162,27 @@ must not contain it.
    still reported**, with their own inputs, so nothing is hidden — but the product asks for the
    shortest path first rather than the union of every question every route could ask. This is a
    product judgment, stated here so it is reviewable rather than emergent.
-6. **A right gates the route it belongs to, and nothing else.** *Amended 2026-08-06 during
-   implementation; the original wording said rights never decide within a route, and that is a false
-   positive.* § 18g Abs. 1 S. 2's ISCO list is not decoration on the reduced route — it is the
-   condition that **opens** it. A right that never decides would let anyone earning €45 934,20
-   qualify by that route regardless of occupation, which is worse than the false negative this ADR
-   exists to fix. So: a right that evaluates `met` opens its route; one that evaluates `not_met`
-   makes its route `not_applicable`; one that is `undetermined` leaves its route undetermined. The
-   original guarantee survives where it was aimed — **a right never blocks the pathway**, because
-   another route can carry it, and **a pathway with no routed rows keeps today's behaviour exactly**,
-   where rights are reported and never decide.
+6. **Gates are ANY; conditions are ALL.** A **gate** (`kind: right`) answers *may this person
+   attempt this route*. A **condition** answers *do they satisfy it*. The two questions are
+   answered independently: any one gate opens the route, and every condition must then hold.
+
+   **A route is one legal consequence.** § 18g Abs. 1 S. 2 does not create two routes — it creates
+   one outcome, the reduced salary threshold, reachable through either a listed occupation *or* a
+   degree earned within three years. Modelling those as separate routes would duplicate the salary
+   and qualification rules beneath both and break the one-to-one relation between a route id and a
+   legal outcome, which is what makes a stable id worth having.
+
+   A route with no met gate and no unanswered one is `not_applicable`, and the reason names every
+   gate that was tried. A route with an unanswered gate is `undetermined` — never closed, because
+   a way in nobody has asked about has not been ruled out.
+
+   *Amended twice during implementation, both times against a false result the original wording
+   produced.* The first wording said rights never decide within a route, which hands the reduced
+   threshold to every occupation. The second required all gates, which denies every recent graduate
+   outside the listed ISCO groups. What survives from the original guarantee is the part that was
+   always right — **a right never blocks the pathway**, because another route can carry it, and
+   **a pathway with no routed rows keeps today's behaviour exactly**, where rights are reported and
+   never decide.
 7. **No composite, no ranking of routes** beyond rule 5. A route is met or it is not; nothing scores
    how nearly. ADR-0022's argument applies unchanged.
 8. **The evaluator never learns a route's meaning.** Route ids are opaque strings from data. The

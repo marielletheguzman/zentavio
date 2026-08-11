@@ -156,26 +156,103 @@ export class AufenthgConnector implements Connector<StatuteRaw, readonly Sourced
     }
 
     if (parsed.requiresAcademicQualification) {
-      rows.push({
-        ...base,
-        requirementId: 'de.eu-blue-card.qualification',
-        kind: 'eligibility',
+      // **One condition, two routes, so two rows.** Abs. 1 S. 2 incorporates the qualification by
+      // reference — *"Fachkräften mit akademischer Ausbildung"* — while Abs. 2 is precisely the
+      // route that does **not** require it. A row carries one route, so the condition is stated
+      // once per route it governs, with distinct ids. Pathway-wide would silently impose a degree
+      // on the one population Abs. 2 exists to admit without one.
+      const qualification = {
+        kind: 'eligibility' as const,
         value: true,
-        // **Pathway-wide, and only correct while Abs. 2 is unmodelled.** Abs. 1 S. 2 incorporates
-        // this condition by reference — *"Fachkräften mit akademischer Ausbildung"* — so it governs
-        // both Abs. 1 routes. Abs. 2 is the route that does **not** require it, and the day that
-        // route is added this row must become route-scoped, or it will wrongly demand a degree of
-        // the one population the provision exists to admit without one.
-        appliesTo: {},
+        evaluation: 'boolean' as const,
+        needsInput: ['has_recognised_academic_degree'],
         domainDetail: {
           legalBasis: 'AufenthG § 18g Abs. 1 S. 1',
-          // Named rather than modelled: § 18g Abs. 2 admits some occupations without a degree, and
-          // this connector does not read that alternative. Recording it stops the row being read
-          // as "no degree means no Blue Card".
-          alternativeRouteNotModelled: 'AufenthG § 18g Abs. 2 (experience route, ISCO 133 and 25)',
+          // § 18g Abs. 1 S. 5. Not its own rule — it widens what the question *means*, and asking
+          // "do you hold a degree?" of someone with an equivalent tertiary qualification would
+          // exclude a person the statute admits.
+          ...(parsed.recognisesEquivalentTertiary
+            ? {
+                equivalentQualificationAccepted:
+                  'A tertiary programme of at least three years at ISCED 2011 level 6 or EQF ' +
+                  'level 6 counts (AufenthG § 18g Abs. 1 S. 5).',
+              }
+            : {}),
         },
-        evaluation: 'boolean',
-        needsInput: ['has_recognised_academic_degree'],
+      };
+
+      rows.push({
+        ...base,
+        ...qualification,
+        requirementId: 'de.eu-blue-card.qualification',
+        appliesTo: { route: 'abs1-s1' },
+      });
+
+      rows.push({
+        ...base,
+        ...qualification,
+        requirementId: 'de.eu-blue-card.qualification.abs1-s2',
+        appliesTo: { route: 'abs1-s2' },
+        domainDetail: {
+          ...qualification.domainDetail,
+          legalBasis: 'AufenthG § 18g Abs. 1 S. 2 (incorporating S. 1)',
+        },
+      });
+    }
+
+    if (parsed.recentGraduateYears !== null) {
+      rows.push({
+        ...base,
+        requirementId: 'de.eu-blue-card.recent-graduate',
+        // The **second** gate on the reduced route, independent of the first. § 18g Abs. 1 S. 2
+        // reads "Nr. 1 *oder* Nr. 2", so either opens it — requiring both would deny every recent
+        // graduate whose occupation is not on the list.
+        kind: 'right',
+        value: { amount: parsed.recentGraduateYears, unit: 'years' },
+        appliesTo: { route: 'abs1-s2' },
+        domainDetail: {
+          legalBasis: 'AufenthG § 18g Abs. 1 S. 2 Nr. 2',
+          requiresLabourMarketConsent: true,
+        },
+        evaluation: 'numeric-lte',
+        needsInput: ['years_since_degree_awarded'],
+      });
+    }
+
+    if (parsed.experienceRouteIscoGroups.length > 0) {
+      rows.push({
+        ...base,
+        requirementId: 'de.eu-blue-card.experience-route-occupations',
+        // The gate on Abs. 2 — a narrower list than Abs. 1 S. 2's, and the statute means the
+        // difference: two groups, not ten.
+        kind: 'right',
+        value: parsed.experienceRouteIscoGroups,
+        appliesTo: { route: 'abs2' },
+        domainDetail: {
+          legalBasis: 'AufenthG § 18g Abs. 2',
+          requiresLabourMarketConsent: true,
+        },
+        evaluation: 'set-member',
+        needsInput: ['isco_08_group'],
+      });
+    }
+
+    if (parsed.experienceRequirement !== null) {
+      rows.push({
+        ...base,
+        requirementId: 'de.eu-blue-card.professional-experience',
+        kind: 'condition',
+        value: { amount: parsed.experienceRequirement.years, unit: 'years' },
+        appliesTo: { route: 'abs2' },
+        domainDetail: {
+          legalBasis: 'AufenthG § 18g Abs. 2 Nr. 3 a)',
+          // The seven-year window is in the question, not in a second rule: three years earned a
+          // decade ago does not qualify, and a bare total would quietly admit it.
+          acquiredWithinYears: parsed.experienceRequirement.withinYears,
+          requiresLabourMarketConsent: true,
+        },
+        evaluation: 'numeric-gte',
+        needsInput: ['years_relevant_experience_last_seven'],
       });
     }
 

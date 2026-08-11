@@ -84,12 +84,16 @@ describe('§ 18g Abs. 1 — the reduced-threshold occupations', () => {
 });
 
 describe('normalize', () => {
-  it('produces the three provisions that are literal on this page', () => {
+  it('produces every provision that is literal on this page', () => {
     const rows = connector().normalize(FIXTURE);
 
     expect(rows.map((r) => r.requirementId).sort()).toEqual([
       'de.eu-blue-card.employment-duration',
+      'de.eu-blue-card.experience-route-occupations',
+      'de.eu-blue-card.professional-experience',
       'de.eu-blue-card.qualification',
+      'de.eu-blue-card.qualification.abs1-s2',
+      'de.eu-blue-card.recent-graduate',
       'de.eu-blue-card.reduced-threshold-occupations',
     ]);
   });
@@ -105,16 +109,76 @@ describe('normalize', () => {
     expect(row?.value).toContain('133');
   });
 
-  it('records that the no-degree route exists but is not modelled', () => {
-    // Without this the qualification row reads as "no degree means no Blue Card", which § 18g
-    // Abs. 2 contradicts.
+  it('models the no-degree route rather than merely naming it', () => {
+    // The qualification row used to carry `alternativeRouteNotModelled` so it would not read as
+    // "no degree means no Blue Card". § 18g Abs. 2 is now a route of its own, so the label is
+    // gone and the thing it apologised for is built.
+    const rows = connector().normalize(FIXTURE);
+    const experience = rows.find((r) => r.requirementId === 'de.eu-blue-card.professional-experience');
+    const gate = rows.find((r) => r.requirementId === 'de.eu-blue-card.experience-route-occupations');
+
+    for (const row of rows) {
+      expect(row.domainDetail).not.toHaveProperty('alternativeRouteNotModelled');
+    }
+
+    expect((experience?.appliesTo as { route?: string }).route).toBe('abs2');
+    expect(experience?.value).toEqual({ amount: 3, unit: 'years' });
+    expect(experience?.domainDetail).toMatchObject({ acquiredWithinYears: 7 });
+
+    // Abs. 2 admits **two** groups, not Abs. 1 S. 2's ten. Reading the wrong sentence here would
+    // open the no-degree route to eight groups the statute never put on it.
+    expect(gate?.value).toEqual(['133', '25']);
+  });
+
+  it('requires a degree on the Abs. 1 routes and not on Abs. 2', () => {
+    // The condition is stated once per route it governs. Pathway-wide would demand a degree of
+    // exactly the population Abs. 2 exists to admit without one.
+    const routesRequiringDegree = connector()
+      .normalize(FIXTURE)
+      .filter((r) => r.needsInput.includes('has_recognised_academic_degree'))
+      .map((r) => (r.appliesTo as { route?: string }).route)
+      .sort();
+
+    expect(routesRequiringDegree).toEqual(['abs1-s1', 'abs1-s2']);
+  });
+
+  it('gives the reduced route a second, independent gate', () => {
+    // § 18g Abs. 1 S. 2 reads "Nr. 1 oder Nr. 2". A recent graduate outside the listed groups
+    // reaches the same threshold, and requiring both gates would deny them.
+    const row = connector()
+      .normalize(FIXTURE)
+      .find((r) => r.requirementId === 'de.eu-blue-card.recent-graduate');
+
+    expect(row?.kind).toBe('right');
+    expect(row?.evaluation).toBe('numeric-lte');
+    expect(row?.value).toEqual({ amount: 3, unit: 'years' });
+    expect((row?.appliesTo as { route?: string }).route).toBe('abs1-s2');
+  });
+
+  it('records that the reduced routes need labour-market consent, without blocking on it', () => {
+    // § 18g Abs. 1 S. 1 grants the Blue Card *ohne* Zustimmung der Bundesagentur für Arbeit; the
+    // S. 2 and Abs. 2 routes need it. It is recorded rather than made a rule on purpose — nobody
+    // can answer it in advance, so a rule would leave those routes permanently undetermined.
+    const consentOf = (id: string) =>
+      connector()
+        .normalize(FIXTURE)
+        .find((r) => r.requirementId === id)?.domainDetail['requiresLabourMarketConsent'];
+
+    expect(consentOf('de.eu-blue-card.recent-graduate')).toBe(true);
+    expect(consentOf('de.eu-blue-card.experience-route-occupations')).toBe(true);
+    expect(consentOf('de.eu-blue-card.qualification')).toBeUndefined();
+  });
+
+  it('widens the qualification question to the equivalent tertiary programme', () => {
+    // § 18g Abs. 1 S. 5. Not its own rule — it changes what the existing question means, and a
+    // narrower question excludes people the statute admits.
     const row = connector()
       .normalize(FIXTURE)
       .find((r) => r.requirementId === 'de.eu-blue-card.qualification');
 
-    expect(row?.domainDetail).toMatchObject({
-      alternativeRouteNotModelled: expect.stringContaining('Abs. 2'),
-    });
+    expect(row?.domainDetail['equivalentQualificationAccepted']).toEqual(
+      expect.stringContaining('ISCED 2011'),
+    );
   });
 
   it('does not claim the statute began on the day we read it', () => {
@@ -218,13 +282,25 @@ describe('routes (ADR-0024)', () => {
 });
 
 describe('what this connector deliberately does not model', () => {
-  it('emits no rule for § 19f rejection grounds or the Abs. 2 experience route', () => {
-    // Both are real provisions this parser cannot read safely. A rule that looks authoritative and
-    // is subtly wrong is worse than a missing one for immigration data, so the omission is
-    // recorded in `domainDetail` and the README rather than filled in.
+  it('emits no rule for § 19f rejection grounds', () => {
+    // A real provision this parser cannot read safely — its substance is on another page. A rule
+    // that looks authoritative and is subtly wrong is worse than a missing one for immigration
+    // data, so the omission is recorded in the README rather than filled in.
     const ids = connector().normalize(FIXTURE).map((r) => r.requirementId);
 
     expect(ids).not.toContain('de.eu-blue-card.rejection-grounds');
-    expect(ids).not.toContain('de.eu-blue-card.experience-route');
+  });
+
+  it('makes no rule of the Bundesagentur’s consent, only a note', () => {
+    // Nobody can answer it in advance. As a rule it would leave the S. 2 and Abs. 2 routes
+    // permanently `undetermined`, which reads as "we cannot tell you" for a route that is open.
+    const ids = connector().normalize(FIXTURE).map((r) => r.requirementId);
+
+    expect(ids).not.toContain('de.eu-blue-card.labour-market-consent');
+    expect(
+      connector()
+        .normalize(FIXTURE)
+        .some((r) => r.needsInput.includes('labour_market_consent')),
+    ).toBe(false);
   });
 });

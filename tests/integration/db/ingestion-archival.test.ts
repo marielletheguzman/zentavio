@@ -151,13 +151,15 @@ describe('the stored rule cites its evidence', () => {
     });
     const report = await executePlan(db, plan);
 
-    expect(report.inserted).toBe(3);
+    // Seven provisions, once § 18g's Abs. 1 S. 2 Nr. 2 gate, its S. 5 widening and the whole of
+    // Abs. 2 are extracted (ADR-0024). Every one of them cites the same archived page.
+    expect(report.inserted).toBe(7);
 
     const { rows } = await pool.query<{ n: string }>(
       'SELECT count(*) AS n FROM requirements WHERE document_id = $1',
       [archive.document.id],
     );
-    expect(Number(rows[0]?.n)).toBe(3);
+    expect(Number(rows[0]?.n)).toBe(7);
   });
 
   it('leaves nothing unarchived once the document is attached', async () => {
@@ -189,7 +191,7 @@ describe('the stored rule cites its evidence', () => {
     const report = await executePlan(db, plan);
 
     expect(report.inserted).toBe(0);
-    expect(report.rejected).toBe(3);
+    expect(report.rejected).toBe(7);
     expect((await pool.query('SELECT id FROM requirements')).rows).toEqual([]);
   });
 
@@ -201,6 +203,6 @@ describe('the stored rule cites its evidence', () => {
     await executePlan(db, planIngest(source, source.normalize(FIXTURE), [], () => uuidv7()));
 
     const { rows } = await pool.query('SELECT id FROM requirements WHERE document_id IS NULL');
-    expect(rows).toHaveLength(3);
+    expect(rows).toHaveLength(7);
   });
 });

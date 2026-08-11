@@ -17,22 +17,28 @@ planned, executed, and stored as versioned tier-1 `requirements`; the gateway ev
 a person's facts through `ai/career-roadmap`; and the browser shows `undetermined` with the one input
 that resolves it, then `met` once answered — **browser-verified 2026-08-04**.
 
-**What M2 still lacks** is in `docs/roadmap/milestones.md` and matters before calling it done:
-**viability** (eligibility × employability — only eligibility exists, so visa-eligible-and-
-unemployable is not caught), the rest of § 18g beyond the two salary thresholds, outcome recording
-(ADR-0019), and archived provenance (ADR-0021 phases 2–6).
+**Viability is built** (`f60f821`) — both axes with the binding constraint named, no composite score
+(ADR-0022). **§ 18g is modelled** through `connectors/immigration-data/de-aufenthg`, evaluated as
+three routes (ADR-0024): the qualification, both gates on the reduced-threshold route, and Abs. 2's
+experience route, which admits ICT and IT professionals with no degree.
 
-13 tables. **924 tests — 399 unit, 175 integration, 350 pytest** (measured 2026-08-04, not
-estimated; the previous figure here was a recollection and was wrong by ~150). CI blocking on
-`main`.
+**What M2 still lacks** is in `docs/roadmap/milestones.md` and matters before calling it done:
+outcome recording (ADR-0019), the DE reference file under
+`.claude/skills/immigration/references/countries/`, and ADR-0021's production bucket. Not the whole
+of § 18g — § 19f's rejection grounds and the Bundesagentur's consent stay unmodelled on purpose,
+and the connector's README says why.
+
+13 tables. **1 124 tests — 474 unit, 252 integration, 398 pytest** (measured 2026-08-11 by running
+all three suites, integration included, against local PostgreSQL and MinIO — not estimated). CI
+blocking on `main`.
 
 | Built | Still a placeholder |
 |---|---|
 | `packages/db`, `config`, `types`, `auth`, `storage`; `ui` — design tokens only | `logger`, `events`, `i18n`; `ui`'s component primitives, unblocked by ADR-0023 (Accepted) but not yet installed |
 | `services/api-gateway`, `services/ingestion` — requirement ingest only | `matching`, `notifications`, `billing`; ingestion's job-listing and scheduling half |
-| `ai/resume-parser`, `ai/skill-gap`, `ai/shared`, `ai/career-roadmap` — eligibility only | `embeddings`, `interview-prep`, `learning-paths`; career-roadmap's readiness and viability half |
-| `apps/web` — upload, gap, eligibility | `apps/admin`, `apps/mobile` |
-| `connectors/core`, `connectors/immigration-data/de-bundesanzeiger` | every other connector, all of `knowledge-engine/` |
+| `ai/resume-parser`, `ai/skill-gap`, `ai/shared`, `ai/career-roadmap` — eligibility, routes, viability | `embeddings`, `interview-prep`, `learning-paths` |
+| `apps/web` — upload, gap, eligibility with its routes | `apps/admin`, `apps/mobile` |
+| `connectors/core`, `connectors/immigration-data/de-bundesanzeiger`, `connectors/immigration-data/de-aufenthg` | every other connector, all of `knowledge-engine/` |
 | the seeded skill graph — in `packages/db/seeds/` and four tables, **not** `knowledge-engine/` (ADR-0020) | |
 
 Not built at all: outcome recording, any deployed environment. ADR-0015's Supabase project is

@@ -113,19 +113,38 @@ beforeEach(async () => {
 });
 
 describe('the first real ingest', () => {
-  it('stores both 2026 thresholds from the actual Bekanntmachung', async () => {
+  it('stores both 2026 figures from the actual Bekanntmachung, one row per route', async () => {
+    // **Three rows from two figures.** The document says the 45,3 % minimum applies "nach § 18 g
+    // Absatz 1 Satz 2 sowie nach § 18g Absatz 2", and a row carries one route (ADR-0024). Stored
+    // once, the Abs. 2 route would have no salary rule and would open on its occupation and
+    // experience alone — met at any wage.
     const source = connector();
     const normalized = source.normalize(FIXTURE);
     const report = await executePlan(db, planIngest(source, normalized, [], () => uuidv7()));
 
-    expect(report).toMatchObject({ sourceId: 'de-bundesanzeiger', inserted: 2, rejected: 0 });
+    expect(report).toMatchObject({ sourceId: 'de-bundesanzeiger', inserted: 3, rejected: 0 });
 
     const rows = await storedRequirements();
-    expect(rows).toHaveLength(2);
+    expect(rows).toHaveLength(3);
     expect(rows.map((r) => r.requirement_id)).toEqual([
       'de.eu-blue-card.salary-threshold.general',
       'de.eu-blue-card.salary-threshold.reduced',
+      'de.eu-blue-card.salary-threshold.reduced.abs2',
     ]);
+  });
+
+  it('gives each route its own row, with the same figure and its own id', async () => {
+    // The two reduced rows are one announced figure reported twice, not two figures. They can
+    // diverge the moment BMI announces different ones, which is why the route is on the row rather
+    // than inferred at read time.
+    const source = connector();
+    await executePlan(db, planIngest(source, source.normalize(FIXTURE), [], () => uuidv7()));
+
+    const { rows } = await pool.query<{ requirement_id: string; applies_to: { route?: string } }>(
+      `SELECT requirement_id, applies_to FROM requirements ORDER BY requirement_id`,
+    );
+
+    expect(rows.map((r) => r.applies_to.route)).toEqual(['abs1-s1', 'abs1-s2', 'abs2']);
   });
 
   it('stores the verified figures, with currency and period intact', async () => {
@@ -182,7 +201,7 @@ describe('re-running an ingest', () => {
 
     const second = await executePlan(db, planIngest(source, normalized, await existing(), () => uuidv7()));
 
-    expect(second).toMatchObject({ inserted: 0, superseded: 0, unchanged: 2 });
+    expect(second).toMatchObject({ inserted: 0, superseded: 0, unchanged: 3 });
     expect(await storedRequirements()).toEqual(afterFirst);
   });
 });
@@ -207,8 +226,8 @@ describe('annually bounded rules do not supersede', () => {
     });
 
     const report = await executePlan(db, planIngest(source, next2027, await existing(), () => uuidv7()));
-    expect(report).toMatchObject({ inserted: 2, superseded: 0 });
-    expect(await storedRequirements()).toHaveLength(4);
+    expect(report).toMatchObject({ inserted: 3, superseded: 0 });
+    expect(await storedRequirements()).toHaveLength(6);
   });
 
   it('leaves no gap and no overlap between consecutive years', async () => {
@@ -268,8 +287,8 @@ describe('a rejected plan', () => {
 
     const report = await executePlan(db, planIngest(source, broken, [], () => uuidv7()));
 
-    expect(report.rejected).toBe(2);
-    expect(report.rejectedIds).toHaveLength(2);
+    expect(report.rejected).toBe(3);
+    expect(report.rejectedIds).toHaveLength(3);
     expect(await storedRequirements()).toEqual([]);
   });
 });
@@ -281,7 +300,7 @@ describe('dry run', () => {
 
     const report = await executePlan(db, plan, { dryRun: true });
 
-    expect(report.inserted).toBe(2);
+    expect(report.inserted).toBe(3);
     expect(await storedRequirements()).toEqual([]);
   });
 });

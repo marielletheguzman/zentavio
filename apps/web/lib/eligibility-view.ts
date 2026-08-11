@@ -16,7 +16,11 @@
  *    is unverifiable, and one with no disclaimer is advice.
  */
 
-import type { EligibilityResponseWire, EvaluatedRequirementWire } from '@zentavio/types';
+import type {
+  EligibilityResponseWire,
+  EvaluatedRequirementWire,
+  RouteOutcomeWire,
+} from '@zentavio/types';
 
 export interface AnswerableQuestion {
   /** The catalogue key to POST back. */
@@ -43,6 +47,37 @@ export interface RequirementView {
   readonly effectiveFrom: string;
 }
 
+/**
+ * One way into the pathway, kept as its own thing on the screen (ADR-0024).
+ *
+ * A pathway with routes is not a flat list of rules, and flattening it loses the two sentences the
+ * model exists to separate: *this way in is not open to you* and *this rule is not satisfied*. A
+ * degree holder was never on Germany's experience route, so the rules on it must read as belonging
+ * to a route that is not theirs rather than as things they failed.
+ */
+export interface RouteView {
+  /**
+   * The route's id, verbatim.
+   *
+   * **Deliberately not translated into a description here.** A route id is opaque data; deciding
+   * that `abs1-s2` means "the reduced salary threshold" would put a reading of German law in a
+   * React file, which is exactly what ADR-0024 rule 8 keeps out of the evaluator. When routes need
+   * human names, the name comes from the pathway record with the rest of the sourced knowledge.
+   */
+  readonly route: string;
+  readonly status: 'met' | 'not_met' | 'undetermined' | 'not_applicable';
+  /** What the screen says about the route. Never a bare status word. */
+  readonly label: string;
+  /** Why it is closed, when it is closed. Null whenever it is open. */
+  readonly detail: string | null;
+  /** The rules evaluated as part of this route, pathway-wide ones included. */
+  readonly requirementIds: readonly string[];
+  /** What answering would move *this* route, whether or not it is the one being asked about. */
+  readonly questions: readonly AnswerableQuestion[];
+  /** The route the verdict above is about — the met one, else the nearest open one. */
+  readonly used: boolean;
+}
+
 export type EligibilityViewState =
   | { readonly kind: 'idle' }
   | { readonly kind: 'loading' }
@@ -54,6 +89,16 @@ export type EligibilityViewState =
       readonly explanation: string;
       readonly status: 'met' | 'not_met' | 'undetermined' | 'unknown';
       readonly requirements: readonly RequirementView[];
+      /**
+       * Every way in, or empty for a pathway whose rules declare none.
+       *
+       * Empty is the normal case and renders nothing: a pathway with one implicit way in has no
+       * route structure to show, and inventing a "default route" heading for it would be the
+       * screen asserting a model the data does not have.
+       */
+      readonly routes: readonly RouteView[];
+      /** The route the verdict is about. Null when the pathway declares none. */
+      readonly usedRoute: string | null;
       /** Present only when `undetermined`. What the user can answer to resolve it. */
       readonly questions: readonly AnswerableQuestion[];
       readonly blockers: readonly string[];
@@ -92,6 +137,42 @@ function toRequirementView(requirement: EvaluatedRequirementWire): RequirementVi
     authority: requirement.authority,
     sourceUrl: requirement.source_url,
     effectiveFrom: requirement.effective_from,
+  };
+}
+
+function routeLabel(status: RouteOutcomeWire['status']): string {
+  switch (status) {
+    case 'met':
+      return 'Open to you';
+    case 'not_met':
+      // The route exists for this person; something on it is not satisfied. Different sentence
+      // from the one below, and the difference is the whole reason routes are rendered.
+      return 'Open to you, but a rule on it is not met';
+    case 'not_applicable':
+      // Never "failed" and never "closed to you" — nothing here is a judgement about the person.
+      // They were not on this way in, which is a fact about the rules.
+      return 'Not a way in for you';
+    default:
+      return 'Still open — something is unanswered';
+  }
+}
+
+function toRouteView(
+  outcome: RouteOutcomeWire,
+  usedRoute: string | null,
+  prompts: PromptLookup,
+): RouteView {
+  return {
+    route: outcome.route,
+    status: outcome.status,
+    label: routeLabel(outcome.status),
+    detail: outcome.reason ?? null,
+    requirementIds: outcome.requirement_ids,
+    // Carried for every open route, not only the one being asked about. The product leads with the
+    // shortest set of questions (ADR-0024 rule 5); it does not get to hide that another way in
+    // exists and has its own.
+    questions: outcome.needs_from_user.map((key) => ({ key, prompt: prompts[key] ?? key })),
+    used: outcome.route === usedRoute,
   };
 }
 
@@ -143,6 +224,10 @@ export function toEligibilityView(
     explanation,
     status: verdict.status,
     requirements: verdict.requirements.map(toRequirementView),
+    routes: (verdict.routes ?? []).map((outcome) =>
+      toRouteView(outcome, verdict.route ?? null, prompts),
+    ),
+    usedRoute: verdict.route ?? null,
     // Only `undetermined` produces questions. A `not_met` verdict is not resolved by answering
     // something — offering a question there would imply the answer could change the outcome.
     questions:
