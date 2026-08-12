@@ -462,6 +462,182 @@ thead th {
   font-weight: var(--weight-medium);
 }
 
+/* ── the comparison: grouped, never ranked ──────────────────────────────── */
+
+/*
+ * The ordering note sits above the groups and is styled to be read, not skipped.
+ *
+ * It is the one sentence keeping an arbitrary order honest, and small print at the foot of the page
+ * arrives after the reader has already assumed the first row is the best one.
+ */
+.ordering-note {
+  border-left: 3px solid var(--border-strong);
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  margin-top: var(--space-6);
+  max-width: 44rem;
+  padding-left: var(--space-4);
+}
+
+.destinations {
+  display: grid;
+  gap: var(--space-4);
+  /*
+   * Equal columns, and that is deliberate. A wider or heavier card is a ranking expressed in
+   * pixels — within a group nothing is ordered, so nothing is emphasised either.
+   */
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  margin-top: var(--space-4);
+}
+
+.destination {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+/*
+ * `REMOTE` is marked as a different kind of thing, never as a better one (ADR-0028).
+ *
+ * A dashed edge says "not the same category" where the accent border would have said "this is the
+ * one" — and the card also says it in a sentence, because a border style is invisible to a screen
+ * reader and this is the misreading the whole decision exists to prevent.
+ */
+.destination-remote {
+  border-style: var(--shape-uncertain);
+  border-color: var(--border-strong);
+}
+
+/* `.card h4` adds top margin for headings that open a new block. This one opens the card. */
+.destination > h4:first-child {
+  margin-top: 0;
+}
+
+.destination-name {
+  color: var(--fg);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.destination-code {
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.destination-kind {
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  margin-top: var(--space-2);
+}
+
+.cells {
+  display: grid;
+  gap: var(--space-2);
+  list-style: none;
+  margin-top: var(--space-4);
+  padding: 0;
+}
+
+/*
+ * A cell, and the four shapes its states take.
+ *
+ * Every state differs from every other in **border style as well as colour**, and each carries its
+ * label and its attribution in words. `unmodelled` and `not_applicable` are the pair this exists
+ * for: both are grey, and they mean opposite things.
+ */
+.cell {
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+}
+
+.cell-met {
+  border-left-color: var(--positive);
+}
+
+.cell-not_met {
+  border-left-color: var(--negative);
+}
+
+/* Unanswered: dashed, as everywhere else in this app. Not a paler version of a decided rule. */
+.cell-undetermined {
+  border-left-color: var(--caution);
+  border-left-style: var(--shape-uncertain);
+}
+
+/*
+ * Our gap. Dotted on every edge, because it is a statement about Zentavio rather than about the
+ * destination — the card itself is what is incomplete, not the place it describes.
+ */
+.cell-unmodelled {
+  border-color: var(--border-strong);
+  border-style: dotted;
+}
+
+/*
+ * The destination's own nature. **No accent edge at all** — nothing here is missing, so nothing is
+ * marked. Deliberately not the dotted treatment above: that one says we owe you data, and this one
+ * says there is none to owe.
+ */
+.cell-not_applicable {
+  border-left-color: var(--border);
+  border-left-width: 1px;
+  color: var(--fg-muted);
+}
+
+.cell-heading {
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cell-label {
+  font-weight: var(--weight-semibold);
+}
+
+/* Whose statement the cell is. The words that survive when colour and shape do not. */
+.cell-attribution {
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  margin-top: var(--space-1);
+}
+
+.cell-detail {
+  margin-top: var(--space-2);
+}
+
+.cell-source {
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  margin-top: var(--space-2);
+}
+
+/*
+ * The cap (ADR-0027). Bordered like a claim rather than a footnote: a capped pathway is a fact
+ * about the destination that outlives any verdict about the person.
+ */
+.quota {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+}
+
+.quota-headline {
+  font-weight: var(--weight-semibold);
+}
+
+.quota-places {
+  font-variant-numeric: tabular-nums;
+  margin-top: var(--space-1);
+}
+
 /* ── asking for what is missing ─────────────────────────────────────────── */
 
 .question {

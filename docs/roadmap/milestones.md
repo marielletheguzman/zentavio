@@ -322,15 +322,25 @@ What each one is, and the reasoning worth keeping:
 
 ### Verification limitations
 
-**Two surfaces merged without a browser check**, and neither is claimed as browser-verified: the
-`/eligibility` typed-control surface (PR #90) and `/applications` (PR #91). The browser extension
-was unavailable for the rest of that session and did not reconnect across a restart. Their logic is
-pure and unit-tested, and the write path behind #90 was exercised over HTTP.
+**Two surfaces merged without a browser check** — the `/eligibility` typed-control surface (PR #90)
+and `/applications` (PR #91) — because the browser extension was unavailable for the rest of that
+session and did not reconnect across a restart.
 
-These are **verification limitations, not outstanding milestone requirements**. Recorded because
+**Both were loaded on 2026-08-12, and most of that gap is now closed.** `/eligibility` renders a real
+verdict against the real evaluator; its integer question renders as a number control with its
+rationale, and answering it moved the verdict from *"we cannot finish until you supply
+`years_since_degree_awarded`"* to a named unmet requirement — the loop M2 is verified by, exercised
+in a browser rather than over HTTP. `/applications` loads, hydrates, fetches `GET /v1/applications`
+cross-origin and renders its empty state.
+
+**What is still owed is narrower than "these pages are unverified":** a **boolean** control (none is
+open for the seeded user until its fact is deleted, so the control PR #90 exists for has still not
+been seen rendered) and the `/applications` **submit**. Both are in M4's evidence gate below, blocked
+on the same extension input failure rather than on anything in the code.
+
+These remain **verification limitations, not outstanding milestone requirements**. Recorded because
 this repository has been caught by exactly this gap before — the gateway shipped with no CORS at all
-through the whole of M1c while every server-side check passed — so the next session should load both
-pages rather than assume them.
+through the whole of M1c while every server-side check passed.
 
 **Outcome data is recorded and not yet read**, and that is deliberate rather than unfinished.
 ADR-0019: a calibration reader with zero rows can only answer "not enough data yet", so
@@ -472,10 +482,25 @@ computed from two instruments neither of which states that number.
 
 ## M4 — Four destinations, honestly compared
 
+**Status: Met** (2026-08-12), **subject to the evidence gate below** — one post-fix
+re-verification is owed and is recorded rather than assumed.
+
 *Phase 2 complete.* DE, LU, NZ, CH, plus `REMOTE`, side by side.
 
 **Comparison semantics are decided** — ADR-0026, Accepted 2026-08-11: destinations are compared,
-grouped by binding constraint, and **never ranked by a score**. The surface is gated on data.
+grouped by binding constraint, and **never ranked by a score**.
+
+**Verified by:** a user sees one market marked `unknown` on salary while another is complete, and
+the comparison is still usable — partial coverage rendered as a designed state rather than a blank.
+
+**That verification passed in a browser on 2026-08-12**, against the real gateway and the real
+evaluator with all four countries' rules ingested. `/compare` rendered five destinations in two
+groups: Luxembourg and `REMOTE` under *"You qualify — the distance is to the work itself"*,
+Switzerland, Germany and New Zealand under *"The rules are what stand in the way"*. Switzerland
+rendered `undetermined` with the questions that would move it, `REMOTE` rendered four dimensions
+nobody has sourced beside an eligibility cell that **does not apply**, and the page stayed usable
+with both on screen. That is the milestone's test: incomplete knowledge appeared as a designed
+state and never as a mark against a destination.
 
 ### New Zealand cost less than Luxembourg, and that is the point
 
@@ -522,8 +547,117 @@ declared arbitrary **on the wire**; no `score`, `rank`, `position`, `weight` or 
 any depth; a group nobody is in is omitted rather than rendered empty; and the quota sits beside the
 cells with no state, because no state is true of a capacity limit (ADR-0027).
 
-**Still to build: the surface.** The shape, the composition and the verification exist; nothing
-renders them yet.
+### The surface, built 2026-08-12
+
+`apps/web/app/compare` renders it. The decisions live in `apps/web/lib/comparison-view.ts`, which is
+pure and tested; the component is markup and one fetch.
+
+**Destinations are cards, not rows of one table**, and that is a correctness choice rather than a
+layout preference. A table needs a column per dimension, and `REMOTE` declares four that no country
+has — so every country would carry four empty cells, which is exactly the "empty means nothing"
+reading ADR-0026 forbids. Columns are equal width for the same reason: a wider card is a ranking
+expressed in pixels.
+
+**Nothing on the page ranks.** No score, no position, no ordered list — a numbered list is a ranking
+whatever the caption says. The wire's `orderingNote` is printed **above** the groups rather than in
+small print beneath them, because by the time a reader reaches the bottom they have already assumed
+the first row is the best one.
+
+**The five states are distinguished three ways at once** — border style, label, and a sentence naming
+whose statement the cell is. Measured in the browser rather than eyeballed:
+
+| State | Border | Label | A statement about |
+|---|---|---|---|
+| `met` / `not_met` | solid, positive / negative | Met / Not met | **you** |
+| `undetermined` | dashed, caution | Not answered yet | **the question** |
+| `unmodelled` | **dotted on every edge** | We have not sourced this | **Zentavio** |
+| `not_applicable` | no accent edge at all, muted | Does not apply here | **the destination** |
+
+`unmodelled` and `not_applicable` differ in every rendered field, because they are both grey and mean
+opposite things.
+
+**`REMOTE` carries its non-recommendation sentence on every render**, not only when the row happens
+to look complete, and it is marked with a dashed frame — *a different kind of thing*, never the
+accent border that would read as *the best one*. ADR-0028 predicted it would usually be the row with
+the fewest unresolved questions; it was, and the card says so in words.
+
+**A quota with no figure renders as capped-and-unsourced.** Switzerland's cap has no number — the
+annex is on a host whose `robots.txt` refuses the document — and the surface says that rather than
+implying the pathway is open. New Zealand carries no quota at all and renders **no quota block**,
+because an absent block is weaker than a sourced claim of "uncapped" and must not be upgraded into
+one.
+
+### What the real stack proved that the stub could not
+
+The surface was first exercised against a throwaway stub gateway, then against the real one. Both
+were used, and they are not interchangeable evidence:
+
+| Established by the stub | Established only by the real stack |
+|---|---|
+| every cell state on one screen, including a numeric quota | CORS from the browser to the gateway |
+| the five-state rendering and its measurements | grouping computed by `ai/career-roadmap` rather than hand-written |
+| responsive layout at 356 px with no horizontal overflow | the 503 path from a genuinely dead evaluator, and recovery |
+| | Switzerland's real quota reason and real `needs_from_user` question ids |
+| | the evaluator's own disclaimer, emitted verbatim |
+
+**A passing stub is evidence about a surface, never about wiring.** This repository has been caught
+by the difference before: the gateway shipped with no CORS at all through the whole of M1c while
+every server-side check passed.
+
+**A destination that cannot be evaluated fails the whole comparison.** Killing the evaluator produced
+the 503 card with **zero destination rows** — deliberately, because there is no cell state meaning
+"we could not ask", and a quietly degraded row would turn a transport failure into a claim about a
+country.
+
+### The defect a browser found, again
+
+**`<input type="date">` emits five-digit years.** Typing into the year segment in Chrome produces
+`12025-08-12` — a legitimate value for the control, and not a date the gateway accepts. Both
+`/compare` and `/eligibility` rendered the resulting 400 as *"Something went wrong on our side. This
+is not a problem with your details."*, which is the right sentence for a 4xx we caused and a false
+one here: the input is the cause, and a person told their own typing is our fault has nothing to do
+next.
+
+`apps/web/lib/as-of.ts` is the single guard, used by both surfaces. It is deliberately **not** a
+second calendar implementation — the control cannot emit `2026-02-31`, the gateway parses the date
+and is authoritative, and a second implementation would be a second thing to keep correct.
+
+Reproduced in a browser on `/eligibility` **before** the fix. Its post-fix re-verification is the
+one owed observation below.
+
+### Evidence gate — three browser observations owed
+
+**Not defects, and not inferred as passing.** The browser extension's keyboard and mouse dispatch
+stopped reaching the page mid-session while screenshots and script evaluation continued to work; a
+capture listener on `document` recorded zero events across a Chrome restart, an extension reattach,
+three tabs and both windows. Recorded here rather than waved through, because inferring these from
+implementation review is exactly the habit this section exists to prevent.
+
+| # | Observation | Result |
+|---|---|---|
+| 1 | `/eligibility` refuses a five-digit year with the guard's sentence and no retry button | _pending_ |
+| 2 | the recognised-degree question renders as a select, and answering **No** never reads as `met` | _pending_ |
+| 3 | `/applications` records a title and shows the readiness prediction stored with it | _pending_ |
+
+Observations 2 and 3 are **M2's carried-over verification limitations**, not new M4 work; observation
+1 is this milestone's own.
+
+**These rows ship open, deliberately.** The change is merged with the gate visible rather than held
+until a browser cooperates: everything the table claims is already true, and the three cells say
+exactly what has not been seen rather than implying it has. They are closed by loading the pages —
+in review, or in the first session where extension input works — and each cell is replaced by what
+was observed, not by the word "passed".
+
+### Two evidence boundaries that must not be overstated
+
+- **A numeric quota has only ever rendered against the stub.** No ingested pathway carries a figure,
+  so the number-formatting path has no real-stack evidence. Switzerland's `null` and New Zealand's
+  absent quota both do.
+- **Switzerland's archived original in the dev database is a synthetic stand-in.** Its fixture ships
+  no PDF bytes on purpose — the published directive carries SEM office addresses that the fixture
+  privacy guard refuses, and the connector never parses a PDF anyway — so its own tests synthesise
+  bytes and so did the dev ingest. It is evidence that the archival path runs; it is **not** evidence
+  that a real Swiss PDF archives.
 
 ---
 

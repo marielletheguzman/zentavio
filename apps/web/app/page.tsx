@@ -38,6 +38,7 @@ export default function Home() {
       <nav className="next-action">
         <a href="/gap">See how far you are from a track</a>
         <a href="/eligibility">Check whether you could work in Germany</a>
+        <a href="/compare">Compare every destination at once</a>
       </nav>
     </main>
   );
