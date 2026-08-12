@@ -14,7 +14,7 @@ Every feature answers a user question. A feature that answers none is not a Zent
 | [learning-paths](learning-paths.md) | What should I learn, in what order, how long? | specified |
 | [job-matching](job-matching.md) | Which of these jobs is worth my time? | specified |
 | [migration-friendly-jobs](migration-friendly-jobs.md) | Which jobs can I actually take, and will the employer help? | specified |
-| [country-preferences](country-preferences.md) | Where should I go? | specified |
+| [country-preferences](country-preferences.md) | Where should I go? | **partial** |
 | [immigration-tracking](immigration-tracking.md) | Am I eligible to work there? | **partial** |
 | [interview-prep](interview-prep.md) | What will they ask, and am I ready? | specified |
 | [job-aggregation](job-aggregation.md) | Are these openings real and current? | specified |
@@ -30,7 +30,7 @@ Every feature answers a user question. A feature that answers none is not a Zent
 | **built** | implemented, tested, and matching this document |
 | **deferred** | intentionally not being built yet, with the reason recorded |
 
-**Two are `partial`; the rest are `specified`.** This block said "everything is specified, there is
+**Four are `partial`; the rest are `specified`.** This block said "everything is specified, there is
 no application code yet" for several milestones after that stopped being true, which is the failure
 the legend exists to prevent — a catalog nobody trusts is worse than no catalog.
 
@@ -55,9 +55,26 @@ visa-eligible and unemployable at the threshold salary is caught rather than rep
 opportunity (`docs/architecture/immigration.md`). **§ 18g is modelled** as three routes (ADR-0024) —
 the qualification, both gates on the reduced-threshold route, and the Abs. 2 experience route.
 
-Still missing: § 19f's rejection grounds and the Bundesagentur's consent, every other jurisdiction,
-all recognition/credential/authentication/language rules, and outcome recording (ADR-0019).
-Source documents **are** archived (ADR-0021, enforced); only the production bucket is unprovisioned.
+**Four jurisdictions are now ingested**, not one: `de.eu-blue-card`, `lu.eu-blue-card`, `nz.aewv`
+and `ch.third-country-worker`, each through its own connector from that country's operative layer.
+**Outcome recording is built** (ADR-0019) and deliberately not read yet.
+
+Still missing: § 19f's rejection grounds and the Bundesagentur's consent, every jurisdiction beyond
+those four, and all recognition/credential/authentication/language rules. Source documents **are**
+archived (ADR-0021, enforced); only the production bucket is unprovisioned.
+
+**`country-preferences` — partial.** Built: the destination comparison itself (`/compare`,
+ADR-0026) — four countries and `REMOTE` grouped by binding constraint, per-dimension states that
+keep *"we have not sourced this"* and *"this does not apply"* apart, quotas as a property of the
+pathway (ADR-0027), and an ordering that is alphabetical and **says so**. Not built: stated user
+priorities and the weighted ranking they would license, cost of living, tax, language requirements,
+and every other dimension `country-preferences.md` describes — each of which is `unmodelled` on the
+surface today, named rather than guessed.
+
+**A global composite score is rejected, not deferred** (ADR-0026): it would rank a destination
+lower for having a rule nobody has ingested, which measures our coverage and presents it as the
+world. User-weighted ranking is the deferred half — the only honest route to a total order, and
+nobody has stated priorities yet.
 
 ## The chain
 

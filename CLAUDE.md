@@ -6,7 +6,8 @@ viability — using structured knowledge rather than keyword matching.
 
 ## Current state
 
-**M1, M2 and M3 are complete** (M2 and M3 both met 2026-08-11, `docs/roadmap/milestones.md`).
+**M1, M2, M3 and M4 are complete** (M2 and M3 met 2026-08-11, M4 on 2026-08-12 subject to the
+evidence gate in `docs/roadmap/milestones.md`).
 
 M1: a résumé uploads, becomes a versioned profile with a verbatim source span on every claim, is
 correctable, and can be compared against a career track to produce a dependency-ordered gap and a
@@ -32,9 +33,15 @@ unprovisioned, and archival is enforced against MinIO only. Coverage is also eve
 *ingested*, not all of § 18g — § 19f's rejection grounds and the Bundesagentur's consent stay
 unmodelled on purpose, and the connector's README says why.
 
-**Two surfaces have never been loaded in a browser:** `/eligibility`'s typed controls and
-`/applications`. Unit-tested only. Recorded as a verification limitation in `milestones.md`, not as
-unfinished work — but load them before building on them.
+M4: four countries and `REMOTE` are compared side by side at `/compare` — grouped by binding
+constraint, **never ranked**, with `unmodelled`, `undetermined` and `not_applicable` kept visibly
+distinct — browser-verified against the real gateway and evaluator on 2026-08-12.
+
+**Three browser observations are still owed**, listed with their reasons in `milestones.md`'s M4
+evidence gate: the five-digit-year guard on `/eligibility` after its fix, a boolean person-fact
+control, and the `/applications` submit. The last two are M2's carried-over limitations. Do not
+record them as passing without loading the page — this repository shipped M1c with no CORS at all
+while every server-side check passed.
 
 **M3's result, and the rule it sets for future work.** Luxembourg's rules were absorbed with
 **zero changes to `ai/`, `apps/` and `services/api-gateway`** — the evaluator took a second
@@ -50,16 +57,17 @@ countries/`). One pathway sourced end to end; labour market, compensation, cost 
 culture all marked `unknown` and unsourced, because a plausible guess in those sections is the
 most harmful and least detectable thing this repository could contain.
 
-14 tables. **1 262 tests — 567 unit, 286 integration, 409 pytest** (measured 2026-08-11 by running
-all three suites, integration included, against local PostgreSQL and MinIO — not estimated). CI
-blocking on `main`.
+14 tables. **1 374 tests — 678 unit, 287 integration, 409 pytest** (measured 2026-08-12 by running
+all three suites, integration included, against local PostgreSQL and MinIO — not estimated). The
+integration suite needs `ZENTAVIO_TEST_DATABASE_URL` pointing at a database whose name ends `_test`;
+it is dropped and rebuilt, so it never touches the dev database. CI blocking on `main`.
 
 | Built | Still a placeholder |
 |---|---|
 | `packages/db`, `config`, `types`, `auth`, `storage`; `ui` — design tokens only | `logger`, `events`, `i18n`; `ui`'s component primitives, unblocked by ADR-0023 (Accepted) but not yet installed |
 | `services/api-gateway`, `services/ingestion` — requirement ingest only | `matching`, `notifications`, `billing`; ingestion's job-listing and scheduling half |
 | `ai/resume-parser`, `ai/skill-gap`, `ai/shared`, `ai/career-roadmap` — eligibility, routes, viability | `embeddings`, `interview-prep`, `learning-paths` |
-| `apps/web` — upload, gap, eligibility with its routes | `apps/admin`, `apps/mobile` |
+| `apps/web` — upload, gap, eligibility with its routes, applications, the comparison | `apps/admin`, `apps/mobile` |
 | `connectors/core`, `connectors/immigration-data/` — `de-bundesanzeiger`, `de-aufenthg`, `lu-legilux` | every other connector, all of `knowledge-engine/` |
 | the seeded skill graph — in `packages/db/seeds/` and four tables, **not** `knowledge-engine/` (ADR-0020) | |
 

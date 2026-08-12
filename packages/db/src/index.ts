@@ -122,6 +122,8 @@ export {
   type RecordFactOptions,
 } from './repositories/person-facts.ts';
 
+export { activePathways, type PathwayRow } from './repositories/pathways.ts';
+
 export {
   DocumentConflictError,
   attachDocument,

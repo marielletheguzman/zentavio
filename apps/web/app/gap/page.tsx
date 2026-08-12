@@ -36,6 +36,7 @@ export default function GapPage() {
           becomes the obvious thing to ask. */}
       <nav className="next-action">
         <a href="/eligibility">Check whether you could work in Germany</a>
+        <a href="/compare">Compare every destination at once</a>
       </nav>
     </main>
   );

@@ -18,6 +18,7 @@
 import type { PersonFactKindWire } from '@zentavio/types';
 import { useCallback, useEffect, useId, useState } from 'react';
 
+import { asOfProblem } from '../../lib/as-of.ts';
 import {
   toFactValue,
   toViabilityView,
@@ -161,6 +162,15 @@ export function EligibilityPanel({
   }, [gatewayUrl, devUserId]);
 
   const evaluate = useCallback(async function evaluate(date: string) {
+    // A date control can hand back a five-digit year (`12025-08-12`). The gateway refuses it with
+    // a 400, and the 400 branch below says "something went wrong on our side" — true of a 4xx we
+    // caused, false of a date somebody typed. Browser-confirmed on this page on 2026-08-12.
+    const problem = asOfProblem(date);
+    if (problem !== null) {
+      setState({ kind: 'error', message: problem, retryable: false });
+      return;
+    }
+
     setState({ kind: 'loading' });
     setNote(null);
     try {

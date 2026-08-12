@@ -29,6 +29,8 @@ import { EligibilityService } from './eligibility/eligibility.service.ts';
 import { GapClient } from './gap/gap-client.ts';
 import { GapController } from './gap/gap.controller.ts';
 import { GapService } from './gap/gap.service.ts';
+import { ComparisonController } from './comparison/comparison.controller.ts';
+import { ComparisonService } from './comparison/comparison.service.ts';
 import { ApplicationsController } from './applications/applications.controller.ts';
 import { ApplicationsService } from './applications/applications.service.ts';
 import { HealthController } from './health/health.controller.ts';
@@ -42,6 +44,7 @@ import { DATABASE, ELIGIBILITY_CLIENT, GAP_CLIENT, PARSER_CLIENT, SUBJECT_RESOLV
     ResumeController,
     GapController,
     EligibilityController,
+    ComparisonController,
     ApplicationsController,
     HealthController,
   ],
@@ -73,6 +76,9 @@ import { DATABASE, ELIGIBILITY_CLIENT, GAP_CLIENT, PARSER_CLIENT, SUBJECT_RESOLV
         new EligibilityClient({ baseUrl: load(parserSchema).careerRoadmapUrl }),
     },
     EligibilityService,
+    // Depends on both by class: one date, one readiness, one evaluator run across every
+    // destination (ADR-0026).
+    ComparisonService,
     // Depends on `GapService` by class, like `EligibilityService`: the prediction stored with an
     // application is the readiness score computed by the same code that shows it (ADR-0019).
     ApplicationsService,

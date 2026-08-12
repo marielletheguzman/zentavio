@@ -43,6 +43,7 @@ export default function EligibilityPage() {
       {/* Every page ends in a next action. When readiness is what binds, the gap is where you go. */}
       <nav className="next-action">
         <a href="/gap">See how far you are from the work itself</a>
+        <a href="/compare">See this beside every other destination</a>
       </nav>
     </main>
   );
