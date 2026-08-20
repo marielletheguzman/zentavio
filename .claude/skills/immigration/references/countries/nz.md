@@ -174,11 +174,65 @@ Read the instruction.
 
 ## Qualification recognition
 
-**`unknown` — no rule ingested.** *"Suitably qualified by training and experience"* (`WA4.10.5`) is
-an officer's assessment rather than a recognition rule, and New Zealand's regulated occupations are
-licensed by separate bodies not read here. Same open boundary as `de.md` and `lu.md`: `user.md`
-places recognition in the unbuilt `user_immigration_facts`, while a `credential`-domain requirement
-would read it as an ordinary input.
+**Sourced 2026-08-20 for software occupations. No rule ingested, and none is justified for them.**
+
+**New Zealand operates a genuinely origin-scoped qualification instrument — and software occupations
+do not trigger it.** Both halves matter, and the second is why nothing is ingested.
+
+**The instrument.** Appendix 13 (Green List, `09/03/2026`) states:
+
+> *"Overseas qualifications must be comparable to the standard of the New Zealand qualification
+> listed. Unless an overseas qualification is listed on the Immigration New Zealand List of
+> Qualifications Exempt from Assessment (Appendix 17), an International Qualification Assessment
+> (IQA) from the New Zealand Qualifications Authority stating the comparable NZQCF qualification is
+> required."*
+
+**The LQEA is organised by the country that awarded the qualification** — country names as headings,
+Argentina through Canada (Appendix 3, `29/09/2023`). **This is the first sourced instance of the
+shape ADR-0029 was written for**, and it is keyed to **where the qualification was awarded, not to
+nationality**: a New Zealander holding an unlisted foreign qualification needs the IQA too. ADR-0029
+chose `qualification_awarded_in` over nationality from reasoning; this is evidence for it.
+
+**Which body, and prerequisite or parallel.** NZQA issues the IQA; MBIE engages NZQA to compile the
+LQEA. It is a **prerequisite to the visa application**, not to the work.
+
+**Why software occupations do not reach it.** The Green List qualifications column is **empty** for
+`261311` Analyst Programmer, `261312` Developer Programmer, `261313` Software Engineer and `261314`
+Software Tester — confirmed twice against the same appendix under differently-worded reads. Read the
+conditional precisely: *"comparable to the standard of the New Zealand qualification **listed**"*.
+The obligation is parasitic on a qualification being listed for the occupation. **Nothing listed,
+nothing to be exempted from, machinery never engages.** Their conditions are remuneration and, on a
+contracting route, ten years' experience — immigration eligibility, the shape already modelled.
+
+**Even where the instrument applies it is not deterministic.** INZ: *"Even if your qualification is
+on the list of exemptions, Immigration New Zealand may still ask you to get an IQA when we process
+your application."* Any rule derived from it is **`evaluation: 'manual'`**, like `nz.aewv.market-rate`
+— never a computed verdict.
+
+**A representation problem to settle before any LQEA rule is ingested.** The LQEA is an **exemption**
+list, so the natural scope is *"applies to origins **not** on it"*. ADR-0029's `origin_jurisdiction`
+is an **inclusion** list where absence means broader applicability. Expressing the negative needs
+either every non-exempt country enumerated or a negation the ADR does not define. **Recorded here
+because this is where an implementer will meet it first.**
+
+**Not recorded, deliberately: the Green List remuneration figures.** Two reads of the same appendix
+returned **different** thresholds for overlapping ICT roles. They cannot both be right, so neither is
+written down. Read the appendix.
+
+**Also unresolved:** which LQEA version is in force today — the one read is dated `29/09/2023` and INZ
+news describes updates in March and June 2025 — and whether Appendix 3 and the Appendix 17 referenced
+by the Green List are two lists or one list under two instruction sets.
+
+**Still `unknown`:** *"Suitably qualified by training and experience"* (`WA4.10.5`) remains an
+officer's assessment rather than a recognition rule, and New Zealand's regulated occupations are
+licensed by separate bodies not read here. That software occupations carry no registration
+requirement is **inferred from its absence in the Green List entry**, not from reading a register.
+
+**The open boundary, unchanged and still shared with `de.md` and `lu.md`:** `user.md` places
+recognition in the unbuilt, separately-encrypted `user_immigration_facts`, while a
+`credential`-domain requirement would read it as an ordinary `person_facts` input. **Nothing above
+resolves it** — an LQEA-derived rule would be the first thing to force the choice, which is another
+reason not to ingest one before deciding.
 
 ## Labor market
 
