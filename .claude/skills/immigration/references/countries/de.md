@@ -147,18 +147,56 @@ No rule for this pathway is currently marked `contested`.
 
 ## Qualification recognition
 
-**`unknown` — no recognition rule is ingested for Germany.**
+**Sourced 2026-08-20 for IT and software occupations. Still `unknown` for regulated professions.**
+
+**For IT and software work there is no professional-recognition requirement, because the occupation
+is not regulated.** BIBB, which operates the federal recognition portal, states that *"recognition is
+not required for working in non-regulated professions"*, and the portal's profession finder returns
+an IT occupation as *"nicht reglementiert"*. **This is an answer, not a gap** — *"recognition does not
+apply to you"* is a better response to a software engineer than `unknown`, and it costs no rule to
+give.
+
+**Do not turn § 18g's degree condition into a recognition rule.** It is immigration eligibility.
+§ 18 Abs. 3 Nr. 2 AufenthG defines the term § 18g relies on, and its three limbs are disjunctive:
+
+> *"…einen **deutschen**, einen **anerkannten ausländischen** oder einen einem deutschen
+> Hochschulabschluss **vergleichbaren ausländischen** Hochschulabschluss besitzt (Fachkraft mit
+> akademischer Ausbildung)."*
+
+**Which body, and prerequisite or parallel.** Comparability is assessed by the **Zentralstelle für
+ausländisches Bildungswesen (ZAB)**, issuing a *Statement of Comparability* for the Länder under the
+Lisbon Recognition Convention. ZAB: *"When applying for a visa or an EU Blue Card, you have to show
+that your university degree is comparable to a German qualification. You can use a Statement of
+Comparability to do so."* It is a **prerequisite for the residence title and not for the work** — the
+same page states it *"does not … entitle its holder to … work in a regulated profession."*
+
+**Origin does not scope this rule.** The statute's split is `deutsch` versus `ausländisch`, a
+domestic/foreign binary — Germany does not publish per-origin-country variants. **The variation is in
+the answer, not in the rule**: one rule applies to everyone, and what differs is the outcome of
+assessing a particular institution and degree. Two Philippine applicants can be answered differently
+by it. Under ADR-0029 the correct representation is therefore **an absent scope key**, which already
+means "applies regardless of counterpart".
+
+**What must not be written from this section.** `anabin`'s **H+ / H+- / H-** institution ratings and
+the ZAB fee are described only by relocation firms, blogs and forums in everything read so far. They
+are **not sourced** and repetition is not evidence. `anabin.kmk.org` redirects cross-host and was not
+followed. `make-it-in-germany.com` stays off-limits — Radware bot protection, ruled out in M2.
+
+**The narrow real exception: "Ingenieur" is a protected title, regulated per Land.** The federal
+portal returns it as *reglementiert* in Berlin, Baden-Württemberg and Bayern, and a foreign engineer
+applies for *"a licence to hold or use the German professional title of 'Engineer'"*. **It gates the
+title, not the activity** — software work is done under other titles. If ever modelled: `recognition`
+domain, **subdivision-scoped**. No Landesingenieurgesetz has been read, so the state mechanism is
+inferred.
+
+**Still `unknown`, and deliberately:** every regulated profession — nursing, teaching, the licensed
+engineering activities. Until a profession's rules are ingested a **licence-gated profession returns
+`unknown` with recognition named** rather than a visa-only verdict that reads as an answer.
 
 What the model already accounts for: § 18g Abs. 1 S. 5 widens what *counts* as the qualification —
 an equivalent tertiary programme of at least three years at ISCED 2011 or EQF level 6. That widening
 lives in the qualification question's wording and its `domainDetail`, **not** as a separate rule,
 because it changes what the question means rather than adding a hurdle.
-
-What is missing is the assessment itself: which body evaluates a foreign degree, whether recognition
-is a prerequisite or a parallel process, and what a Philippine qualification is assessed against.
-Until that exists, a `credential`- or `recognition`-domain rule for Germany cannot be written, and a
-**licence-gated profession returns `unknown` with recognition named** rather than a visa-only verdict
-that reads as an answer.
 
 **The open modelling question, recorded here because it will be decided by whoever sources this:**
 `user.md` places qualification recognition in the unbuilt, separately-encrypted
