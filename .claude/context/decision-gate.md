@@ -49,7 +49,7 @@ entity document does not require the test runner. Writing a test does.
 
 | Decision | Blocks | Needs |
 |---|---|---|
-| Origin-side authorities per domain | any verdict for a regulated profession | **research, not a decision** — ADR-0010 is Accepted and the schema exists; no recognition rule is sourced |
+| Origin-side authorities per domain | any verdict for a regulated profession | **research, not a decision** — again, and this time it is true. ADR-0029 (Accepted 2026-08-20) settled the modelling half ADR-0010 left open: how a rule names the origin it is about. Sourcing each authority stays research |
 | Observability **backend** | dashboards and alert routing | follow-up ADR (ADR-0008 deferred it deliberately) |
 
 Where each is documented: `docs/architecture/immigration.md` (origin-side data) ·
