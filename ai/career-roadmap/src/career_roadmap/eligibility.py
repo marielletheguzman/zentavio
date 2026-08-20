@@ -98,6 +98,22 @@ class Requirement:
         value = self.applies_to.get("route")
         return value if isinstance(value, str) and value != "" else None
 
+    @property
+    def any_of(self) -> str | None:
+        """The any-of group this condition belongs to, or ``None`` (ADR-0024 rule 10).
+
+        Members of a group are **alternatives to each other**: the group is met when any one member
+        is met, and fails only when every member fails. Luxembourg's Art. 45 (2) f) is the case —
+        one qualification condition satisfiable by a diploma, by ICT experience, or by five years
+        in another profession. Those are not separate legal consequences, so they are not routes;
+        and failing all three is ``not_met`` rather than ``not_applicable``, so they are not gates.
+
+        Read exactly like ``route``: a non-string or empty value is treated as absent, because a
+        malformed ``applies_to`` must not make a pathway unevaluable.
+        """
+        value = self.applies_to.get("anyOf")
+        return value if isinstance(value, str) and value != "" else None
+
 
 @dataclass(frozen=True)
 class PersonFact:
@@ -508,6 +524,84 @@ def _as_not_applicable(result: EvaluatedRequirement, route: str | None) -> Evalu
 _Pairs = tuple[tuple[EvaluatedRequirement, Requirement], ...]
 
 
+def _collapse_any_of(pairs: _Pairs) -> tuple[EvaluatedRequirement, ...]:
+    """Replace each any-of group with the one result it contributes (ADR-0024 rule 10).
+
+    A group is **one condition** wherever conditions are aggregated, so it is collapsed before
+    anything counts `not_met`s. Members keep their own results in the response — the person is
+    still shown each alternative and how they did on it — but only this collapsed result decides.
+
+    ``met`` if any member is met; otherwise ``undetermined`` if any is undetermined, because an
+    unanswered alternative is never a failure; otherwise ``not_met``, and only when **every** member
+    failed.
+
+    ``not_applicable`` members are excluded first. A member that does not apply can neither satisfy
+    the condition nor fail it, and a group with nothing left is itself ``not_applicable`` rather
+    than ``not_met`` — the distinction ADR-0024 rule 3 draws, applied inside the group.
+
+    **The collapsed result carries the group id, never a member's.** Telling someone "you lack a
+    degree" when the requirement was *degree or experience* is the failure mode rule 10 exists to
+    prevent, so the blocker and the reason both name the group.
+    """
+    grouped: dict[str, list[EvaluatedRequirement]] = {}
+    out: list[EvaluatedRequirement] = []
+
+    for result, req in pairs:
+        group = req.any_of
+        if group is None:
+            out.append(result)
+        else:
+            grouped.setdefault(group, []).append(result)
+
+    # Sorted, for the same reason route ids are: one input, one ordering.
+    for group in sorted(grouped):
+        members = grouped[group]
+        live = [m for m in members if m.result != "not_applicable"]
+
+        if not live:
+            status: Result = "not_applicable"
+            reason = "no alternative applies: " + ", ".join(m.requirement_id for m in members)
+            needs: tuple[str, ...] = ()
+        elif any(m.result == "met" for m in live):
+            status = "met"
+            met = next(m for m in live if m.result == "met")
+            reason = f"satisfied by {met.requirement_id}"
+            needs = ()
+        elif any(m.result == "undetermined" for m in live):
+            status = "undetermined"
+            # Rule 5, one level down: ask for the shortest path first. The other open alternatives
+            # keep their own results in the response, so nothing is hidden by choosing one here.
+            nearest = min(
+                (m for m in live if m.result == "undetermined"),
+                key=lambda m: (len(m.needs_input), m.requirement_id),
+            )
+            reason = "not yet answered: " + ", ".join(
+                m.requirement_id for m in live if m.result == "undetermined"
+            )
+            needs = nearest.needs_input
+        else:
+            status = "not_met"
+            reason = "no alternative is met: " + ", ".join(m.requirement_id for m in live)
+            needs = ()
+
+        first = members[0]
+        out.append(
+            EvaluatedRequirement(
+                requirement_id=group,
+                domain=first.domain,
+                imposed_by=first.imposed_by,
+                result=status,
+                authority=first.authority,
+                source_url=first.source_url,
+                effective_from=first.effective_from,
+                reason=reason,
+                needs_input=needs,
+            )
+        )
+
+    return tuple(out)
+
+
 def _aggregate(pairs: _Pairs) -> tuple[Decided, tuple[str, ...], tuple[str, ...]]:
     """Aggregate one set of rules: the status, the blockers, and the inputs that would move it.
 
@@ -519,7 +613,7 @@ def _aggregate(pairs: _Pairs) -> tuple[Decided, tuple[str, ...], tuple[str, ...]
     unanswered one block would reject exactly the people the provision is generous to. Whether the
     right *opens* this route is decided by the caller, before this runs.
     """
-    deciding = tuple(result for result, req in pairs if req.kind != "right")
+    deciding = _collapse_any_of(tuple(pair for pair in pairs if pair[1].kind != "right"))
 
     # `undetermined` dominates: one unknown makes the whole thing undetermined even when everything
     # else is met. It never rounds toward the friendlier answer.
