@@ -677,9 +677,17 @@ them. They stay open, and a later session must not read the closed gate as cover
 **Verified by:** a Filipino nurse or engineer receives a verdict that names recognition as the binding
 constraint where it is, instead of the `unknown` that honesty currently requires.
 
-**Blocked on:** the origin-jurisdiction ADR. Until then this milestone cannot start, and the product
-cannot serve some of its largest user groups — which is why it is a named milestone rather than a backlog
-item.
+**Blocked on:** the origin-jurisdiction ADR — **written 2026-08-20 as ADR-0029, and Proposed rather than
+Accepted**, so the block stands until it is decided. Until then this milestone cannot start, and the
+product cannot serve some of its largest user groups — which is why it is a named milestone rather than a
+backlog item.
+
+**One finding from writing it belongs here, because it is not an M5 dependency.** ADR-0010's safety
+property — a licence-gated profession returns `unknown` rather than a visa-only verdict — is implemented
+in `ai/career-roadmap` and **unreachable in production**: no caller passes `licence_gated`, and the
+gateway retrieves requirements by pathway only, so no `recognition` row would reach the evaluator even if
+one were ingested. Every document claiming that guard protects someone today is wrong. Fixing the wiring
+needs no sourced data and no accepted ADR.
 
 ---
 

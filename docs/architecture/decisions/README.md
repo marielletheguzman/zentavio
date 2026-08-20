@@ -42,11 +42,19 @@ already ruled out and how the rule is enforced.
 | [0026](0026-destination-comparison.md) | Destinations are compared, grouped and explained — never ranked by a score | Accepted | 2026-08-11 |
 | [0027](0027-quota-semantics.md) | A quota is a property of the pathway, never a requirement a person can fail | Accepted | 2026-08-11 |
 | [0028](0028-remote-as-a-destination.md) | `REMOTE` compares on employability alone, and its eligibility is `not_applicable` rather than unknown | Accepted | 2026-08-11 |
+| [0029](0029-origin-scoped-requirements.md) | Origin scopes a requirement through `applies_to`, and an origin with no rule is `unmodelled` | **Proposed** | 2026-08-20 |
 
 **0010 is Accepted, and the rename is done** — `immigration_rules` is now `requirements`, with `domain`,
 `imposed_by`, and `authority`. Regulated professions remain blocked on **data**, not schema: nursing,
 engineering, and teaching return `unknown` until each profession's recognition rules are sourced and
 ingested.
+
+**0029 is the part of that 0010 did not settle, and it is Proposed rather than Accepted.** `jurisdiction`
+names who imposes a rule; nothing named who the rule is *about*, so a destination's recognition rules for
+an origin's qualifications could not be expressed. It also records a measured finding: ADR-0010's
+licence-gated `unknown` guard is implemented in the evaluator and **unreachable in production**, because
+no caller passes `licence_gated` and no non-`immigration` row is ever retrieved. M5 stays blocked until
+0029 is Accepted.
 
 **Accepted is not implemented — but less of it than this section used to claim.** As of 2026-07-31: Vitest
 and pytest are installed, the `promptVersion` check runs in CI, and ADR-0011 is fully discharged — branch
