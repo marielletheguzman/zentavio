@@ -37,11 +37,15 @@ M4: four countries and `REMOTE` are compared side by side at `/compare` — grou
 constraint, **never ranked**, with `unmodelled`, `undetermined` and `not_applicable` kept visibly
 distinct — browser-verified against the real gateway and evaluator on 2026-08-12.
 
-**Three browser observations are still owed**, listed with their reasons in `milestones.md`'s M4
-evidence gate: the five-digit-year guard on `/eligibility` after its fix, a boolean person-fact
-control, and the `/applications` submit. The last two are M2's carried-over limitations. Do not
-record them as passing without loading the page — this repository shipped M1c with no CORS at all
-while every server-side check passed.
+**M4's evidence gate closed on 2026-08-20.** All three owed browser observations were made against
+the real gateway, evaluator and database, and `milestones.md` records what was seen rather than the
+word "passed": the five-digit-year guard on `/eligibility` after its fix, the boolean person-fact
+control (a `Choose… / Yes / No` select storing JSON `false`), and the `/applications` submit. **Two
+evidence boundaries stay open** and the closure does not cover them — a numeric quota has only ever
+rendered against a stub, and Switzerland's archived original in the dev database is synthetic.
+
+Do not record an observation as passing without loading the page — this repository shipped M1c with
+no CORS at all while every server-side check passed.
 
 **M3's result, and the rule it sets for future work.** Luxembourg's rules were absorbed with
 **zero changes to `ai/`, `apps/` and `services/api-gateway`** — the evaluator took a second
