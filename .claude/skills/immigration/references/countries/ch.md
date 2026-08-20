@@ -144,10 +144,64 @@ and naturalisation is long, cantonal and outside Kapitel 4.
 
 ## Qualification recognition
 
-**`unknown` — no rule ingested.** Art. 23 AIG's *"Persönliche Voraussetzungen"* asks for managers,
-specialists and qualified workers, and § 4.3.5.3 makes a separate case for holders of **Swiss**
-tertiary qualifications — which implies a recognition question for foreign ones that this chapter
-does not answer.
+**Sourced 2026-08-20 for IT and software. No rule ingested, and none is justified yet.**
+
+**No recognition requirement arises for IT, because the occupation is not regulated — inferred, not
+proven.** Weisungen AIG Kap. 4 (Stand 30.06.2026) Ziff. 4.3.5.1 reserves recognition to regulated
+professions: *"Vorbehalten bleiben … allfällig erforderliche **Anerkennungen von ausländischen
+Bildungsabschlüssen** und Berufsausübungsbewilligungen in **reglementierten Berufen**."* Across all
+167 pages `reglementiert` appears **twice**, and the only occupation named is nursing.
+
+**SERI's authoritative *Liste der reglementierten Berufe* is unavailable: HTTP 502 on three retrieval
+attempts**, and neither SERI's overview page nor `anerkennung.swiss` states the rule in static text.
+**The 502 is not a fact.** The non-regulated conclusion rests on the SEM material above and is **not
+independently confirmed by SERI** — retry the list before anything is built on it.
+
+**Switzerland relaxes the IT bar rather than raising it.** Ziff. 4.3.5.1 names *"Technische und
+spezialisierte Berufe im Bereich der Informations- und Kommunikationstechnologie"* among shortage
+fields where admission is possible *"auch für Stellen, die nicht zwingend einen Hochschulabschluss …
+erfordern"*, on a Berufsbildungsabschluss **or** *"mehrjährige, in der Regel mind. 5-jährige
+Berufserfahrung"*. SEM revises that list periodically with SECO, so any ingested version needs a
+refresh window.
+
+### The origin-keyed provision, and why it is a route rather than an origin-scoped requirement
+
+**Ziff. 4.4.6, restating Art. 21 Abs. 3 AIG:** *"Ausländerinnen und Ausländer **mit Schweizer
+Hochschulabschluss** … können zur Ausübung einer Erwerbstätigkeit zugelassen werden, wenn diese von
+**hohem wissenschaftlichem oder wirtschaftlichem Interesse** ist."*
+
+**Its applicability is keyed to where the qualification was awarded, not to nationality** — everyone
+in scope is a foreign national. It **reaches IT**: the directive describes recruitment by
+*"Grossunternehmen, KMU sowie Jungunternehmen/Start-up"* for *"die Anwendung neuer Technologien"*.
+
+**But it is discretionary**, with Bundesverwaltungsgericht case law cited (C-3859/2014, C-674/2011)
+and a change-log entry recording an amendment made *"um das behördliche Ermessen besser
+aufzuzeigen"*. Any model of it is **`evaluation: 'manual'`**.
+
+**And it is structurally a derogation from Abs. 1 — an alternative way in for a distinguishable
+population, which this repository already calls a route (ADR-0024).** Luxembourg settles the point:
+its Art. 45 (2) f) i) is Germany's § 18g Abs. 2 verbatim, and Germany's is modelled as a route.
+**ADR-0024 owns the alternative-path semantics; ADR-0029's vocabulary describes the origin dimension
+of the entry condition.** Representing this as an origin-scoped requirement instead would put one
+legal distinction in two mechanisms.
+
+**A vocabulary trap worth naming.** Here the qualification's origin **is the destination**.
+`origin_jurisdiction: ['CH']` on a Swiss rule satisfies ADR-0029's invariant — the invariant forbids
+scoping by the side that *imposes* the rule, which would be `destination_jurisdiction` — but "origin
+= the destination country" reads as a contradiction to anyone taking *origin* to mean *where the
+person came from*. **The invariant holds; the wording invites error.**
+
+**A second, narrower origin-keyed deeming provision:** Ziff. 4.3.5.3 treats holders of a Swiss
+*höhere Berufsbildung* qualification as *"qualifiziert im Sinne von Artikel 23 AIG"* where the post
+is closely related to the studies. Its stated examples are hotel management and nursing; whether an
+HF Informatik engages it is **unknown**.
+
+**Art. 23's own standard is derived rather than tested:** Ziff. 4.3.5 says the required qualification
+*"kann bei der arbeitsmarktlichen Prüfung oft auch von der Funktion der ausländischen Arbeitskraft
+abgeleitet werden"*.
+
+**Still `unknown`:** every regulated profession, and the AIG article texts as enacted — Fedlex
+document bytes are `Disallow`ed, so everything above is quoted as **SEM restates it**.
 
 ## Labor market
 

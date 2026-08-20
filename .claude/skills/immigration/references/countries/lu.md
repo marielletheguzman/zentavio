@@ -175,11 +175,51 @@ None found in Art. 45–45-4. Not asserted as "no quota" — no source has been 
 
 ## Qualification recognition
 
-**`unknown` — no rule ingested.** Art. 45 (1) 2. splits the question in a way Germany's does not:
-for a **non-regulated** profession it asks for high professional qualifications; for a **regulated**
-one it asks whether the conditions for practising *that profession* are met. That is a recognition
-rule in the statute's own text, and modelling it needs the body that assesses it — which is not on
-this page.
+**Sourced 2026-08-20 from Art. 45 itself. No rule ingested for IT, and none is justified.**
+
+**Art. 45 (1) 2. splits the question in a way Germany's does not**, and the split is now quoted
+rather than characterised:
+
+> *"présente des documents attestant qu'il possède les **qualifications professionnelles élevées**
+> requises pour l'exercice de la **profession non réglementée** ou qu'il satisfait aux conditions
+> requises pour l'exercice de la **profession réglementée** indiquée dans le contrat de travail"*
+
+**The branch is keyed to the profession, not to origin.** Regulated and non-regulated are defined at
+(2) h) and i) by reference to the **loi modifiée du 28 octobre 2016** on the recognition of
+professional qualifications. **IT takes the non-regulated branch** — inferred from the statute's own
+structure, since (2) f) i) below presupposes ICT professionals qualifying on experience alone. The
+ministry's authoritative list was **not read**.
+
+**The degree definition defers to the institution's own state.** Art. 45 (2) e) requires a programme
+at an institution *"reconnu comme établissement d'enseignement supérieur ou équivalent **par l'État
+dans lequel il se situe**"*, of at least three years and at least level 6 of the Luxembourg
+qualifications framework. **This is Germany's shape**: one rule for everyone, whose answer depends on
+the institution. **The variation is in the answer, not in the rule**, so under ADR-0029 the correct
+representation is an **absent scope key**. Nothing here is origin-keyed.
+
+### Two derogation routes, and one of them is Germany's
+
+**Art. 45 (2) f) i)** — *"en ce qui concerne les professions de manager et de spécialiste des
+technologies de l'information et de la communication qui ont acquis **au moins trois ans
+d'expérience professionnelle pertinente au cours des sept années précédant la demande** …
+appartenant aux groupes «**133**» ou «**25**» de la classification **CITP-08**"*.
+
+**This is § 18g Abs. 2 AufenthG** — same groups, same three-in-seven window, both transposing
+Directive 2021/1883. Germany's is already modelled as a **route** (ADR-0024, `abs2`), and this is the
+precedent that settles how Switzerland's Art. 21 Abs. 3 should be read: **a derogation admitting a
+distinguishable population is a route.**
+
+**Art. 45 (2) f) ii)** — *"en ce qui concerne les autres professions : … une expérience
+professionnelle d'**au moins cinq ans** d'un niveau comparable à des diplômes de l'enseignement
+supérieur"*. **Luxembourg goes further than Germany here**, extending an experience route to every
+profession. Germany has no equivalent.
+
+**Neither is ingested.** `lu.eu-blue-card` currently carries the salary rules only, so a person
+qualifying under either route is not yet answered — a **coverage gap, not a modelling gap**.
+
+**Still `unknown`:** the regulated branch, which needs the assessing body and the 2016 law's own
+provisions. Those may well be origin-keyed for regulated professions under Directive 2005/36/EC —
+**not read, and not assumed.** It would not affect IT either way.
 
 This is the same open boundary recorded in `de.md`: `user.md` places recognition in the unbuilt,
 separately-encrypted `user_immigration_facts`, while a `credential`-domain requirement would read it
