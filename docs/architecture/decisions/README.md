@@ -49,6 +49,12 @@ already ruled out and how the rule is enforced.
 engineering, and teaching return `unknown` until each profession's recognition rules are sourced and
 ingested.
 
+**0024 carries a Proposed amendment as of 2026-08-20 — any-of conditions.** Luxembourg's Art. 45 (2) f)
+states one qualification condition satisfiable three ways, which are neither separate legal consequences
+(so not routes, rule 6) nor closed doors (so not gates, rule 3 — failing every alternative is `not_met`,
+never `not_applicable`). The amendment adds `applies_to.anyOf` and nothing else: no nesting, no negation.
+**Rules 1-9 are unchanged and the base decision stands.**
+
 **0029 is the part of that 0010 did not settle, Accepted 2026-08-20.** `jurisdiction` names who imposes
 a rule; nothing named who the rule is *about*, so a destination's recognition rules for an origin's
 qualifications could not be expressed. It also recorded a measured finding: ADR-0010's licence-gated

@@ -286,6 +286,130 @@ function, and the ADR should be amended rather than superseded.
 - **The gateway passes `applies_to` through unread.** It maps the column; it does not interpret it.
   A reviewer greps `services/api-gateway` for `route` and finds nothing that branches on one.
 
+## Amendment — 2026-08-20: any-of conditions
+
+- **Status:** Proposed
+- **Raised by:** Luxembourg's EU Blue Card, Art. 45 (2) f) of the loi du 29 août 2008
+
+**The decision above is unchanged.** Routes, gates and rules 1–9 all stand. This adds one mechanism
+they do not cover, and it is written before the implementation rather than discovered inside it.
+
+### What Luxembourg exposed
+
+Art. 45 (1) 2. requires *"les qualifications professionnelles élevées"*. Art. 45 (2) d) defines those
+as sanctioned **either** by a higher-education diploma **or** by *"compétences professionnelles
+élevées"*, and (2) f) defines those two ways:
+
+- **f) i)** ICT managers and specialists — CITP-08 groups `133` or `25` — with *"au moins trois ans
+  d'expérience professionnelle pertinente au cours des sept années précédant la demande"*;
+- **f) ii)** *"en ce qui concerne les autres professions"* — at least **five years**.
+
+**One condition. Three ways to satisfy it.** They are not separate legal consequences: same permit,
+same salary rule, same everything downstream. And Luxembourg's existing routes — `general` and
+`citp-1-2` — are **salary** routes, so the qualification limbs are orthogonal to them.
+
+### Why neither existing mechanism holds it
+
+**Not routes.** Rule 6 says *"a route is one legal consequence"*. Making each limb a route would need
+the cross-product — three limbs × two salary routes — duplicating the salary and qualification rules
+beneath all six and breaking the one-to-one relation between a route id and a legal outcome that
+rule 6 exists to protect. Rule 9 then makes that a **breaking data change** to undo.
+
+**Not gates.** Gates are the right disjunction and the wrong sentence. Rule 3: a route with no met
+gate is **`not_applicable`** — *"this way in is not open to you"*. A person holding no degree and no
+qualifying experience has not met a closed door. **They failed the qualification requirement, and
+that is `not_met`.** Telling them otherwise misdescribes their own case, which is the error class
+`docs/architecture/immigration.md` calls the most costly output this product produces.
+
+**Germany never surfaced this** because § 18g bundles qualification and threshold per Absatz, so its
+alternatives genuinely are separate legal consequences. Luxembourg carries the same EU directive
+article with a different statutory shape, and the shape is what the model has to hold.
+
+### The amendment
+
+**10. A condition may belong to an `any-of` group, and the group is satisfied by any one member.**
+
+```jsonc
+applies_to: { anyOf: 'qualification' }   // a stable group id, scoped to its pathway
+```
+
+- **Members are alternatives to each other, and the group is one condition** wherever conditions are
+  aggregated. Nothing else in rule 6's ALL-semantics changes: the group contributes one result.
+- **`met`** if any member is `met`. Otherwise **`undetermined`** if any member is `undetermined` —
+  an unanswered alternative is never a failure. Otherwise **`not_met`**, and only when *every*
+  member is `not_met`.
+- **`not_applicable` members are excluded from the group** before it is decided. A member that does
+  not apply can neither satisfy the condition nor fail it. A group whose every member is
+  `not_applicable` is itself `not_applicable`.
+- **`needs_from_user` comes from the nearest member** — the `undetermined` one needing fewest
+  additional inputs, ties broken by `DOMAIN_ORDER`. This is rule 5 applied one level down, and for
+  the same product reason: ask for the shortest path first, report the rest.
+- **The blocker names the group, not an arbitrary member.** A person who fails all three is not told
+  *"you lack a degree"* — they are told the qualification condition is unmet and by which means it
+  could have been met.
+- **Group ids obey rules 1, 8 and 9 unchanged**: a stable id scoped to its pathway, never prose,
+  never constructed in `ai/` or `services/`, and changing one is a breaking data change.
+- **A group may sit inside a route**, and a member may carry its own route or — under ADR-0029 — its
+  own origin scope. Group membership and route membership are independent scopes on the same row.
+
+**Choosing between a gate and an any-of group has one test, and it is the failure sentence.** If
+failing every alternative means *"this way in is not open to you"*, it is a gate. If it means
+*"you did not satisfy this requirement"*, it is an any-of group. Anything else — which reads more
+naturally, which is fewer rows — is not a reason.
+
+### Consequences
+
+**Accepted costs.**
+
+- **A second disjunction mechanism.** The real risk is not the code; it is a contributor picking the
+  wrong one. The failure-sentence test above is the mitigation, and it is stated as a rule rather
+  than as advice.
+- **The evaluator changes**, so this is not free and not additive-by-construction the way rule 2 was.
+  A groupless pathway must behave exactly as today — see Compliance.
+- **A one-member group must be indistinguishable from an ungrouped condition.** That identity is
+  what makes the mechanism safe to adopt gradually, and it is asserted rather than assumed.
+- **Luxembourg's salary rows will need re-scoping.** `lu.eu-blue-card.salary-threshold.general` and
+  `.reduced` currently sit on `general` / `citp-1-2`; once qualification is a group rather than a
+  route dimension, those routes mean *only* salary. **That is a change to stored `requirement_id`s'
+  `applies_to`, and it should happen once, in the implementing change.**
+
+**Follow-up work.**
+
+- `any-of` support in `evaluate_pathway`, with the aggregation above.
+- Validation that `applies_to.anyOf` is a non-empty string, alongside the existing route check.
+- Ingest Luxembourg's Art. 45 (2) f) limbs plus the degree limb as one group, and re-scope the salary
+  rows in the same change.
+- `lu.md`'s qualification section updated from *"researched, not ingested"* to what was built.
+
+**What acceptance does not approve.**
+
+- **No schema migration.** `applies_to` is jsonb and already carries `route`; this adds a key.
+- **Not a boolean expression language.** `any-of` only — **no nesting, no negation, no all-of
+  group.** A rule needing those is a new decision, not an extension of this one. ADR-0029's open
+  exemption-versus-inclusion question is precisely such a case and stays open.
+- **Not the Luxembourg content.** Which limbs become rows, and their values, is the implementing
+  change's evidence to present.
+
+**Reversal cost.** Low while one pathway uses it: delete the key and the group members become
+ordinary ALL-conditions, which changes verdicts — so reversal is a data change, not only a code one.
+The signal to reverse is a second mechanism arriving that subsumes it.
+
+### Compliance
+
+- **A one-member group is identical to no group.** Asserted directly: same verdict, same
+  `needs_from_user`, same blockers.
+- **A group is `not_met` only when every member is.** Asserted with a three-member group where one
+  member is `undetermined`, which must keep the group `undetermined`.
+- **`not_applicable` members are excluded**, and an all-`not_applicable` group is `not_applicable` —
+  never `not_met`. This is rule 3's distinction applied inside the group.
+- **A groupless pathway is unchanged.** The existing-behaviour test that rule 2 relies on extends to
+  cover groups, and must produce a byte-identical verdict.
+- **The blocker names the group.** Asserted, because naming one arbitrary member is the failure mode
+  that would make the output wrong in exactly the way this amendment exists to prevent.
+- **The evaluator stays jurisdiction-agnostic.** The existing AST test must keep passing: no group
+  id, no ISCO or CITP group, no article number in the source.
+- **The gateway passes `applies_to` through unread**, as it already does for `route`.
+
 ## Related
 
 - ADR-0010 — six domains, one table; `employment_clearance` is the domain the consent asymmetry needs
