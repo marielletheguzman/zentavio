@@ -239,3 +239,41 @@ export async function careerBySlug(
     .where('deleted_at', 'is', null)
     .executeTakeFirst();
 }
+
+export interface LicenceScope {
+  /** The profession the track is licensed as, or `null` when it is not licence-gated. */
+  readonly profession: string | null;
+  readonly licenceGated: boolean;
+}
+
+/**
+ * Whether the track a person is pursuing is licence-gated, and the profession it is gated by.
+ *
+ * **This exists because the guard that depends on it was unreachable.** `ai/career-roadmap` refuses
+ * to give a licence-gated profession a visa-only verdict — it returns `unknown` with recognition
+ * named (ADR-0010) — but the flag that triggers it was an optional argument no caller ever passed,
+ * so a nurse would have received the visa answer. Derived from the target rather than accepted as a
+ * parameter: an optional input that must never be omitted is the shape of the original defect.
+ *
+ * `undefined` when the person has no active target. That is not "not gated" — the caller has no
+ * track to reason about at all, and eligibility for a pathway is still answerable.
+ */
+export async function licenceScopeForUser(
+  db: Kysely<Database>,
+  userId: string,
+): Promise<LicenceScope | undefined> {
+  const row = await db
+    .selectFrom('user_targets')
+    .innerJoin('careers', 'careers.id', 'user_targets.career_id')
+    .select(['careers.profession as profession', 'careers.licence_gated as licenceGated'])
+    .where('user_targets.user_id', '=', userId)
+    .where('user_targets.status', '=', 'active')
+    .where('user_targets.deleted_at', 'is', null)
+    .where('careers.deleted_at', 'is', null)
+    .orderBy('user_targets.rank', 'asc')
+    .limit(1)
+    .executeTakeFirst();
+
+  if (row === undefined) return undefined;
+  return { profession: row.profession, licenceGated: row.licenceGated };
+}

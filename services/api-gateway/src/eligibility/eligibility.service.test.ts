@@ -6,22 +6,38 @@ import type { EligibilityClient, EligibilityOutcome } from './eligibility-client
 import { EligibilityService } from './eligibility.service.ts';
 
 /**
- * A database stub shaped like the two calls the service makes. Compile-only: the real queries are
+ * A database stub shaped like the three calls the service makes. Compile-only: the real queries are
  * covered by the integration suite, and what is under test here is the taxonomy — which failures
  * are answers and which are ours.
+ *
+ * `licence` is the third: `licenceScopeForUser` joins `careers`, so the stub grows an `innerJoin`
+ * branch. `undefined` is a person with no target, which is the common case and **not** the same as
+ * a track that is not gated.
  */
-function stubDb(rules: unknown[] = [], facts: unknown[] = []): Kysely<Database> {
+function stubDb(
+  rules: unknown[] = [],
+  facts: unknown[] = [],
+  licence?: { readonly profession: string | null; readonly licenceGated: boolean },
+): Kysely<Database> {
+  const chain = <T>(result: T) => ({
+    where: function where() {
+      return this;
+    },
+    orderBy: function orderBy() {
+      return this;
+    },
+    limit: function limit() {
+      return this;
+    },
+    execute: async () => result,
+    executeTakeFirst: async () => result,
+  });
+
   return {
     selectFrom: () => ({
-      selectAll: () => ({
-        where: function where() {
-          return this;
-        },
-        orderBy: function orderBy() {
-          return this;
-        },
-        execute: async () => facts,
-      }),
+      selectAll: () => chain(facts),
+      // `licenceScopeForUser` joins careers onto the target.
+      innerJoin: () => ({ select: () => chain(licence) }),
       // `requirementsAsOf` builds through the same chain.
       _rules: rules,
     }),
@@ -92,6 +108,37 @@ describe('EligibilityService', () => {
       kind: 'unavailable',
       reason: 'timed out',
     });
+  });
+
+  it('sends licence_gated from the targeted career, never a default', async () => {
+    // **The regression this file exists to hold.** `licence_gated` was an optional argument and no
+    // caller ever passed it, so `ai/career-roadmap`'s refusal to give a licence-gated profession a
+    // visa-only verdict could not fire — the guard was implemented, tested in `ai/`, and
+    // unreachable in production. A nurse would have received the visa answer.
+    const client = stubClient({ kind: 'evaluated', response: verdict });
+    const service = new EligibilityService(
+      stubDb([], [], { profession: 'registered-nurse', licenceGated: true }),
+      client,
+    );
+
+    await service.evaluate('user-1', 'de.eu-blue-card', '2026-06-01');
+
+    expect(client.evaluate).toHaveBeenCalledWith(
+      expect.objectContaining({ licence_gated: true }),
+    );
+  });
+
+  it('sends licence_gated false when the person has no target at all', async () => {
+    // No target is not "not gated" — there is no track to be gated. False is honest here because
+    // nothing has claimed otherwise, and eligibility for a pathway is still answerable.
+    const client = stubClient({ kind: 'evaluated', response: verdict });
+    const service = new EligibilityService(stubDb(), client);
+
+    await service.evaluate('user-1', 'de.eu-blue-card', '2026-06-01');
+
+    expect(client.evaluate).toHaveBeenCalledWith(
+      expect.objectContaining({ licence_gated: false }),
+    );
   });
 
   it('sends a persons current facts, keyed the way the catalogue names them', async () => {

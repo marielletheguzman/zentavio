@@ -18,7 +18,12 @@
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { Kysely } from 'kysely';
-import { currentFacts, requirementsAsOf, type Database } from '@zentavio/db';
+import {
+  currentFacts,
+  licenceScopeForUser,
+  requirementsAsOf,
+  type Database,
+} from '@zentavio/db';
 import type { EligibilityResponseWire, GapResponseWire, ViabilityResponseWire } from '@zentavio/types';
 
 import type { EligibilityClient } from './eligibility-client.ts';
@@ -87,9 +92,8 @@ export class EligibilityService {
     userId: string,
     pathwayId: string,
     asOf: string,
-    options: { readonly licenceGated?: boolean } = {},
   ): Promise<EligibilityOutcomeForUser> {
-    const outcome = await this.#client.evaluate(await this.#inputs(userId, pathwayId, asOf, options));
+    const outcome = await this.#client.evaluate(await this.#inputs(userId, pathwayId, asOf));
     return this.#interpret(outcome, (response) => ({ kind: 'evaluated' as const, verdict: response }));
   }
 
@@ -106,10 +110,9 @@ export class EligibilityService {
     pathwayId: string,
     asOf: string,
     gap: GapResponseWire,
-    options: { readonly licenceGated?: boolean } = {},
   ): Promise<ViabilityOutcomeForUser> {
     const outcome = await this.#client.viability({
-      ...(await this.#inputs(userId, pathwayId, asOf, options)),
+      ...(await this.#inputs(userId, pathwayId, asOf)),
       employability: toEmployability(gap, asOf),
     });
     return this.#interpret(outcome, (response) => ({ kind: 'paired' as const, viability: response }));
@@ -139,15 +142,15 @@ export class EligibilityService {
   }
 
   /** Everything the evaluator needs, read once so both routes send identical inputs. */
-  async #inputs(
-    userId: string,
-    pathwayId: string,
-    asOf: string,
-    options: { readonly licenceGated?: boolean },
-  ) {
-    const [rules, facts] = await Promise.all([
+  async #inputs(userId: string, pathwayId: string, asOf: string) {
+    const [rules, facts, licence] = await Promise.all([
       requirementsAsOf(this.#db, { pathwayId }, asOf).execute(),
       currentFacts(this.#db, userId),
+      // Read here rather than accepted as an argument. It used to be an optional parameter, and
+      // no caller ever passed it — so `ai/career-roadmap`'s refusal to give a licence-gated
+      // profession a visa-only verdict could not fire. An input that must never be omitted does
+      // not belong in a signature that lets you omit it.
+      licenceScopeForUser(this.#db, userId),
     ]);
 
     return {
@@ -179,7 +182,9 @@ export class EligibilityService {
         basis: fact.basis,
       })),
       as_of: asOf,
-      licence_gated: options.licenceGated ?? false,
+      // A person with no target is not "not gated" — there is no track to be gated. The verdict
+      // is still answerable, and false is the honest value because nothing claims otherwise.
+      licence_gated: licence?.licenceGated ?? false,
     };
   }
 }
