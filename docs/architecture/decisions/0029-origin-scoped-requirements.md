@@ -1,4 +1,4 @@
-# ADR 0029: Origin scopes a requirement through `applies_to`, and an origin with no rule is `unmodelled`
+# ADR 0029: Origin scopes a requirement through `applies_to`, and an origin with no rule is `unknown`, never `not_applicable`
 
 - **Status:** Proposed
 - **Date:** 2026-08-20
@@ -80,10 +80,22 @@ If Germany's recognition rules are ingested for EU-awarded qualifications only, 
 asks, the system finds **no matching recognition rule**. There are exactly two things it can mean by
 that, and they are opposite:
 
-- **`not_applicable`** — recognition does not apply to this person. A claim about the world.
-- **`unmodelled`** — recognition applies and we have not sourced it. A claim about **us**.
+- **recognition does not apply to this person** — a claim about the world.
+- **recognition applies and we have not sourced it** — a claim about **us**.
 
-ADR-0026 and ADR-0028 already treat that distinction as a correctness property rather than a wording
+**These are said in two different vocabularies, and this ADR is binding on both.** They are separate
+enums at separate layers, and conflating their words is how a compliance test ends up asserting
+against a status that does not exist:
+
+| Layer | Enum | The word here |
+|---|---|---|
+| the verdict — `ai/career-roadmap` | `Status = met \| not_met \| undetermined \| unknown` | **`unknown`**, with `binding_domain = 'recognition'` |
+| a single requirement — `ai/career-roadmap` | `Result = met \| not_met \| undetermined \| not_applicable` | `not_applicable` only where a rule genuinely does not apply |
+| the comparison cell — `services/api-gateway/src/comparison/compose.ts` | adds `unmodelled` | **`unmodelled`**, the cell derived from that verdict |
+
+**`unmodelled` is a cell state, never a verdict status.** A verdict returns `unknown`; the cell
+rendered from it reads `unmodelled`. ADR-0026 and ADR-0028 already treat the
+`unmodelled` / `not_applicable` distinction as a correctness property rather than a wording
 preference, and `compose.test.ts` asserts the two are produced by different branches with different
 sentences. Here the cost of collapsing them is higher than anywhere else in the product: a nurse
 told her licence is fine, by a system that never looked, acts on it.
@@ -157,7 +169,8 @@ that is already false rather than a limitation that is already safe.
 **Option C — origin scopes a requirement through `applies_to.origin_jurisdiction`, mirrored by
 `applies_to.destination_jurisdiction` for origin-imposed rules; an absent key means the rule applies
 regardless of counterpart; and a licence-gated profession with no recognition rule *matching the
-person's origin* is `unmodelled`, never `not_applicable` and never a visa-only verdict.**
+person's origin* is a verdict of `unknown` with recognition named — rendered as `unmodelled` in the
+comparison, never `not_applicable`, and never a visa-only verdict.**
 
 Three parts, and the third is the one that matters most.
 
@@ -197,9 +210,9 @@ and needs no new concept.
 - **A new sensitive person fact.** Where a qualification was awarded is close enough to origin and
   ethnicity to deserve the flag, and `person-fact.md` already routes `sensitive` kinds to
   column-level encryption in the production posture.
-- **`unmodelled` will be the common answer for a long time.** Every regulated profession, in every
-  destination, until its rules are sourced. That is the correct answer and it will look like a broken
-  product. It must not be softened.
+- **`unknown` will be the common verdict for a long time**, rendering as `unmodelled` on the
+  comparison. Every regulated profession, in every destination, until its rules are sourced. That is
+  the correct answer and it will look like a broken product. It must not be softened.
 - **This ADR creates no data.** Same caveat ADR-0010 carried and worth repeating: accepting this
   unblocks the model; the research is still the expensive part.
 
@@ -237,9 +250,12 @@ time an origin scope needs a second column.
   Asserted at the gateway, not only in `ai/` — the current gap is precisely that the evaluator's test
   passes while production never triggers it.
 - **A licence-gated profession whose recognition rules exist but do not match the person's origin
-  returns `unmodelled`, with the origin named.** A dedicated test, because this is the exact case
-  where a wrong answer is most harmful and hardest to notice: rules are present, so nothing looks
-  empty.
+  returns the verdict `unknown` with `binding_domain = 'recognition'`, and the origin named.** Two
+  tests, one per layer: the verdict in `ai/career-roadmap`, and the `unmodelled` cell it produces in
+  `compose.test.ts`. Asserted separately because they are separate enums — a test written against
+  "returns `unmodelled`" at the verdict layer would assert a status that does not exist. This is the
+  exact case where a wrong answer is most harmful and hardest to notice: rules are present, so
+  nothing looks empty.
 - **`unmodelled` and `not_applicable` are produced by different branches with different sentences**,
   extending the rule `compose.test.ts` already enforces for the comparison (ADR-0026, ADR-0028).
 - **The jurisdiction-free AST test still passes.** Origin is data; no `if (origin === 'PH')` may
