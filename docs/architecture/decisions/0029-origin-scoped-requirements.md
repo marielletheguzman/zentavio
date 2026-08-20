@@ -244,8 +244,12 @@ time an origin scope needs a second column.
   `assertValid` (`packages/db/src/repositories/requirements.ts`) — an unknown key beginning
   `origin_` or `destination_` is rejected at insert, so a typo fails loudly instead of matching
   nobody.
-- **`imposed_by = 'origin'` implies no `origin_jurisdiction` key**, and vice versa: a rule does not
-  scope itself by the side that imposes it. Asserted in the repository tests.
+- **A rule never scopes itself by the side that imposes it.** `imposed_by = 'origin'` implies no
+  `origin_jurisdiction` key; `imposed_by = 'destination'` implies no `destination_jurisdiction` key.
+  Asserted in the repository tests. Stated as two implications rather than as "and vice versa",
+  which would have claimed that a rule with no `origin_jurisdiction` key is origin-imposed — false
+  of all 21 rows already ingested, every one of them `imposed_by = 'destination'` with no origin
+  scope.
 - **No licence-gated career is evaluated without `licence_gated: true` reaching the evaluator.**
   Asserted at the gateway, not only in `ai/` — the current gap is precisely that the evaluator's test
   passes while production never triggers it.
