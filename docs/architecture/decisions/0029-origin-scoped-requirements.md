@@ -1,6 +1,7 @@
 # ADR 0029: Origin scopes a requirement through `applies_to`, and an origin with no rule is `unknown`, never `not_applicable`
 
-- **Status:** Proposed
+- **Status:** Accepted
+- **Accepted:** 2026-08-20
 - **Date:** 2026-08-20
 - **Deciders:** project lead
 - **Affects:** `packages/db` (`requirements`, `person_fact_kinds`), `services/api-gateway/src/eligibility`, `ai/career-roadmap`, `connectors/immigration-data`, `docs/database/entities/requirement.md`, `.claude/skills/immigration/references/countries/`
