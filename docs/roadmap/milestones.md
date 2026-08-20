@@ -333,14 +333,14 @@ rationale, and answering it moved the verdict from *"we cannot finish until you 
 in a browser rather than over HTTP. `/applications` loads, hydrates, fetches `GET /v1/applications`
 cross-origin and renders its empty state.
 
-**What is still owed is narrower than "these pages are unverified":** a **boolean** control (none is
-open for the seeded user until its fact is deleted, so the control PR #90 exists for has still not
-been seen rendered) and the `/applications` **submit**. Both are in M4's evidence gate below, blocked
-on the same extension input failure rather than on anything in the code.
+**Both remaining items closed on 2026-08-20** — the **boolean** control (rendered as a
+`Choose… / Yes / No` select, answered **No**, stored as JSON `false`) and the `/applications`
+**submit** (a title recorded, its stored prediction rendered). They are rows 2 and 3 of M4's evidence
+gate below, and each carries what was observed.
 
-These remain **verification limitations, not outstanding milestone requirements**. Recorded because
-this repository has been caught by exactly this gap before — the gateway shipped with no CORS at all
-through the whole of M1c while every server-side check passed.
+They were recorded as verification limitations rather than waved through because this repository has
+been caught by exactly this gap before — the gateway shipped with no CORS at all through the whole
+of M1c while every server-side check passed.
 
 **Outcome data is recorded and not yet read**, and that is deliberate rather than unfinished.
 ADR-0019: a calibration reader with zero rows can only answer "not enough data yet", so
@@ -482,8 +482,9 @@ computed from two instruments neither of which states that number.
 
 ## M4 — Four destinations, honestly compared
 
-**Status: Met** (2026-08-12), **subject to the evidence gate below** — one post-fix
-re-verification is owed and is recorded rather than assumed.
+**Status: Met** (2026-08-12). **The evidence gate below closed on 2026-08-20** — all three owed
+browser observations were made, and each cell records what was seen. **Two evidence boundaries
+remain explicitly unproven** and are stated below rather than absorbed into the closure.
 
 *Phase 2 complete.* DE, LU, NZ, CH, plus `REMOTE`, side by side.
 
@@ -622,33 +623,41 @@ next.
 second calendar implementation — the control cannot emit `2026-02-31`, the gateway parses the date
 and is authoritative, and a second implementation would be a second thing to keep correct.
 
-Reproduced in a browser on `/eligibility` **before** the fix. Its post-fix re-verification is the
-one owed observation below.
+Reproduced in a browser on `/eligibility` **before** the fix. **Re-verified after it on
+2026-08-20** — observation 1 below.
 
-### Evidence gate — three browser observations owed
+### Evidence gate — three browser observations, closed 2026-08-20
 
-**Not defects, and not inferred as passing.** The browser extension's keyboard and mouse dispatch
-stopped reaching the page mid-session while screenshots and script evaluation continued to work; a
-capture listener on `document` recorded zero events across a Chrome restart, an extension reattach,
-three tabs and both windows. Recorded here rather than waved through, because inferring these from
-implementation review is exactly the habit this section exists to prevent.
+**Opened 2026-08-12 and closed 2026-08-20.** The gate was opened because the browser extension's
+keyboard and mouse dispatch stopped reaching the page mid-session while screenshots and script
+evaluation continued to work; a capture listener on `document` recorded zero events across a Chrome
+restart, an extension reattach, three tabs and both windows. **Input dispatch worked on 2026-08-20**
+— the same capture listener recorded `pointerdown`, `mousedown` and `click` on the first attempt, and
+the tab reported `visibilityState: 'visible'` once clicked. Each cell below is **what was seen**, not
+the word "passed".
 
 | # | Observation | Result |
 |---|---|---|
-| 1 | `/eligibility` refuses a five-digit year with the guard's sentence and no retry button | _pending_ |
-| 2 | the recognised-degree question renders as a select, and answering **No** never reads as `met` | _pending_ |
-| 3 | `/applications` records a title and shows the readiness prediction stored with it | _pending_ |
+| 1 | `/eligibility` refuses a five-digit year with the guard's sentence and no retry button | **Observed 2026-08-20.** The year segment was typed to `12025-08-20`, which the control reported `valid`. `Check eligibility` rendered *"That date cannot be used. Use a four-digit year, as 2026-08-12."* — `asOfProblem`'s string verbatim. The page carried **one** button, `Check eligibility`; no retry control, and no *"Something went wrong on our side"*. **The gateway log recorded no request**, so the guard stopped it before the network |
+| 2 | the recognised-degree question renders as a select, and answering **No** never reads as `met` | **Observed 2026-08-20.** The question rendered as a `<select>` with exactly `Choose… / Yes / No` (values `'' / true / false`), beside a salary question rendering as a free-text box on the same screen — the two control types are visibly different. Answering **No** stored JSON `false`, **not the string `'no'`**, and `de.eu-blue-card.qualification` and `.abs1-s2` both rendered **Not met**, basis *"has_recognised_academic_degree is False"*. No `Met de.eu-blue-card.qualification` appeared anywhere on the page |
+| 3 | `/applications` records a title and shows the readiness prediction stored with it | **Observed 2026-08-20.** *"Cloud Platform Engineer at Testfirma GmbH"* was typed and recorded; the card rendered *"Applied 2026-08-20."* and *"We put your readiness at 15% when you applied."* The stored row carries `predicted_score = 0.1501` and `scorer_version = skill-gap/2026-08-03` — the rendered figure is the stored one, rounded |
 
-Observations 2 and 3 are **M2's carried-over verification limitations**, not new M4 work; observation
-1 is this milestone's own.
+Observations 2 and 3 were **M2's carried-over verification limitations**, not new M4 work; observation
+1 was this milestone's own. All three are now closed against the real gateway, the real evaluator and
+the real database.
 
-**These rows ship open, deliberately.** The change is merged with the gate visible rather than held
-until a browser cooperates: everything the table claims is already true, and the three cells say
-exactly what has not been seen rather than implying it has. They are closed by loading the pages —
-in review, or in the first session where extension input works — and each cell is replaced by what
-was observed, not by the word "passed".
+**How observation 2 was exposed, and why it is not a stub.** The seeded user already carried
+`has_recognised_academic_degree = false`, so the question was answered and its control was not
+rendered. It was exposed by having the page's own `fetch` send a **different real user's** dev-auth
+header — a user given a career track through `/gap`'s own chooser first, because the panel does not
+render an eligibility result without a readiness to put beside it. **Nothing was stubbed**: every
+response came from the gateway and the evaluator, and the answer was written through `POST
+/v1/person-facts` by clicking *Save and re-check*. The seeded user's own facts were not modified.
 
 ### Two evidence boundaries that must not be overstated
+
+**Closing the gate above did not touch either of these**, and the 2026-08-20 session did not attempt
+them. They stay open, and a later session must not read the closed gate as covering them.
 
 - **A numeric quota has only ever rendered against the stub.** No ingested pathway carries a figure,
   so the number-formatting path has no real-stack evidence. Switzerland's `null` and New Zealand's
