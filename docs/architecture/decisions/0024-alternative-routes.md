@@ -288,8 +288,12 @@ function, and the ADR should be amended rather than superseded.
 
 ## Amendment — 2026-08-20: any-of conditions
 
-- **Status:** Proposed
+- **Status:** Accepted
+- **Accepted:** 2026-08-20
 - **Raised by:** Luxembourg's EU Blue Card, Art. 45 (2) f) of the loi du 29 août 2008
+- **Evidence base:** one statute. Germany, New Zealand and Switzerland do not need this
+  mechanism, so rule 10 is justified by Luxembourg alone — a narrower base than ADR-0025 had
+  when Luxembourg forced `requirement_sources`, and stated here rather than left to be found.
 
 **The decision above is unchanged.** Routes, gates and rules 1–9 all stand. This adds one mechanism
 they do not cover, and it is written before the implementation rather than discovered inside it.

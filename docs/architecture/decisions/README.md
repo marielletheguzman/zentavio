@@ -49,7 +49,7 @@ already ruled out and how the rule is enforced.
 engineering, and teaching return `unknown` until each profession's recognition rules are sourced and
 ingested.
 
-**0024 carries a Proposed amendment as of 2026-08-20 — any-of conditions.** Luxembourg's Art. 45 (2) f)
+**0024 carries an Accepted amendment as of 2026-08-20 — any-of conditions (rule 10).** Luxembourg's Art. 45 (2) f)
 states one qualification condition satisfiable three ways, which are neither separate legal consequences
 (so not routes, rule 6) nor closed doors (so not gates, rule 3 — failing every alternative is `not_met`,
 never `not_applicable`). The amendment adds `applies_to.anyOf` and nothing else: no nesting, no negation.
