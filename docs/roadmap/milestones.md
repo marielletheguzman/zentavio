@@ -690,12 +690,17 @@ profession still returns `unknown`, which is the honest answer and not a placeho
 product cannot serve some of its largest user groups, which is why this is a named milestone rather than
 a backlog item.
 
-**One finding from writing it belongs here, because it is not an M5 dependency.** ADR-0010's safety
-property — a licence-gated profession returns `unknown` rather than a visa-only verdict — is implemented
-in `ai/career-roadmap` and **unreachable in production**: no caller passes `licence_gated`, and the
-gateway retrieves requirements by pathway only, so no `recognition` row would reach the evaluator even if
-one were ingested. Every document claiming that guard protects someone today is wrong. Fixing the wiring
-needs no sourced data and no accepted ADR.
+**One finding from writing it belonged here, and is now fixed.** ADR-0010's safety property — a
+licence-gated profession returns `unknown` rather than a visa-only verdict — was implemented in
+`ai/career-roadmap` and **unreachable in production**: no caller passed `licence_gated`, so a
+licence-gated career would have received the visa answer. **#109 wired it** (`2026-08-20`):
+`licence_gated` is read from the person's target instead of being an optional argument nobody passed,
+held by two unit tests and six integration tests against real PostgreSQL. The guard fires.
+
+**That is the guard working, not recognition becoming answerable.** Retrieval is **still pathway-only**,
+so no `recognition` row reaches the evaluator even where one is ingested — and none is. A licence-gated
+profession still returns `unknown`, and will until **origin-scoped recognition rules are sourced and
+ingested** under ADR-0029. Widening retrieval is that ADR's follow-up, not this fix.
 
 ---
 

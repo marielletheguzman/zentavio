@@ -224,8 +224,11 @@ and needs no new concept.
   pass `licence_gated` from `careers.licence_gated`.
 - Teach the evaluator `applies_to.origin_jurisdiction` / `destination_jurisdiction`, with the same
   absent-means-broader rule as `route`.
-- **Wire and test the licence-gated guard end to end** — it exists and is unreachable, which is the
-  most urgent item here and is independent of any sourcing.
+- ~~**Wire and test the licence-gated guard end to end**~~ **Done** — #109. `licence_gated` is read
+  from the person's target rather than accepted as an optional argument, held by two unit tests and
+  six integration tests against real PostgreSQL. **Retrieval is still pathway-only**, which is the
+  half that waits on this ADR: no `recognition` row reaches the evaluator, so a licence-gated
+  profession returns `unknown`. That is now the guard firing rather than an accident.
 - Document both keys in `requirement.md`'s `applies_to` section and in `immigration.md`.
 - A `ph.md` origin reference file (ADR-0010 follow-up, still open), naming the authority per
   origin-side domain — sourced, not assumed.

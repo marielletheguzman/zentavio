@@ -53,7 +53,9 @@ ingested.
 a rule; nothing named who the rule is *about*, so a destination's recognition rules for an origin's
 qualifications could not be expressed. It also recorded a measured finding: ADR-0010's licence-gated
 `unknown` guard was implemented in the evaluator and **unreachable in production**, because no caller
-passed `licence_gated` and no non-`immigration` row is ever retrieved.
+passed `licence_gated`. **#109 fixed that half** — the guard now fires. Retrieval is still pathway-only,
+so no `recognition` row reaches the evaluator; widening it is 0029's follow-up and waits on sourced,
+origin-scoped rules.
 
 **M5 is no longer blocked on a decision.** What remains is 0029's follow-up work and the per-profession
 research 0010 already named — neither of which is an open question. **No verdict changes until rules are
