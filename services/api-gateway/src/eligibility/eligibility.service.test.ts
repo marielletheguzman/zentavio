@@ -323,6 +323,28 @@ describe('EligibilityService gathers across domains (ADR-0029)', () => {
     expect(idsSentTo(client)).toEqual(['de.nursing.licence-recognition']);
   });
 
+  it("sends the pathway's jurisdiction as the destination, from the row not the id", async () => {
+    // The evaluator needs it to place a rule an origin state scopes by destination (ADR-0029).
+    // Read from the column because the id is a naming convention and the column is the fact.
+    const client = stubClient({ kind: 'evaluated', response: verdict });
+    const service = new EligibilityService(stubDb([], [], nurse, germany, {}), client);
+
+    await service.evaluate('user-1', 'de.eu-blue-card', '2026-06-01');
+
+    expect(client.evaluate).toHaveBeenCalledWith(expect.objectContaining({ destination: 'DE' }));
+  });
+
+  it('sends a null destination when the pathway is not on file', async () => {
+    // Null rather than a guess. A destination-scoped rule then stays undetermined, which is what a
+    // fabricated destination would have hidden.
+    const client = stubClient({ kind: 'evaluated', response: verdict });
+    const service = new EligibilityService(stubDb([], [], nurse, undefined, {}), client);
+
+    await service.evaluate('user-1', 'de.eu-blue-card', '2026-06-01');
+
+    expect(client.evaluate).toHaveBeenCalledWith(expect.objectContaining({ destination: null }));
+  });
+
   it('gathers only the pathway when the person has no target profession', async () => {
     const client = stubClient({ kind: 'evaluated', response: verdict });
     const service = new EligibilityService(

@@ -63,6 +63,38 @@ DOMAIN_ORDER: tuple[str, ...] = (
 )
 
 
+#: The fact naming where a person's qualification was awarded (ADR-0029). Named once here because
+#: the evaluator reads it structurally — to decide *which rules are about this person* — rather than
+#: comparing it against a threshold the way every other fact is used.
+ORIGIN_FACT_KEY = "qualification_awarded_in"
+
+
+def _codes(value: Any) -> tuple[str, ...] | None:
+    """A jurisdiction scope as a tuple of codes, or ``None`` when it says nothing.
+
+    Accepts a list of strings, and a bare string as the one-element case, because a connector
+    writing ``"PH"`` where it meant ``["PH"]`` has expressed the same intent and refusing it would
+    turn a harmless shape difference into a rule that applies to nobody.
+
+    Anything else — a number, an empty list, a list of numbers — is ``None``: **broader, not
+    narrower**. A scope nobody can read must not silently exclude the people the rule was written
+    for, and a rule that quietly applies to no one is invisible in a way a wrong verdict is not.
+    """
+    if isinstance(value, str):
+        return (value.strip().upper(),) if value.strip() != "" else None
+    if isinstance(value, list):
+        codes = tuple(
+            item.strip().upper() for item in value if isinstance(item, str) and item.strip() != ""
+        )
+        return codes or None
+    return None
+
+
+def _normalised(value: Any) -> str | None:
+    """A person's or a pathway's jurisdiction code, comparably. ``None`` when there is not one."""
+    return value.strip().upper() if isinstance(value, str) and value.strip() != "" else None
+
+
 @dataclass(frozen=True)
 class Requirement:
     """One stored requirement row, as the gateway hands it over."""
@@ -83,8 +115,10 @@ class Requirement:
     refresh_after: date | None = None
     contested: bool = False
     contested_note: str | None = None
-    #: Occupation lists, qualification levels — and ``route``, which is the only key this module
-    #: reads. Everything else here is carried for the caller's benefit and ignored.
+    #: Occupation lists, qualification levels — and the four keys this module reads: ``route``
+    #: (ADR-0024), ``anyOf`` (its amendment), and ``origin_jurisdiction`` /
+    #: ``destination_jurisdiction`` (ADR-0029). Everything else here is carried for the caller's
+    #: benefit and ignored.
     applies_to: dict[str, Any] = field(default_factory=dict)
 
     @property
@@ -97,6 +131,30 @@ class Requirement:
         """
         value = self.applies_to.get("route")
         return value if isinstance(value, str) and value != "" else None
+
+    @property
+    def origin_jurisdictions(self) -> tuple[str, ...] | None:
+        """Which origins this rule is for, or ``None`` when it is for all of them (ADR-0029).
+
+        The origin is where the person's **qualification** was awarded, never their nationality: a
+        citizen of one country holding another's nursing degree has that degree's recognition
+        problem, not their passport's.
+
+        ``None`` means the rule applies whatever the origin — "absent means broader, not narrower",
+        the same conservative reading :attr:`route` gets. A malformed value is read as absent for
+        the same reason: a typo in one rule must not silently exclude the people it was written for.
+        """
+        return _codes(self.applies_to.get("origin_jurisdiction"))
+
+    @property
+    def destination_jurisdictions(self) -> tuple[str, ...] | None:
+        """Which destinations this rule is for, or ``None`` for all of them (ADR-0029).
+
+        The mirror of :attr:`origin_jurisdictions`, for rules an origin state imposes: an exit
+        clearance may have different terms depending on where the person is going. Same
+        absent-means-broader reading, for the same reason.
+        """
+        return _codes(self.applies_to.get("destination_jurisdiction"))
 
     @property
     def any_of(self) -> str | None:
@@ -383,6 +441,115 @@ def _confidence(evaluated: tuple[EvaluatedRequirement, ...], facts: dict[str, Pe
     return "medium"
 
 
+ScopeStatus = Literal["applies", "excluded", "unanswered"]
+
+
+def scope_status(
+    requirement: Requirement, *, origin: str | None, destination: str | None
+) -> ScopeStatus:
+    """Whether a rule is about this person at all (ADR-0029).
+
+    Three answers, and the third is the one that keeps the model honest:
+
+    ``applies``
+        The rule declares no scope, or declares one containing the person's value.
+
+    ``excluded``
+        The rule declares a scope the person is outside. It is **not** a rule they failed — it was
+        never about them, which is why it becomes ``not_applicable`` rather than ``not_met``.
+
+    ``unanswered``
+        The rule declares a scope and we do not know the person's value. We cannot tell whether it
+        applies, and guessing in either direction is a fabricated verdict: assuming it applies
+        invents a hurdle, assuming it does not invents compliance. The answer is ``undetermined``
+        with the question named.
+
+    The destination is a property of the pathway being evaluated rather than something the person
+    tells us, so a destination-scoped rule with no destination on the request is ``unanswered`` too
+    — but nothing the person can answer. The caller distinguishes those.
+    """
+    origins = requirement.origin_jurisdictions
+    if origins is not None:
+        if origin is None:
+            return "unanswered"
+        if origin not in origins:
+            return "excluded"
+
+    destinations = requirement.destination_jurisdictions
+    if destinations is not None:
+        if destination is None:
+            return "unanswered"
+        if destination not in destinations:
+            return "excluded"
+
+    return "applies"
+
+
+def _out_of_scope(requirement: Requirement, common: dict[str, Any]) -> EvaluatedRequirement:
+    """A rule this person is outside the scope of. Never a failure they can act on."""
+    return EvaluatedRequirement(
+        **common,
+        result="not_applicable",
+        reason="this rule is for qualifications from elsewhere, so it does not apply to you",
+    )
+
+
+def _scope_unanswered(
+    requirement: Requirement, common: dict[str, Any], *, answerable: bool
+) -> EvaluatedRequirement:
+    """A rule we cannot place yet. Undetermined, and it says what is missing."""
+    if answerable:
+        return EvaluatedRequirement(
+            **common,
+            result="undetermined",
+            reason=(
+                "whether this rule applies to you depends on where your qualification was awarded, "
+                "which is not on file"
+            ),
+            needs_input=(ORIGIN_FACT_KEY,),
+        )
+    return EvaluatedRequirement(
+        **common,
+        result="undetermined",
+        reason=(
+            "this rule applies only to particular destinations and the destination was not stated "
+            "on this request"
+        ),
+    )
+
+
+def _scoped(
+    requirement: Requirement,
+    facts: dict[str, PersonFact],
+    *,
+    origin: str | None,
+    destination: str | None,
+) -> EvaluatedRequirement:
+    """Evaluate one requirement, or say why it was not evaluated against this person."""
+    status = scope_status(requirement, origin=origin, destination=destination)
+    if status == "applies":
+        return evaluate_requirement(requirement, facts)
+
+    common = {
+        "requirement_id": requirement.requirement_id,
+        "domain": requirement.domain,
+        "imposed_by": requirement.imposed_by,
+        "authority": requirement.authority,
+        "source_url": requirement.source_url,
+        "effective_from": requirement.effective_from.isoformat(),
+    }
+
+    if status == "excluded":
+        return _out_of_scope(requirement, common)
+
+    # `unanswered` is answerable by the person exactly when it is the origin that is missing.
+    return _scope_unanswered(
+        requirement,
+        common,
+        answerable=requirement.origin_jurisdictions is not None and origin is None,
+    )
+
+
 def evaluate_pathway(
     pathway_id: str | None,
     requirements: list[Requirement],
@@ -390,20 +557,30 @@ def evaluate_pathway(
     as_of: date,
     *,
     licence_gated: bool = False,
+    destination: str | None = None,
 ) -> Verdict:
     """Evaluate every applicable requirement and aggregate one verdict.
 
     Returns ``unknown`` — not ``met`` — when there is nothing to evaluate, and when a licence-gated
-    profession has no recognition requirement on file. Returning a visa-only verdict to a nurse
-    whose licence does not transfer is the most harmful output this product could produce
-    (`docs/architecture/immigration.md`).
+    profession has no recognition requirement **that could be about this person** on file. Returning
+    a visa-only verdict to a nurse whose licence does not transfer is the most harmful output this
+    product could produce (`docs/architecture/immigration.md`).
+
+    ``destination`` is the jurisdiction the pathway leads to, used only to place rules an origin
+    state scopes by destination (ADR-0029). It is not compared against anything the person said.
     """
     by_key = {fact.key: fact for fact in facts}
+    origin_fact = by_key.get(ORIGIN_FACT_KEY)
+    origin = _normalised(origin_fact.value) if origin_fact is not None else None
+    destination_code = _normalised(destination)
+
     applicable = [r for r in requirements if applicable_on(r, as_of)]
     order = {domain: i for i, domain in enumerate(DOMAIN_ORDER)}
     applicable.sort(key=lambda r: (order.get(r.domain, len(DOMAIN_ORDER)), r.requirement_id))
 
-    evaluated = tuple(evaluate_requirement(r, by_key) for r in applicable)
+    evaluated = tuple(
+        _scoped(r, by_key, origin=origin, destination=destination_code) for r in applicable
+    )
     notes: list[str] = []
 
     stale = [r for r in applicable if r.refresh_after is not None and r.refresh_after < as_of]
@@ -425,7 +602,19 @@ def evaluate_pathway(
             notes=(*notes, "no requirements are on file for this pathway on this date"),
         )
 
-    if licence_gated and not any(r.domain == "recognition" for r in applicable):
+    # **Scope decides what counts as "on file" here** (ADR-0029). A recognition rule written for
+    # qualifications from somewhere else is not a recognition rule for this person, and treating it
+    # as one would hand a nurse the visa answer on the strength of a rule that was never about her —
+    # the precise failure this guard exists to prevent. A rule we cannot place because she has not
+    # said where she qualified *does* count: it evaluates to `undetermined` and names the question,
+    # which is an answer she can move.
+    recognition_in_scope = [
+        requirement
+        for result, requirement in zip(evaluated, applicable, strict=True)
+        if requirement.domain == "recognition" and result.result != "not_applicable"
+    ]
+
+    if licence_gated and not recognition_in_scope:
         return Verdict(
             pathway_id=pathway_id,
             status="unknown",

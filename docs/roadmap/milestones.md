@@ -704,10 +704,17 @@ no `recognition` row reached the evaluator even where one was ingested — and n
 sets rather than one: the pathway's rules, the destination's rules for the career's profession, and the
 origin state's own duties. A recognition row reaches the evaluator where one exists.
 
-**A licence-gated profession still returns `unknown`**, and two things stand between it and a real
-verdict: the evaluator does not yet match `applies_to.origin_jurisdiction` to a person's origin, and
-**no origin-scoped recognition rule has been sourced or ingested**. The second is the expensive half.
-Neither is softened by the first two being done.
+**The evaluator learned origin scope on 2026-08-21** (ADR-0029's third follow-up). A rule declaring
+`applies_to.origin_jurisdiction` is matched against where the person's qualification was awarded:
+absent applies to everybody, a different origin is `not_applicable` rather than a rule they failed,
+and an unanswered origin is `undetermined` naming the question. The licence-gated guard now counts
+only recognition rules that are not excluded — a recognition rule for qualifications from elsewhere
+is not a recognition rule for this person.
+
+**A licence-gated profession still returns `unknown`**, and one thing stands between it and a real
+verdict: **no origin-scoped recognition rule has been sourced or ingested**. That is the expensive
+half, and it is not softened by the mechanism being finished. No rule declares either scope key
+today, so no stored verdict has changed.
 
 ---
 

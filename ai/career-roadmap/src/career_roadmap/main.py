@@ -83,6 +83,10 @@ class EvaluateRequest(BaseModel):
     #: True when the target profession is licence-gated, which forces `unknown` unless a
     #: recognition rule is on file.
     licence_gated: bool = False
+    #: The jurisdiction this pathway leads to, used only to place rules an origin state scopes by
+    #: destination (ADR-0029). A property of the pathway, never compared against anything the person
+    #: said. Absent means a destination-scoped rule cannot be placed and stays `undetermined`.
+    destination: str | None = None
 
 
 class EvaluatedRequirementOutput(BaseModel):
@@ -220,6 +224,7 @@ def _evaluate(payload: EvaluateRequest) -> Verdict:
         [PersonFact(key=f.key, value=f.value, basis=f.basis) for f in payload.facts],
         payload.as_of,
         licence_gated=payload.licence_gated,
+        destination=payload.destination,
     )
 
 

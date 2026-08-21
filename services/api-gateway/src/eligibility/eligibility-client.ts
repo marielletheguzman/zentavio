@@ -24,6 +24,14 @@ export interface EvaluateRequestWire {
   readonly facts: readonly unknown[];
   readonly as_of: string;
   readonly licence_gated: boolean;
+  /**
+   * The jurisdiction the pathway leads to (ADR-0029).
+   *
+   * Sent so the evaluator can place a rule an origin state scopes by destination — an exit
+   * clearance whose terms depend on where the person is going. `null` when the pathway is not on
+   * file, which leaves such a rule `undetermined` rather than quietly applying it.
+   */
+  readonly destination: string | null;
 }
 
 /** Viability adds the employability half. One call, so the two axes cannot disagree. */

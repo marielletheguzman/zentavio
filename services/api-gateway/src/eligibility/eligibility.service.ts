@@ -280,6 +280,10 @@ export class EligibilityService {
       // A person with no target is not "not gated" — there is no track to be gated. The verdict
       // is still answerable, and false is the honest value because nothing claims otherwise.
       licence_gated: licence?.licenceGated ?? false,
+      // Where the pathway leads, so the evaluator can place a rule the origin state scopes by
+      // destination. Read from the pathway row rather than parsed out of `pathwayId`: the id is a
+      // naming convention and the column is the fact.
+      destination: pathway?.jurisdiction ?? null,
     };
   }
 }
