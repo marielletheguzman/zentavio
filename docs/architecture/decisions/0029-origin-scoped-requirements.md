@@ -231,8 +231,17 @@ and needs no new concept.
   PostgreSQL. **A recognition row now reaches the evaluator** — which does not yet know how to match
   one to a person's origin. That is the next item, and until it lands a licence-gated profession
   still returns `unknown`.
-- Teach the evaluator `applies_to.origin_jurisdiction` / `destination_jurisdiction`, with the same
-  absent-means-broader rule as `route`.
+- ~~**Teach the evaluator `applies_to.origin_jurisdiction` / `destination_jurisdiction`, with the
+  same absent-means-broader rule as `route`**~~ **Done** — 2026-08-21. Three answers, not two: a
+  rule applies, is `not_applicable` because it was written for other origins, or is `undetermined`
+  because we cannot place it until the person says where they qualified. **The licence-gated guard
+  now counts only recognition rules that are not excluded**, which is the safety property this ADR
+  exists for — a recognition rule for qualifications from elsewhere is not a recognition rule for
+  this person, and counting it would hand a nurse the visa answer. An unreadable scope is read as
+  absent, so a typo makes a rule broader rather than silently applying it to nobody. The evaluator
+  gained a `destination` input, supplied from the pathway row rather than parsed out of its id.
+  Held by 18 pytest cases and two gateway tests. **No rule declares either key yet**, so no stored
+  verdict changes.
 - ~~**Wire and test the licence-gated guard end to end**~~ **Done** — #109. `licence_gated` is read
   from the person's target rather than accepted as an optional argument, held by two unit tests and
   six integration tests against real PostgreSQL. **Retrieval is still pathway-only**, which is the
