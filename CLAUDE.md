@@ -64,9 +64,11 @@ most harmful and least detectable thing this repository could contain.
 14 tables. **1 401 tests — 686 unit, 295 integration, 420 pytest** (measured 2026-08-20 by running
 all three suites, integration included, against local PostgreSQL and MinIO — not estimated). The
 integration suite needs `ZENTAVIO_TEST_DATABASE_URL` pointing at a database whose name ends `_test`;
-it is dropped and rebuilt, so it never touches the dev database. It also needs the five
-`ZENTAVIO_STORAGE_*` keys — without them three archival tests fail with a `ConfigError` that looks
-like a code failure and is not. CI blocking on `main`.
+it is dropped and rebuilt, so it never touches the dev database. It also needs the four
+`ZENTAVIO_STORAGE_*` keys that have no default — `ENDPOINT`, `BUCKET`, `ACCESS_KEY_ID` and
+`SECRET_ACCESS_KEY`; the other two, `REGION` and `PROVIDER`, default to `auto` and `minio`
+(`packages/config/src/zentavio.ts`). Without the four, three archival tests fail with a `ConfigError`
+that looks like a code failure and is not. CI blocking on `main`.
 
 | Built | Still a placeholder |
 |---|---|
