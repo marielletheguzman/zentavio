@@ -259,8 +259,22 @@ and needs no new concept.
   sourced and what stays `unknown`. It establishes the **Philippine** side only: PRC decides who is a
   registered nurse in the Philippines, and says nothing about whether a destination recognises that
   registration. **That is the remaining item**, and it is destination-side evidence.
-- Per-profession recognition research for one destination and one profession, as the vertical slice
-  that proves the model before it is repeated.
+- ~~**Per-profession recognition research for one destination and one profession, as the vertical
+  slice that proves the model before it is repeated**~~ **Done** — 2026-08-21, and the profession is
+  not the one this ADR guessed at. The slice follows the product's own priority — IT, software and
+  computer engineering — and the research produced two answers rather than one.
+
+  **For software and platform work, recognition does not apply**: the occupation is not regulated,
+  BIBB says recognition is not required to work in a non-regulated profession, and no rule is needed
+  to say so. **For a computer engineer who wants the protected title `Ingenieur`, it does**: BayIngG
+  Art. 2 and Art. 3 are read, and `connectors/immigration-data/de-bayingg` stores three
+  origin-scoped `recognition` rows for Bavaria. A Philippine degree is measured against Art. 2's
+  programme requirements through Art. 3 Abs. 4; a German one is told the rules are not about it; an
+  unanswered origin is asked.
+
+  **The title is gated, not the activity** — every row says so, because a surface rendering it as
+  "you cannot work in Germany" would be false about a person's life. Bavaria is one Land of sixteen
+  and nothing generalises to the others.
 
 **Reversal cost.** Low. Nothing is ingested outside `immigration`/`destination`, so there is nothing
 to migrate: reversing means deleting two jsonb keys nobody has written yet. The signal to reverse is a

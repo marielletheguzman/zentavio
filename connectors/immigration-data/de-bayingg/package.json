@@ -1,0 +1,17 @@
+{
+  "name": "@zentavio/connector-de-bayingg",
+  "version": "0.0.0",
+  "private": true,
+  "description": "BayIngG Art. 2 and Art. 3 — the protected title 'Ingenieur' in Bavaria, and what a foreign qualification must show.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zentavio/connectors-core": "workspace:*",
+    "@zentavio/types": "workspace:*"
+  }
+}

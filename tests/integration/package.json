@@ -9,6 +9,7 @@
     "@zentavio/auth": "workspace:*",
     "@zentavio/config": "workspace:*",
     "@zentavio/connector-de-aufenthg": "workspace:*",
+    "@zentavio/connector-de-bayingg": "workspace:*",
     "@zentavio/connector-de-bundesanzeiger": "workspace:*",
     "@zentavio/connector-lu-legilux": "workspace:*",
     "@zentavio/db": "workspace:*",

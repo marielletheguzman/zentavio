@@ -254,3 +254,111 @@ class TestLicenceGatedGuard:
         )
 
         assert verdict.status == "met"
+
+
+class TestTheBavarianTitleRulesAsIngested:
+    """The rules `de-bayingg` actually stores, evaluated.
+
+    Not a second copy of the connector's tests: those assert what is written to the database, and
+    these assert what a person is told. The shapes here are the stored ones — three recognition
+    rows, all scoped to `PH`, one of them a document only an authority can decide.
+
+    **No test crosses the HTTP boundary**, and none builds a gateway. The chain is covered in two
+    halves: the database and retrieval in `tests/integration/db/de-bayingg-ingest.test.ts`,
+    placement and the verdict here.
+    """
+
+    def _rules(self) -> list[Requirement]:
+        common = dict(
+            domain="recognition",
+            imposed_by="destination",
+            authority="Bayerisches Staatsministerium für Wirtschaft, Landesentwicklung und Energie",
+            source_url="https://www.gesetze-bayern.de/Content/Document/BayIngG2016-2",
+            effective_from=date(2016, 8, 1),
+            effective_to=None,
+            applies_to={"origin_jurisdiction": ["PH"]},
+        )
+        return [
+            Requirement(
+                requirement_id="de.ingenieur-title.by.study-duration.ph",
+                kind="condition",
+                evaluation="numeric-gte",
+                value={"amount": 6, "unit": "semesters"},
+                needs_input=("degree_standard_duration_semesters",),
+                **common,
+            ),
+            Requirement(
+                requirement_id="de.ingenieur-title.by.ects-credits.ph",
+                kind="condition",
+                evaluation="numeric-gte",
+                value={"amount": 180, "unit": "ects"},
+                needs_input=("degree_ects_credits",),
+                **common,
+            ),
+            Requirement(
+                requirement_id="de.ingenieur-title.by.permission.ph",
+                kind="document",
+                evaluation="document-present",
+                value={"document": "Genehmigung zum Führen der Berufsbezeichnung"},
+                needs_input=(),
+                **common,
+            ),
+        ]
+
+    def test_a_philippine_degree_is_measured_against_them(self) -> None:
+        verdict = evaluate_pathway(
+            "de.eu-blue-card",
+            self._rules(),
+            [
+                _qualified_in("PH"),
+                PersonFact(key="degree_standard_duration_semesters", value=8),
+                PersonFact(key="degree_ects_credits", value=240),
+            ],
+            AS_OF,
+            destination="DE",
+        )
+
+        results = {r.requirement_id: r.result for r in verdict.requirements}
+        assert results["de.ingenieur-title.by.study-duration.ph"] == "met"
+        assert results["de.ingenieur-title.by.ects-credits.ph"] == "met"
+        # The permission is undetermined and stays that way: only the authority knows whether it was
+        # granted, and asserting either way would be inventing a verdict.
+        assert results["de.ingenieur-title.by.permission.ph"] == "undetermined"
+        assert verdict.status == "undetermined"
+
+    def test_a_shorter_programme_is_a_real_no_on_the_condition_it_fails(self) -> None:
+        verdict = evaluate_pathway(
+            "de.eu-blue-card",
+            self._rules(),
+            [
+                _qualified_in("PH"),
+                PersonFact(key="degree_standard_duration_semesters", value=4),
+                PersonFact(key="degree_ects_credits", value=120),
+            ],
+            AS_OF,
+            destination="DE",
+        )
+
+        assert "de.ingenieur-title.by.study-duration.ph" in verdict.blockers
+        assert "de.ingenieur-title.by.ects-credits.ph" in verdict.blockers
+
+    def test_a_qualification_from_elsewhere_is_told_the_rules_are_not_about_it(self) -> None:
+        # The whole point of origin scoping. Art. 3 Abs. 4 addresses evidence from outside the
+        # EU/EEA; someone holding a German degree is not measured against it, and telling them they
+        # failed a condition written for other qualifications would be false about their own case.
+        verdict = evaluate_pathway(
+            "de.eu-blue-card",
+            self._rules(),
+            [_qualified_in("DE")],
+            AS_OF,
+            destination="DE",
+        )
+
+        assert {r.result for r in verdict.requirements} == {"not_applicable"}
+        assert verdict.blockers == ()
+
+    def test_someone_who_has_not_said_where_they_qualified_is_asked(self) -> None:
+        verdict = evaluate_pathway("de.eu-blue-card", self._rules(), [], AS_OF, destination="DE")
+
+        assert verdict.status == "undetermined"
+        assert ORIGIN_FACT_KEY in verdict.needs_from_user
