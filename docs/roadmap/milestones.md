@@ -697,10 +697,17 @@ licence-gated career would have received the visa answer. **#109 wired it** (`20
 `licence_gated` is read from the person's target instead of being an optional argument nobody passed,
 held by two unit tests and six integration tests against real PostgreSQL. The guard fires.
 
-**That is the guard working, not recognition becoming answerable.** Retrieval is **still pathway-only**,
-so no `recognition` row reaches the evaluator even where one is ingested — and none is. A licence-gated
-profession still returns `unknown`, and will until **origin-scoped recognition rules are sourced and
-ingested** under ADR-0029. Widening retrieval is that ADR's follow-up, not this fix.
+**That is the guard working, not recognition becoming answerable.** Retrieval was **pathway-only**, so
+no `recognition` row reached the evaluator even where one was ingested — and none is.
+
+**Retrieval was widened on 2026-08-21** (ADR-0029's second follow-up). The gateway now gathers three
+sets rather than one: the pathway's rules, the destination's rules for the career's profession, and the
+origin state's own duties. A recognition row reaches the evaluator where one exists.
+
+**A licence-gated profession still returns `unknown`**, and two things stand between it and a real
+verdict: the evaluator does not yet match `applies_to.origin_jurisdiction` to a person's origin, and
+**no origin-scoped recognition rule has been sourced or ingested**. The second is the expensive half.
+Neither is softened by the first two being done.
 
 ---
 

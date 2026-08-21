@@ -33,3 +33,26 @@ export function activePathways(db: Kysely<Database>): Promise<PathwayRow[]> {
     .orderBy('pathway_id')
     .execute();
 }
+
+/**
+ * One pathway, by its stable id.
+ *
+ * Exists because a destination is a **fact about the pathway**, not something a caller should infer
+ * from the rules it happens to return. An eligibility read needs it to ask the second question
+ * ADR-0029 introduces — *which of this profession's rules does this destination impose?* — and
+ * reading it off the first requirement row would break the moment a pathway has no rules ingested,
+ * which is exactly the case where the answer still has to be honest.
+ *
+ * Not filtered on `is_active`: a verdict is given as of a date, and a pathway retired since then
+ * still has to be explicable.
+ */
+export function pathwayById(
+  db: Kysely<Database>,
+  pathwayId: string,
+): Promise<PathwayRow | undefined> {
+  return db
+    .selectFrom('immigration_pathways')
+    .select(['pathway_id', 'jurisdiction', 'name', 'description', 'quota', 'is_active'])
+    .where('pathway_id', '=', pathwayId)
+    .executeTakeFirst();
+}

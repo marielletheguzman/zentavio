@@ -220,8 +220,17 @@ and needs no new concept.
 **Follow-up work.**
 
 - Add `qualification_awarded_in` to `person_fact_kinds`, with its prompt and rationale, `sensitive`.
-- Extend `requirementsAsOf` with an origin scope; change the gateway to gather across domains and to
-  pass `licence_gated` from `careers.licence_gated`.
+- ~~**Extend `requirementsAsOf` with an origin scope; change the gateway to gather across domains**~~
+  **Done** — 2026-08-21. The scope gained `imposedBy` and `includeProfessionless`, and the gateway
+  now runs three reads instead of one: the pathway's rules, the destination's rules for the career's
+  profession, and the origin state's own duties, merged by row id. `licence_gated` was already
+  passed from `careers.licence_gated` by #109. **Retrieval does not filter on `applies_to`** and
+  must not: an absent origin key means the rule applies regardless, so a SQL predicate on it would
+  drop exactly the rules that apply to everybody. Held by four repository tests on the compiled SQL,
+  six gateway tests on which rules reach the evaluator, and eight integration tests against real
+  PostgreSQL. **A recognition row now reaches the evaluator** — which does not yet know how to match
+  one to a person's origin. That is the next item, and until it lands a licence-gated profession
+  still returns `unknown`.
 - Teach the evaluator `applies_to.origin_jurisdiction` / `destination_jurisdiction`, with the same
   absent-means-broader rule as `route`.
 - ~~**Wire and test the licence-gated guard end to end**~~ **Done** — #109. `licence_gated` is read

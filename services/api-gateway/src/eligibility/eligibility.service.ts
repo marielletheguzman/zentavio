@@ -21,6 +21,7 @@ import type { Kysely } from 'kysely';
 import {
   currentFacts,
   licenceScopeForUser,
+  pathwayById,
   requirementsAsOf,
   type Database,
 } from '@zentavio/db';
@@ -53,6 +54,29 @@ function toEmployability(gap: GapResponseWire, asOf: string): Readonly<Record<st
     reason: gap.reason,
     as_of: asOf,
   };
+}
+
+/** One row as `requirementsAsOf` returns it. Named so the gather can say what it carries. */
+type RequirementRow = Awaited<ReturnType<ReturnType<typeof requirementsAsOf>['execute']>>[number];
+
+/**
+ * The country a person's qualification was awarded in, if they have told us.
+ *
+ * `undefined` when unanswered, and that is not a failure: no origin rules are gathered, the
+ * recognition question stays unresolved, and `needs_input` names `qualification_awarded_in` as what
+ * would resolve it. Guessing an origin from anything else — a résumé's addresses, a nationality we
+ * do not hold — would be inventing the fact that decides which rules apply to somebody.
+ *
+ * Trimmed and upper-cased **for the query only**, because `requirements.jurisdiction` stores
+ * `PH` and a person who typed `ph` should not silently match nothing. This is not the
+ * `applies_to.origin_jurisdiction` matching, which is ADR-0029's third follow-up and lives in the
+ * evaluator.
+ */
+function originOf(facts: Awaited<ReturnType<typeof currentFacts>>): string | undefined {
+  const fact = facts.find((candidate) => candidate.kind_key === 'qualification_awarded_in');
+  if (fact === undefined || typeof fact.value !== 'string') return undefined;
+  const code = fact.value.trim().toUpperCase();
+  return code === '' ? undefined : code;
 }
 
 /**
@@ -141,9 +165,77 @@ export class EligibilityService {
     return { kind: 'unavailable', reason: outcome.reason };
   }
 
+  /**
+   * The three sets of rules a person is actually subject to (ADR-0029).
+   *
+   * Retrieval used to ask one question — *what does this pathway require?* — and that is only the
+   * immigration third of it. A Filipino nurse moving to Germany is subject to:
+   *
+   * * the **pathway's** rules, whatever her profession
+   * * the **destination's rules for her profession** — German nursing recognition, which no
+   *   pathway-scoped query returns because a recognition row carries a profession and no pathway
+   * * the **origin state's own duties** — a Philippine clearance, imposed by `PH` and invisible to
+   *   every query scoped to `DE`
+   *
+   * Missing the second is what made a licence-gated verdict unanswerable: `licence_gated` reached
+   * the evaluator (#109) with no `recognition` row to reason about, so the guard fired on an empty
+   * set. This widens the set. It does **not** decide anything about the rules it returns.
+   *
+   * **Nothing here filters on the person's origin.** Whether a gathered rule applies to somebody
+   * with a Philippine qualification is `applies_to.origin_jurisdiction`, an absent key means it
+   * applies regardless, and that matching belongs to the evaluator — ADR-0029's third follow-up,
+   * deliberately not this one. Gathering more than applies is safe; the evaluator discards. Failing
+   * to gather is not: a rule never fetched cannot be discarded, and its absence looks like
+   * compliance.
+   */
+  async #gather(
+    pathwayRules: readonly RequirementRow[],
+    facts: Awaited<ReturnType<typeof currentFacts>>,
+    licence: Awaited<ReturnType<typeof licenceScopeForUser>>,
+    pathway: Awaited<ReturnType<typeof pathwayById>>,
+    asOf: string,
+  ): Promise<RequirementRow[]> {
+    const profession = licence?.profession ?? undefined;
+    const destination = pathway?.jurisdiction;
+    const origin = originOf(facts);
+
+    const [professionRules, originRules] = await Promise.all([
+      // The destination's rules for this profession. Scoped to the destination so Luxembourg's
+      // nursing rules cannot arrive in a German verdict, and exact on profession so another
+      // occupation's recognition rules cannot either.
+      profession !== undefined && destination !== undefined
+        ? requirementsAsOf(this.#db, { jurisdiction: destination, profession }, asOf).execute()
+        : [],
+      // The origin state's duties. Widened to rules naming no profession, because an
+      // overseas-employment clearance usually applies to every departing worker and dropping those
+      // rows would tell the person nothing about a step they still have to take.
+      origin !== undefined
+        ? requirementsAsOf(
+            this.#db,
+            profession === undefined
+              ? { jurisdiction: origin, imposedBy: 'origin' }
+              : { jurisdiction: origin, imposedBy: 'origin', profession, includeProfessionless: true },
+            asOf,
+          ).execute()
+        : [],
+    ]);
+
+    // A rule can be reached by more than one gather — a destination recognition rule for the
+    // profession is also, on some pathways, a pathway rule. Sent twice it would be evaluated twice
+    // and could be counted twice in a blocker list, so identity is the row's `id` and first arrival
+    // wins. Order is stable rather than meaningful: the evaluator does not read order, and a
+    // deterministic sequence is what makes a diff of two responses legible.
+    const byId = new Map<string, RequirementRow>();
+    for (const rule of [...pathwayRules, ...professionRules, ...originRules]) {
+      if (!byId.has(rule.id)) byId.set(rule.id, rule);
+    }
+
+    return [...byId.values()].sort((a, b) => a.requirement_id.localeCompare(b.requirement_id));
+  }
+
   /** Everything the evaluator needs, read once so both routes send identical inputs. */
   async #inputs(userId: string, pathwayId: string, asOf: string) {
-    const [rules, facts, licence] = await Promise.all([
+    const [pathwayRules, facts, licence, pathway] = await Promise.all([
       requirementsAsOf(this.#db, { pathwayId }, asOf).execute(),
       currentFacts(this.#db, userId),
       // Read here rather than accepted as an argument. It used to be an optional parameter, and
@@ -151,7 +243,10 @@ export class EligibilityService {
       // profession a visa-only verdict could not fire. An input that must never be omitted does
       // not belong in a signature that lets you omit it.
       licenceScopeForUser(this.#db, userId),
+      pathwayById(this.#db, pathwayId),
     ]);
+
+    const rules = await this.#gather(pathwayRules, facts, licence, pathway, asOf);
 
     return {
       pathway_id: pathwayId,

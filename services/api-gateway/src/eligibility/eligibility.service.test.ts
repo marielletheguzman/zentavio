@@ -6,21 +6,30 @@ import type { EligibilityClient, EligibilityOutcome } from './eligibility-client
 import { EligibilityService } from './eligibility.service.ts';
 
 /**
- * A database stub shaped like the three calls the service makes. Compile-only: the real queries are
+ * A database stub shaped like the four reads the service makes. Compile-only: the real queries are
  * covered by the integration suite, and what is under test here is the taxonomy — which failures
- * are answers and which are ours.
+ * are answers and which are ours — plus which rules get gathered.
  *
- * `licence` is the third: `licenceScopeForUser` joins `careers`, so the stub grows an `innerJoin`
- * branch. `undefined` is a person with no target, which is the common case and **not** the same as
- * a track that is not gated.
+ * **Branches on the table name**, because ADR-0029 made that distinction load-bearing: retrieval is
+ * now three requirement reads rather than one, and a stub that answered every `selectAll` with the
+ * same array could not tell a pathway rule from a recognition rule. It answered `facts` to both
+ * before, which is why `rules` was dead.
+ *
+ * `licenceScopeForUser` joins `careers`, so `user_targets` grows an `innerJoin` branch.
+ * `undefined` is a person with no target — the common case, and **not** the same as a track that is
+ * not gated.
  */
 function stubDb(
   rules: unknown[] = [],
   facts: unknown[] = [],
   licence?: { readonly profession: string | null; readonly licenceGated: boolean },
+  pathway?: { readonly pathway_id: string; readonly jurisdiction: string },
+  /** Answers the profession and origin gathers, keyed by the `jurisdiction` each one scopes to. */
+  byJurisdiction: Readonly<Record<string, unknown[]>> = {},
 ): Kysely<Database> {
-  const chain = <T>(result: T) => ({
-    where: function where() {
+  const chain = <T>(result: T, onWhere?: (column: string, value: unknown) => void) => ({
+    where: function where(column: unknown, _operator?: unknown, value?: unknown) {
+      if (typeof column === 'string' && onWhere !== undefined) onWhere(column, value);
       return this;
     },
     orderBy: function orderBy() {
@@ -33,13 +42,36 @@ function stubDb(
     executeTakeFirst: async () => result,
   });
 
+  /**
+   * A requirements read answers by what it scoped to: a `pathway_id` is the pathway gather, a
+   * `jurisdiction` is one of the two ADR-0029 added. Captured off the `where` calls because that is
+   * the only place the distinction exists.
+   */
+  const requirementsChain = () => {
+    let jurisdiction: string | undefined;
+    let scopedToPathway = false;
+    const link: Record<string, unknown> = {
+      where(column: unknown, _operator?: unknown, value?: unknown) {
+        if (column === 'pathway_id') scopedToPathway = true;
+        if (column === 'jurisdiction' && typeof value === 'string') jurisdiction = value;
+        return link;
+      },
+      orderBy: () => link,
+      limit: () => link,
+      execute: async () =>
+        scopedToPathway ? rules : jurisdiction === undefined ? [] : byJurisdiction[jurisdiction] ?? [],
+      executeTakeFirst: async () => undefined,
+    };
+    return link;
+  };
+
   return {
-    selectFrom: () => ({
-      selectAll: () => chain(facts),
+    selectFrom: (table: string) => ({
+      selectAll: () => (table === 'requirements' ? requirementsChain() : chain(facts)),
       // `licenceScopeForUser` joins careers onto the target.
       innerJoin: () => ({ select: () => chain(licence) }),
-      // `requirementsAsOf` builds through the same chain.
-      _rules: rules,
+      // `pathwayById` selects columns directly off the table.
+      select: () => chain(pathway),
     }),
   } as unknown as Kysely<Database>;
 }
@@ -161,5 +193,147 @@ describe('EligibilityService', () => {
         ],
       }),
     );
+  });
+});
+
+/**
+ * ADR-0029's retrieval half: the person is subject to three sets of rules, and asking only what the
+ * pathway requires returns one of them. These assert which rules reach the evaluator — never what
+ * it decides about them.
+ */
+describe('EligibilityService gathers across domains (ADR-0029)', () => {
+  const rule = (id: string, requirementId: string, domain: string) => ({
+    id,
+    requirement_id: requirementId,
+    domain,
+    imposed_by: domain === 'employment_clearance' ? 'origin' : 'destination',
+    kind: 'eligibility',
+    evaluation: 'boolean',
+    value: null,
+    applies_to: {},
+    needs_input: [],
+    authority: 'An authority',
+    source_url: 'https://official.invalid/x',
+    effective_from: '2026-01-01',
+    effective_to: null,
+    refresh_after: null,
+    contested: false,
+    contested_note: null,
+  });
+
+  const nurse = { profession: 'registered-nurse', licenceGated: true };
+  const germany = { pathway_id: 'de.eu-blue-card', jurisdiction: 'DE' };
+  const qualifiedInPh = [
+    { kind_key: 'qualification_awarded_in', value: 'PH', basis: 'self_reported' },
+  ];
+
+  const idsSentTo = (client: EligibilityClient): string[] => {
+    const call = vi.mocked(client.evaluate).mock.calls[0]?.[0] as
+      | { requirements: { requirement_id: string }[] }
+      | undefined;
+    return (call?.requirements ?? []).map((requirement) => requirement.requirement_id);
+  };
+
+  it("gathers the destination's rules for the person's profession, not just the pathway's", async () => {
+    // The half that made a licence-gated verdict unanswerable: `licence_gated` reached the
+    // evaluator with no recognition rule to reason about, because a recognition row carries a
+    // profession and no pathway, so no pathway-scoped query could ever return it.
+    const client = stubClient({ kind: 'evaluated', response: verdict });
+    const service = new EligibilityService(
+      stubDb(
+        [rule('1', 'de.eu-blue-card.salary-threshold', 'immigration')],
+        [],
+        nurse,
+        germany,
+        { DE: [rule('2', 'de.nursing.licence-recognition', 'recognition')] },
+      ),
+      client,
+    );
+
+    await service.evaluate('user-1', 'de.eu-blue-card', '2026-06-01');
+
+    expect(idsSentTo(client)).toEqual([
+      'de.eu-blue-card.salary-threshold',
+      'de.nursing.licence-recognition',
+    ]);
+  });
+
+  it("gathers the origin state's own duties once the person says where they qualified", async () => {
+    // A Philippine clearance is imposed by PH and is invisible to every query scoped to DE.
+    const client = stubClient({ kind: 'evaluated', response: verdict });
+    const service = new EligibilityService(
+      stubDb([rule('1', 'de.eu-blue-card.salary-threshold', 'immigration')], qualifiedInPh, nurse, germany, {
+        DE: [],
+        PH: [rule('3', 'ph.overseas-employment.clearance', 'employment_clearance')],
+      }),
+      client,
+    );
+
+    await service.evaluate('user-1', 'de.eu-blue-card', '2026-06-01');
+
+    expect(idsSentTo(client)).toContain('ph.overseas-employment.clearance');
+  });
+
+  it('gathers no origin rules when the person has not said where they qualified', async () => {
+    // Not a failure. No origin is gathered, the question stays open, and `needs_input` is what
+    // names it. Inferring an origin from anything else would be inventing the fact that decides
+    // which rules apply to somebody.
+    const client = stubClient({ kind: 'evaluated', response: verdict });
+    const service = new EligibilityService(
+      stubDb([rule('1', 'de.eu-blue-card.salary-threshold', 'immigration')], [], nurse, germany, {
+        DE: [],
+        PH: [rule('3', 'ph.overseas-employment.clearance', 'employment_clearance')],
+      }),
+      client,
+    );
+
+    await service.evaluate('user-1', 'de.eu-blue-card', '2026-06-01');
+
+    expect(idsSentTo(client)).not.toContain('ph.overseas-employment.clearance');
+  });
+
+  it('matches the origin jurisdiction whatever case the person typed', async () => {
+    // The kind is free text, so `ph` is a real answer. Upper-cased for the query only — this is not
+    // the `applies_to.origin_jurisdiction` matching, which is the evaluator's.
+    const client = stubClient({ kind: 'evaluated', response: verdict });
+    const service = new EligibilityService(
+      stubDb([], [{ kind_key: 'qualification_awarded_in', value: ' ph ', basis: 'self_reported' }], nurse, germany, {
+        DE: [],
+        PH: [rule('3', 'ph.overseas-employment.clearance', 'employment_clearance')],
+      }),
+      client,
+    );
+
+    await service.evaluate('user-1', 'de.eu-blue-card', '2026-06-01');
+
+    expect(idsSentTo(client)).toContain('ph.overseas-employment.clearance');
+  });
+
+  it('sends a rule once when two gathers reach it', async () => {
+    // Sent twice it would be evaluated twice and could be counted twice in a blocker list.
+    const client = stubClient({ kind: 'evaluated', response: verdict });
+    const shared = rule('2', 'de.nursing.licence-recognition', 'recognition');
+    const service = new EligibilityService(
+      stubDb([shared], [], nurse, germany, { DE: [shared] }),
+      client,
+    );
+
+    await service.evaluate('user-1', 'de.eu-blue-card', '2026-06-01');
+
+    expect(idsSentTo(client)).toEqual(['de.nursing.licence-recognition']);
+  });
+
+  it('gathers only the pathway when the person has no target profession', async () => {
+    const client = stubClient({ kind: 'evaluated', response: verdict });
+    const service = new EligibilityService(
+      stubDb([rule('1', 'de.eu-blue-card.salary-threshold', 'immigration')], [], undefined, germany, {
+        DE: [rule('2', 'de.nursing.licence-recognition', 'recognition')],
+      }),
+      client,
+    );
+
+    await service.evaluate('user-1', 'de.eu-blue-card', '2026-06-01');
+
+    expect(idsSentTo(client)).toEqual(['de.eu-blue-card.salary-threshold']);
   });
 });

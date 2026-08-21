@@ -191,6 +191,57 @@ describe('as-of queries', () => {
     expect(compiled.parameters).toContain('registered-nurse');
   });
 
+  it('scopes by the side that imposed the rule, for an origin state’s own duties', () => {
+    // An overseas-employment clearance is imposed by the Philippines. Nothing scoped to the
+    // destination can see it, however complete the destination's rules are.
+    const compiled = requirementsAsOf(
+      db,
+      { jurisdiction: 'PH', imposedBy: 'origin' },
+      '2026-08-21',
+    ).compile();
+
+    expect(compiled.sql).toContain('"imposed_by" =');
+    expect(compiled.parameters).toContain('origin');
+    expect(compiled.parameters).toContain('PH');
+  });
+
+  it('widens a profession scope to rules naming no profession, when asked', () => {
+    // The origin state's duties often apply to every departing worker rather than to nurses in
+    // particular. Matching the profession exactly drops those rows, and the person is told nothing
+    // about a clearance they still have to obtain.
+    const compiled = requirementsAsOf(
+      db,
+      { jurisdiction: 'PH', profession: 'registered-nurse', includeProfessionless: true },
+      '2026-08-21',
+    ).compile();
+
+    expect(compiled.sql).toContain('"profession" is null');
+    expect(compiled.parameters).toContain('registered-nurse');
+  });
+
+  it('keeps the profession scope exact unless widening is asked for', () => {
+    const compiled = requirementsAsOf(
+      db,
+      { jurisdiction: 'DE', profession: 'registered-nurse' },
+      '2026-08-21',
+    ).compile();
+
+    expect(compiled.sql).not.toContain('"profession" is null');
+  });
+
+  it('never filters on applies_to, because absent means broader', () => {
+    // ADR-0029: origin lives in `applies_to.origin_jurisdiction`, and a rule declaring none applies
+    // whatever the counterpart is. A SQL filter on that key would drop precisely the rules that
+    // apply to everybody. Matching is the evaluator's job; this query gathers candidates.
+    const compiled = requirementsAsOf(
+      db,
+      { jurisdiction: 'DE', profession: 'registered-nurse', imposedBy: 'destination' },
+      '2026-08-21',
+    ).compile();
+
+    expect(compiled.sql).not.toContain('applies_to');
+  });
+
   it('omits a scope filter that was not supplied', () => {
     const compiled = requirementsAsOf(db, {}, '2026-07-28').compile();
     expect(compiled.sql).not.toContain('"pathway_id" =');

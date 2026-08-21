@@ -10,7 +10,7 @@
  */
 
 import type { Insertable, Kysely } from 'kysely';
-import type { Database, RequirementsTable } from '../schema.ts';
+import type { Database, ImposedByColumn, RequirementsTable } from '../schema.ts';
 
 export class RequirementInvariantError extends Error {
   readonly rule: string;
@@ -127,10 +127,41 @@ export function insertRequirement(db: Kysely<Database>, row: NewRequirement) {
  *
  * Not "current": every response carries `asOf`, and a verdict given last year must still be
  * explicable against the rules as they stood then (`entities/requirement.md`).
+ *
+ * ## What this deliberately does not filter on
+ *
+ * **`applies_to` is never touched here** (ADR-0029). Origin scoping lives in
+ * `applies_to.origin_jurisdiction`, and an absent key means the rule applies whatever the
+ * counterpart is — "absent means broader, not narrower", the same reading `route` already gets.
+ * A SQL filter on that key would drop exactly the rules that apply to everybody, which is the
+ * opposite of what scoping is for. Retrieval gathers candidates; the evaluator matches them.
+ *
+ * So the scope here is the **structural** one — which pathway, which profession, which
+ * jurisdiction, and which side imposed the rule — and nothing about the person.
  */
 export function requirementsAsOf(
   db: Kysely<Database>,
-  scope: { readonly pathwayId?: string; readonly profession?: string; readonly jurisdiction?: string },
+  scope: {
+    readonly pathwayId?: string;
+    readonly profession?: string;
+    readonly jurisdiction?: string;
+    /**
+     * Which side imposes the rule. `origin` is how the origin state's own duties are gathered —
+     * an overseas-employment clearance is imposed by the Philippines and is invisible to any query
+     * scoped to the destination.
+     */
+    readonly imposedBy?: ImposedByColumn;
+    /**
+     * Widen `profession` to also return rules that name no profession.
+     *
+     * An origin state's duties frequently apply to every departing worker rather than to nurses in
+     * particular, and those rows carry `profession IS NULL`. Matching the profession exactly would
+     * drop them silently — the person would be told nothing about a clearance they still have to
+     * obtain. Off by default: a destination's recognition lookup wants the profession's own rules
+     * and nothing else.
+     */
+    readonly includeProfessionless?: boolean;
+  },
   asOf: string,
 ) {
   let query = db
@@ -142,8 +173,19 @@ export function requirementsAsOf(
     );
 
   if (scope.pathwayId !== undefined) query = query.where('pathway_id', '=', scope.pathwayId);
-  if (scope.profession !== undefined) query = query.where('profession', '=', scope.profession);
+
+  if (scope.profession !== undefined) {
+    const profession = scope.profession;
+    query =
+      scope.includeProfessionless === true
+        ? query.where((eb) =>
+            eb.or([eb('profession', '=', profession), eb('profession', 'is', null)]),
+          )
+        : query.where('profession', '=', profession);
+  }
+
   if (scope.jurisdiction !== undefined) query = query.where('jurisdiction', '=', scope.jurisdiction);
+  if (scope.imposedBy !== undefined) query = query.where('imposed_by', '=', scope.imposedBy);
 
   return query;
 }
