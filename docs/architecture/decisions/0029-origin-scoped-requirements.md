@@ -254,8 +254,11 @@ and needs no new concept.
   the same semantics against its evaluation contract, and its numbered pass now has nine steps
   rather than eight — placement is step 2, before evaluation. The licence-gated invariant is
   restated as needing a recognition row **that could be about this person**.
-- A `ph.md` origin reference file (ADR-0010 follow-up, still open), naming the authority per
-  origin-side domain — sourced, not assumed.
+- ~~**A `ph.md` origin reference file (ADR-0010 follow-up), naming the authority per origin-side
+  domain — sourced, not assumed**~~ **Done** — 2026-08-21. See ADR-0010's follow-up for what is
+  sourced and what stays `unknown`. It establishes the **Philippine** side only: PRC decides who is a
+  registered nurse in the Philippines, and says nothing about whether a destination recognises that
+  registration. **That is the remaining item**, and it is destination-side evidence.
 - Per-profession recognition research for one destination and one profession, as the vertical slice
   that proves the model before it is repeated.
 

@@ -149,8 +149,12 @@ collapses to a yes or a no.
   record of what was renamed; it is deliberately not a working link.
 - Define the `jsonb` shape per domain, documented in the entity file.
 - Extend the evaluator to the ordered pass above, with the binding constraint named.
-- **A `ph.md` origin reference file**, listing which authority is authoritative for each origin-side
-  domain — sourced, not assumed.
+- ~~**A `ph.md` origin reference file**, listing which authority is authoritative for each
+  origin-side domain — sourced, not assumed.~~ **Done** — 2026-08-21. Sourced for `recognition`
+  (PRC, and R.A. 9173 read in full for nursing) and `authentication` (the DFA Authentication
+  Division, from HCCH's own designation record). `employment_clearance` names DMW and R.A. 11641 on
+  the Bureau of Immigration's attestation, because DMW's site does not render. `credential` is
+  `unknown` — CHED refused the fetch, and writing it in anyway would be invented coverage.
 - Per-profession recognition research for the launch destinations, starting with whichever track the MVP
   chooses.
 - Lift the interim `unknown` rule for a profession only once its recognition rules are ingested and dated.
