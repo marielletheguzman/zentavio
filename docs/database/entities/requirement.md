@@ -31,7 +31,7 @@ CREATE TABLE requirements (
 
   kind            text         NOT NULL,
   value           jsonb        NOT NULL,              -- typed by kind; amounts carry currency and period
-  applies_to      jsonb        NOT NULL DEFAULT '{}', -- occupation lists, qualification levels, age bands
+  applies_to      jsonb        NOT NULL DEFAULT '{}', -- who the rule is about; see the scope keys below
   domain_detail   jsonb        NOT NULL DEFAULT '{}', -- documented per domain; see below
   evaluation      text         NOT NULL,              -- 'numeric-gte' | 'set-member' | 'boolean' | 'document-present' | 'manual'
   needs_input     text[]       NOT NULL DEFAULT '{}', -- person facts required to evaluate it
@@ -116,6 +116,70 @@ resolved by picking the friendlier reading.
 **`needs_input`.** The person facts required to evaluate this requirement. It produces `needsFromUser` in a
 response — the most actionable field we return, because it converts an `undetermined` into a definite answer
 with one input.
+
+## `applies_to` scope keys
+
+`applies_to` answers **who a rule is about**. Four keys are read by the evaluator; anything else in
+the object is carried for a caller's benefit and ignored.
+
+| Key | Type | Means | Decided by |
+|---|---|---|---|
+| `route` | string | the way into the pathway this rule belongs to | ADR-0024 |
+| `anyOf` | string | the alternatives group this condition is one member of | ADR-0024 amendment |
+| `origin_jurisdiction` | array of ISO 3166-1 alpha-2 | the origins whose qualifications this rule is written for | ADR-0029 |
+| `destination_jurisdiction` | array of ISO 3166-1 alpha-2 | the destinations this rule is written for | ADR-0029 |
+
+```jsonc
+applies_to: { "origin_jurisdiction": ["PH"] }        // a destination's recognition rule for Philippine qualifications
+applies_to: { "destination_jurisdiction": ["DE"] }   // an origin state's clearance whose terms depend on the destination
+applies_to: { }                                       // applies whatever the counterpart is
+```
+
+### Absent means broader, never narrower
+
+A rule declaring no scope key applies regardless of the counterpart. That is the conservative
+reading, and it is why ADR-0029 needed **no migration and no backfill**: every row ingested before
+it declares neither key and keeps applying to everybody.
+
+A value that cannot be read — a number, an empty list, a list of numbers — is treated as absent for
+the same reason. A typo must make a rule apply to more people, never to none: a rule that quietly
+applies to nobody is invisible in a way a wrong verdict is not.
+
+A bare string is accepted as the one-element case. A connector writing `"PH"` where it meant
+`["PH"]` expressed the same intent.
+
+### The origin is the qualification's country, not the passport
+
+The person fact compared against `origin_jurisdiction` is `qualification_awarded_in`, **not**
+nationality. A citizen of one country holding another's nursing degree has that degree's recognition
+problem; a citizen of the country granting recognition holding a foreign degree still has it.
+Recognition follows the qualification. Nationality is a different fact for a different purpose and is
+not stored (`entities/person-fact.md`).
+
+`destination_jurisdiction` is compared against the pathway's own jurisdiction, which is a fact about
+the pathway rather than anything the person says.
+
+### Placement has three outcomes
+
+| Situation | Result |
+|---|---|
+| the key is absent, or contains the person's value | the rule is evaluated |
+| the key is present and the person is outside it | `not_applicable` — never a rule they failed |
+| the key is present and the person's value is unknown | `undetermined`, naming what would place it |
+
+The third is why a scope key is not a filter. Assuming an unplaceable rule applies invents a hurdle;
+assuming it does not invents compliance.
+
+### Not enforceable by a `CHECK`, so enforced where it can be
+
+A jsonb key has no constraint behind it: a misspelled `origin_jursidiction` matches nobody and fails
+silently. That cost was accepted knowingly for `route` and again here. It is mitigated by validation
+at insert (`assertValid`), by connector golden tests, and by the absent-means-broader reading, which
+makes the failure mode "applies to everybody" rather than "applies to no one".
+
+**Retrieval never queries these keys.** Requirements are gathered by pathway, profession,
+jurisdiction and imposing side; placement happens in the evaluator. A SQL predicate on a scope key
+would drop exactly the rules declaring none — the ones that apply to everybody.
 
 ## `domain_detail` per domain
 
@@ -290,7 +354,9 @@ a regression rather than a parallel solution.
 - `contested` requires a note.
 - Every response carries `asOf` and the disclaimer — information, never advice.
 - No inference across jurisdictions, professions, or domains.
-- A licence-gated profession with no recognition row returns `unknown`.
+- A licence-gated profession with no recognition row **that could be about this person** returns
+  `unknown`. A recognition row scoped to other origins does not count; one that cannot be placed yet
+  does, and is `undetermined` naming the question (ADR-0029).
 
 ## Related
 
