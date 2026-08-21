@@ -34,6 +34,15 @@ export interface PersonFactKindSeed {
  * Deliberately short. Each entry is a question a real ingested rule asks today, and nothing is
  * added in anticipation — a catalogue entry with no rule behind it is a question we cannot justify
  * asking, and `rationale` is where that justification has to be written down.
+ *
+ * **One entry is currently an exception, and it is named rather than hidden.**
+ * `qualification_awarded_in` has no ingested rule reading it yet: ADR-0029 sequences the mechanism
+ * — the fact, the origin scope on retrieval, the evaluator's matching — ahead of the recognition
+ * research that produces the first rule, because the research is the expensive half and the shape
+ * has to exist for it to land into. The exception is bounded two ways: nothing renders the question
+ * until a rule names it in `needs_input`, so no one is asked it in the meantime; and if the M5
+ * recognition slice does not land, this entry comes out again rather than sitting here as a
+ * question with no rule to justify it.
  */
 export const PERSON_FACT_KINDS: readonly PersonFactKindSeed[] = [
   {
@@ -167,6 +176,29 @@ export const PERSON_FACT_KINDS: readonly PersonFactKindSeed[] = [
       'AIG art. 23 admits managers, specialists and other qualified workers, and the Weisungen ' +
       '(Ziff. 4.3.5) accept qualification at several levels depending on the occupation.',
     sensitive: false,
+    allowedValues: [],
+  },
+  {
+    key: 'qualification_awarded_in',
+    valueType: 'string',
+    unit: null,
+    // ISO 3166-1 alpha-2, and deliberately **not** nationality (ADR-0029). A Filipino citizen
+    // holding a German nursing degree has no recognition problem; a German citizen holding a
+    // Philippine one does. Recognition follows the qualification, so the question asks where the
+    // qualification was awarded and says so in those words — "your country" would be read as the
+    // passport by most people answering it.
+    prompt:
+      'In which country was your professional qualification awarded? Give the two-letter country ' +
+      'code, such as PH for the Philippines.',
+    rationale:
+      'A regulated profession is licensed at origin and re-assessed at destination, and which ' +
+      'recognition rules apply depends on where the qualification comes from rather than on ' +
+      'citizenship (ADR-0029). Without it a recognition rule cannot be matched to you, and the ' +
+      'verdict stays undetermined with this question named as what would resolve it.',
+    // Where a qualification was awarded is close enough to origin and ethnicity to deserve the
+    // flag; `person-fact.md` routes `sensitive` kinds to column-level encryption in the production
+    // posture.
+    sensitive: true,
     allowedValues: [],
   },
   {

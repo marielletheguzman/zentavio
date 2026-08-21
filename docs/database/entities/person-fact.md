@@ -4,7 +4,8 @@
 > where the answer goes.
 
 `requirements.needs_input` names what a rule must know. The EU Blue Card salary threshold needs
-`expected_gross_annual_salary_eur`; a recognition rule will need a qualification level. That array
+`expected_gross_annual_salary_eur`; a recognition rule needs `qualification_awarded_in`, because
+which recognition rules apply depends on where the qualification comes from (ADR-0029). That array
 produces `needsFromUser` in an eligibility response, which is the most actionable field this product
 returns: it converts an `undetermined` verdict into a definite one with a single input.
 
@@ -42,10 +43,19 @@ The line is **status versus circumstance**:
 A rule may need facts from both. The evaluator reads them through separate repositories, and only
 `user_immigration_facts` carries the encryption boundary.
 
-> **This boundary was drawn when `person_facts` was built (2026-08-04) and is worth confirming.**
-> The ambiguous case is qualification recognition, which `user.md` lists under
+> **This boundary was drawn when `person_facts` was built (2026-08-04), and the ambiguous case was
+> settled on 2026-08-21.** That case was qualification recognition, which `user.md` lists under
 > `user_immigration_facts` as `qualification-recognition` while a `credential`-domain requirement
 > would naturally read it as an ordinary input.
+>
+> ADR-0029 splits it along the same status-versus-circumstance line. **Where a qualification was
+> awarded is circumstance**, so `qualification_awarded_in` is an ordinary catalogue kind here,
+> flagged `sensitive` — a rule compares against it exactly as it compares against expected salary.
+> **Recognition status — whether a licence has actually been granted — stays status**, and belongs
+> in `user_immigration_facts` when that table is built.
+>
+> Citizenship is not introduced by either. ADR-0029 declines it deliberately: recognition follows
+> the qualification, not the passport, and no ingested rule reads nationality yet.
 
 ### Why a catalogue rather than a `CHECK` constraint
 

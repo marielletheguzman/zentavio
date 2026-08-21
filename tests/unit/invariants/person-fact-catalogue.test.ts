@@ -112,3 +112,40 @@ describe('every catalogue kind can be asked and answered', () => {
     }
   });
 });
+
+/**
+ * ADR-0029's two decisions about this one kind, pinned. Both are the kind of thing that reads as a
+ * detail and is not: the first decides whose rules apply to you, and the second decides how the
+ * answer is stored and logged.
+ */
+describe('qualification_awarded_in carries ADR-0029 as written', () => {
+  const kind = PERSON_FACT_KINDS.find((seed) => seed.key === 'qualification_awarded_in');
+
+  it('exists, because retrieval and the evaluator are about to name it', () => {
+    expect(kind).toBeDefined();
+  });
+
+  it('is sensitive', () => {
+    // Where a qualification was awarded is close enough to origin and ethnicity to deserve the
+    // flag, and `sensitive` is what routes it to column-level encryption and out of logs.
+    expect(kind?.sensitive).toBe(true);
+  });
+
+  it('asks about the qualification rather than about the passport', () => {
+    // The distinction the whole fact exists for: a Filipino citizen with a German nursing degree
+    // has no recognition problem, and a German citizen with a Philippine one does. A prompt that
+    // says "nationality" or "citizenship" collects the wrong fact and matches the wrong rules.
+    const prompt = kind?.prompt.toLowerCase() ?? '';
+    expect(prompt).toContain('awarded');
+    expect(prompt).not.toContain('nationalit');
+    expect(prompt).not.toContain('citizen');
+  });
+
+  it('does not bring nationality in alongside it', () => {
+    // ADR-0029 declines to introduce nationality: no ingested rule reads it, and this repository
+    // does not declare a thing before its first reader. If that changes it changes deliberately,
+    // by editing this test.
+    const keys = PERSON_FACT_KINDS.map((seed) => seed.key);
+    expect(keys).not.toContain('nationality');
+  });
+});
