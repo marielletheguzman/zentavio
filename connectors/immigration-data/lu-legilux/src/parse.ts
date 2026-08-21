@@ -165,3 +165,73 @@ export function parseOperand(html: string): { readonly amount: number; readonly 
 export function computeThreshold(multiplier: number, average: number): number {
   return Math.round(multiplier * average * 100) / 100;
 }
+
+/**
+ * The qualification limbs of Art. 45 — the statute, not the règlement.
+ *
+ * **Art. 45 (1) 2. states one condition**: the applicant holds *"les qualifications
+ * professionnelles élevées"*. Art. 45 (2) d) then defines those as sanctioned **either** by a
+ * higher-education diploma **or** by *"compétences professionnelles élevées"*, and (2) f) gives
+ * that second limb two forms — an ICT one and a general one.
+ *
+ * Three alternatives, one condition. They become an `anyOf` group (ADR-0024 rule 10) rather than
+ * three routes, because they reach the same permit under the same salary rule, and rather than
+ * gates, because failing all three is `not_met` and not `not_applicable`.
+ */
+export interface ParsedQualification {
+  /** CITP-08 groups the ICT limb is open to — `133` and `25` as the statute lists them. */
+  readonly ictGroups: readonly string[];
+  /** Years of relevant experience the ICT limb requires. */
+  readonly ictYears: number | null;
+  /** The window those years must fall within. Part of the question, not a second rule. */
+  readonly ictWithinYears: number | null;
+  /** Years the general limb requires, for *"les autres professions"*. */
+  readonly otherYears: number | null;
+}
+
+/** French number words the statute uses for durations. A closed map — a guess here is a wrong rule. */
+const DURATION_WORDS: ReadonlyMap<string, number> = new Map([
+  ['trois', 3],
+  ['quatre', 4],
+  ['cinq', 5],
+  ['six', 6],
+  ['sept', 7],
+  ['huit', 8],
+]);
+
+function duration(word: string | undefined): number | null {
+  if (word === undefined) return null;
+  return DURATION_WORDS.get(word.trim().toLowerCase()) ?? null;
+}
+
+/**
+ * The CITP groups and durations of Art. 45 (2) f).
+ *
+ * Anchored on the statute's own phrases and never on position. The consolidated text carries
+ * amendment markers mid-phrase and enumerates the groups with their full French labels, so the
+ * codes are taken from the quoted group names — *«133 Managers, technologies …»* — rather than by
+ * scanning for digit runs, which would collect the article numbers around them.
+ */
+export function parseQualification(text: string): ParsedQualification {
+  const ictYears = duration(
+    /qui ont acquis au moins ([a-zà-ÿ]+) ans d’expérience professionnelle pertinente/.exec(text)?.[1],
+  );
+  const ictWithinYears = duration(
+    /au cours des ([a-zà-ÿ]+) années précédant la demande/.exec(text)?.[1],
+  );
+  const otherYears = duration(
+    /en ce qui concerne les autres professions[\s\S]{0,120}?au moins ([a-zà-ÿ]+) ans/.exec(text)?.[1],
+  );
+
+  // The groups as the statute quotes them, each opening with its code.
+  const ictGroups = [...text.matchAll(/«\s*(\d+)\s+[^»]*technologies de l’information/g)]
+    .map((match) => match[1])
+    .filter((code): code is string => code !== undefined);
+
+  return {
+    ictGroups: [...new Set(ictGroups)],
+    ictYears,
+    ictWithinYears,
+    otherYears,
+  };
+}

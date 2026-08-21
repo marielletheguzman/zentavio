@@ -38,7 +38,13 @@ import {
 } from '@zentavio/connectors-core';
 import type { SourcedRequirement } from '@zentavio/types';
 
-import { computeThreshold, parseFormula, parseOperand } from './parse.ts';
+import {
+  computeThreshold,
+  parseFormula,
+  parseOperand,
+  parseQualification,
+  toPlainText,
+} from './parse.ts';
 
 /** One instrument as fetched: the bytes, and which legal act they are. */
 export interface InstrumentRaw {
@@ -62,6 +68,13 @@ export interface LegiluxRaw extends Omit<InstrumentRaw, 'html'> {
   readonly formulaHtml: string;
   /** The règlement ministériel — the average the formula multiplies. */
   readonly operand: InstrumentRaw;
+  /**
+   * The loi itself — Art. 45, which states the qualification condition.
+   *
+   * A third instrument, because the thresholds and the qualification live in different acts: the
+   * règlement sets the salary, the statute says who may hold the card at all.
+   */
+  readonly statute: InstrumentRaw;
 }
 
 export const SOURCE_ID = 'lu-legilux';
@@ -246,6 +259,85 @@ export class LegiluxConnector implements Connector<LegiluxRaw, readonly SourcedR
       });
     }
 
+    // **The qualification condition — one condition, three ways to satisfy it (ADR-0024 rule 10).**
+    //
+    // Art. 45 (1) 2. asks for *"les qualifications professionnelles élevées"*; (2) d) says those
+    // are sanctioned by a diploma **or** by high professional skills; (2) f) gives that second
+    // limb an ICT form and a general one. All three reach the same permit under the same salary
+    // rule, so they are **not routes** — and failing all three is a failed requirement rather than
+    // a closed door, so they are **not gates**. They share one `anyOf` group.
+    //
+    // **No route.** Rule 2 makes a routeless requirement pathway-wide, evaluated as part of every
+    // route — which is exactly right: the qualification is required whichever salary threshold
+    // applies. The existing salary rows keep their routes untouched.
+    const qualification = parseQualification(toPlainText(raw.statute.html));
+
+    const statuteBase = {
+      ...base,
+      sourceUrl: raw.statute.sourceUrl,
+      retrievedAt: raw.statute.fetchedAt,
+      authorityUrl: `${HOST}/${raw.statute.eli}`,
+      appliesTo: { anyOf: 'qualification' },
+    };
+
+    rows.push({
+      ...statuteBase,
+      requirementId: 'lu.eu-blue-card.qualification.diploma',
+      kind: 'eligibility',
+      value: true,
+      domainDetail: {
+        legalBasis: 'Loi du 29 août 2008, art. 45, par. (2), points d) et e)',
+        // (2) e) defers recognition to the awarding institution's own state and sets a level floor.
+        // Carried as detail rather than modelled: it changes what the question *means*, and no
+        // per-origin rule follows from it — the same reading `de.md` records for Germany.
+        recognisedBy: 'l’État dans lequel l’établissement se situe',
+        minimumFrameworkLevel: 6,
+        minimumProgrammeYears: 3,
+      },
+      evaluation: 'boolean',
+      needsInput: ['has_recognised_academic_degree'],
+    });
+
+    if (qualification.ictGroups.length > 0 && qualification.ictYears !== null) {
+      rows.push({
+        ...statuteBase,
+        requirementId: 'lu.eu-blue-card.qualification.ict-experience',
+        kind: 'condition',
+        value: { amount: qualification.ictYears, unit: 'years' },
+        domainDetail: {
+          legalBasis: 'Loi du 29 août 2008, art. 45, par. (2), point f), tiret i)',
+          // The window is in the question, not a second rule: three years earned a decade ago does
+          // not qualify, and a bare total would quietly admit it.
+          acquiredWithinYears: qualification.ictWithinYears,
+          // Recorded, not modelled as a gate. A gate would close this alternative for everyone
+          // outside the two groups, and a closed alternative reads as `not_applicable` — which is
+          // right for a route and wrong here, because the person can still be told they failed the
+          // qualification condition overall. The occupation test belongs in the question's wording.
+          citpGroups: qualification.ictGroups,
+          classification: 'CITP (ISCO-08)',
+        },
+        evaluation: 'numeric-gte',
+        needsInput: ['years_relevant_experience_last_seven'],
+      });
+    }
+
+    if (qualification.otherYears !== null) {
+      rows.push({
+        ...statuteBase,
+        requirementId: 'lu.eu-blue-card.qualification.other-experience',
+        kind: 'condition',
+        value: { amount: qualification.otherYears, unit: 'years' },
+        domainDetail: {
+          legalBasis: 'Loi du 29 août 2008, art. 45, par. (2), point f), tiret ii)',
+          // **Luxembourg goes further than Germany here.** § 18g has no general experience route;
+          // this one admits any profession at five years.
+          appliesToProfessions: 'les autres professions',
+        },
+        evaluation: 'numeric-gte',
+        needsInput: ['years_relevant_experience'],
+      });
+    }
+
     return rows;
   }
 
@@ -336,6 +428,29 @@ export class LegiluxConnector implements Connector<LegiluxRaw, readonly SourcedR
         instrumentId: raw.operand.eli,
         sourceUrl: raw.operand.sourceUrl,
         retrievedAt: raw.operand.fetchedAt,
+      },
+      {
+        // The statute. Not part of the threshold's derivation — it is the instrument the
+        // qualification rows cite, and ADR-0021 will not accept a rule whose original was never
+        // archived. Adding a row that names a document nobody stored is exactly the half-evidenced
+        // state the paragraph above refuses for the average.
+        source: {
+          bytes: new TextEncoder().encode(raw.statute.html),
+          contentType: 'text/html; charset=utf-8',
+          slug: slugFor(raw.statute.eli),
+          jurisdiction: 'LU',
+          year: yearFrom(raw.statute.eli),
+          extension: 'html',
+          isOriginal: true,
+        },
+        // `primary` — the closed vocabulary's word for *the instrument imposing the requirement*
+        // (ADR-0025). That is exactly what the statute is for the qualification rows, so no new
+        // role and no migration: widening a closed set to describe something it already covers is
+        // how a vocabulary stops meaning anything.
+        role: 'primary',
+        instrumentId: raw.statute.eli,
+        sourceUrl: raw.statute.sourceUrl,
+        retrievedAt: raw.statute.fetchedAt,
       },
     ];
   }

@@ -99,9 +99,19 @@ async function ingest() {
 
   const stored = await db.selectFrom('requirements').select(['id', 'requirement_id']).execute();
   for (const row of stored) {
+    // **Bound per requirement, not fanned out across all of them.** This helper used to link every
+    // stored rule to every archived instrument, which was harmless while both instruments fed the
+    // one derived threshold — and became a lie the moment the statute arrived: the salary threshold
+    // does not come from Art. 45, and recording that it does is exactly the false provenance
+    // ADR-0025 exists to prevent. A qualification row cites the statute; a computed threshold cites
+    // the formula and the operand it was multiplied from.
+    const derived = row.requirement_id.startsWith('lu.eu-blue-card.qualification.')
+      ? archived.instruments.filter((instrument) => instrument.role === 'primary')
+      : archived.instruments.filter((instrument) => instrument.role !== 'primary');
+
     await recordRequirementSources(
       db,
-      archived.instruments.map((instrument) => ({ id: uuidv7(), requirement_id: row.id, ...instrument })),
+      derived.map((instrument) => ({ id: uuidv7(), requirement_id: row.id, ...instrument })),
     );
   }
 
@@ -112,19 +122,19 @@ describe('both instruments are archived before any rule is stored', () => {
   it('archives the formula and the operand as separate documents', async () => {
     const { archived } = await ingest();
 
-    expect(archived.instruments.map((i) => i.role).sort()).toEqual(['formula', 'operand']);
+    expect(archived.instruments.map((i) => i.role).sort()).toEqual(['formula', 'operand', 'primary']);
 
     const { rows } = await pool.query<{ n: string }>('SELECT count(*) AS n FROM documents');
-    expect(Number(rows[0]?.n)).toBe(2);
+    expect(Number(rows[0]?.n)).toBe(3);
   });
 
   it('keeps them under distinct object keys', async () => {
     // One key for two instruments would archive one and silently overwrite the other, leaving the
-    // rule half-evidenced with no error anywhere.
+    // rule half-evidenced with no error anywhere. Three instruments now — the statute joined them.
     await ingest();
 
     const { rows } = await pool.query<{ object_key: string }>('SELECT object_key FROM documents');
-    expect(new Set(rows.map((r) => r.object_key)).size).toBe(2);
+    expect(new Set(rows.map((r) => r.object_key)).size).toBe(3);
   });
 
   it('stores nothing when an instrument cannot be archived', async () => {
@@ -148,15 +158,49 @@ describe('both instruments are archived before any rule is stored', () => {
 });
 
 describe('the computed threshold, stored', () => {
-  it('stores both thresholds and the gate', async () => {
+  it('stores both thresholds, the gate, and the qualification group', async () => {
     const { report, stored } = await ingest();
 
     expect(report.rejected).toBe(0);
     expect(stored.map((r) => r.requirement_id).sort()).toEqual([
+      'lu.eu-blue-card.qualification.diploma',
+      'lu.eu-blue-card.qualification.ict-experience',
+      'lu.eu-blue-card.qualification.other-experience',
       'lu.eu-blue-card.reduced-threshold-occupations',
       'lu.eu-blue-card.salary-threshold.general',
       'lu.eu-blue-card.salary-threshold.reduced',
     ]);
+  });
+
+  it('stores the three qualification limbs as one any-of group', async () => {
+    // ADR-0024 rule 10, asserted against the stored rows rather than the connector's output —
+    // `applies_to` surviving the round trip is what the evaluator actually reads.
+    await ingest();
+
+    const { rows } = await pool.query<{ requirement_id: string; applies_to: { anyOf?: string } }>(
+      "SELECT requirement_id, applies_to FROM requirements WHERE requirement_id LIKE 'lu.eu-blue-card.qualification.%'",
+    );
+
+    expect(rows).toHaveLength(3);
+    for (const row of rows) {
+      expect(row.applies_to.anyOf).toBe('qualification');
+    }
+  });
+
+  it('leaves the salary rows on the routes they already had', async () => {
+    // **The migration that was not needed.** A routeless any-of group is pathway-wide, so the
+    // salary routes keep meaning exactly what they meant and no stored `applies_to` changes —
+    // ADR-0024 rule 9's breaking-change cost is not incurred at all.
+    await ingest();
+
+    const { rows } = await pool.query<{ requirement_id: string; applies_to: { route?: string } }>(
+      "SELECT requirement_id, applies_to FROM requirements WHERE requirement_id LIKE 'lu.eu-blue-card.salary%' OR requirement_id LIKE '%occupations'",
+    );
+
+    const routeOf = (id: string) => rows.find((r) => r.requirement_id === id)?.applies_to.route;
+    expect(routeOf('lu.eu-blue-card.salary-threshold.general')).toBe('general');
+    expect(routeOf('lu.eu-blue-card.salary-threshold.reduced')).toBe('citp-1-2');
+    expect(routeOf('lu.eu-blue-card.reduced-threshold-occupations')).toBe('citp-1-2');
   });
 
   it('stores a threshold PostgreSQL accepts as money, not as a rounding artefact', async () => {
@@ -193,7 +237,10 @@ describe('every contributing instrument is citable afterwards (ADR-0025)', () =>
 
     for (const row of stored) {
       const sources = await requirementSources(db, row.id);
-      expect(sources.map((s) => s.role).sort(), row.requirement_id).toEqual(['formula', 'operand']);
+      const expected = row.requirement_id.startsWith('lu.eu-blue-card.qualification.')
+        ? ['primary']
+        : ['formula', 'operand'];
+      expect(sources.map((s) => s.role).sort(), row.requirement_id).toEqual(expected);
       for (const source of sources) {
         expect(source.document_id).not.toBeNull();
         expect(source.instrument_id).toMatch(/^eli\//);

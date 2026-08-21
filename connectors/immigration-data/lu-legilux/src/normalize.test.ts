@@ -10,6 +10,7 @@ import {
   parseAverageSalary,
   parseGeneralMultiplier,
   parseReducedGroups,
+  parseQualification,
   parseReducedMultiplier,
   toPlainText,
 } from './parse.ts';
@@ -116,10 +117,13 @@ describe('the multiplication ADR-0025 places here', () => {
 });
 
 describe('normalize', () => {
-  it('produces both thresholds and the gate that opens the lower one', () => {
+  it('produces both thresholds, the gate that opens the lower one, and the qualification group', () => {
     const rows = connector().normalize(FIXTURE);
 
     expect(rows.map((r) => r.requirementId).sort()).toEqual([
+      'lu.eu-blue-card.qualification.diploma',
+      'lu.eu-blue-card.qualification.ict-experience',
+      'lu.eu-blue-card.qualification.other-experience',
       'lu.eu-blue-card.reduced-threshold-occupations',
       'lu.eu-blue-card.salary-threshold.general',
       'lu.eu-blue-card.salary-threshold.reduced',
@@ -248,10 +252,13 @@ describe('validate', () => {
 });
 
 describe('archival (ADR-0025)', () => {
-  it('offers both instruments, each as an original', () => {
+  it('offers every contributing instrument, each as an original', () => {
+    // Three now: the formula and the operand the threshold is computed from, and the statute the
+    // qualification rows cite. A row naming a document nobody archived is the half-evidenced state
+    // ADR-0021 refuses, whether or not the number was derived.
     const sources = connector().archivableSources(FIXTURE);
 
-    expect(sources.map((s) => s.role)).toEqual(['formula', 'operand']);
+    expect(sources.map((s) => s.role)).toEqual(['formula', 'operand', 'primary']);
     for (const source of sources) {
       expect(source.source.isOriginal).toBe(true);
       expect(source.source.jurisdiction).toBe('LU');
@@ -281,5 +288,78 @@ describe('archival (ADR-0025)', () => {
     expect(connector().archivable(FIXTURE).slug).toBe(
       connector().archivableSources(FIXTURE)[0]?.source.slug,
     );
+  });
+});
+
+describe('the qualification condition, and why it is a group rather than routes', () => {
+  it('reads the three limbs Art. 45 states', () => {
+    // Parsed from the statute as served, amendment markers and all. The durations are French
+    // number words in the source — "trois ans", "sept années", "cinq ans" — never digits.
+    const parsed = parseQualification(toPlainText(FIXTURE.statute.html));
+
+    expect(parsed.ictYears).toBe(3);
+    expect(parsed.ictWithinYears).toBe(7);
+    expect(parsed.otherYears).toBe(5);
+    expect(parsed.ictGroups).toEqual(['133', '25']);
+  });
+
+  it('puts all three limbs in one any-of group', () => {
+    // ADR-0024 rule 10. One condition, three ways to satisfy it — not three routes, because they
+    // reach the same permit under the same salary rule.
+    const rows = connector()
+      .normalize(FIXTURE)
+      .filter((r) => r.requirementId.startsWith('lu.eu-blue-card.qualification.'));
+
+    expect(rows).toHaveLength(3);
+    for (const row of rows) {
+      expect(row.appliesTo).toEqual({ anyOf: 'qualification' });
+    }
+  });
+
+  it('gives the qualification no route, so it applies whichever threshold does', () => {
+    // Rule 2: a routeless requirement is pathway-wide. The qualification is required on both the
+    // general and the reduced threshold, so routing it would silently excuse one of them.
+    const rows = connector().normalize(FIXTURE);
+    const qualification = rows.filter((r) => r.requirementId.startsWith('lu.eu-blue-card.qualification.'));
+
+    for (const row of qualification) {
+      expect((row.appliesTo as Record<string, unknown>).route).toBeUndefined();
+    }
+  });
+
+  it('leaves the salary rows on the routes they already had', () => {
+    // **The migration that turned out not to be needed.** Because the qualification group is
+    // pathway-wide, the salary routes keep meaning exactly what they meant, and no stored
+    // `applies_to` changes — so rule 9's breaking-change cost is not incurred at all.
+    const rows = connector().normalize(FIXTURE);
+    const routeOf = (id: string) =>
+      (rows.find((r) => r.requirementId === id)?.appliesTo as { route?: string }).route;
+
+    expect(routeOf('lu.eu-blue-card.salary-threshold.general')).toBe('general');
+    expect(routeOf('lu.eu-blue-card.salary-threshold.reduced')).toBe('citp-1-2');
+    expect(routeOf('lu.eu-blue-card.reduced-threshold-occupations')).toBe('citp-1-2');
+  });
+
+  it('does not model the ICT occupation test as a gate', () => {
+    // A gate would close the ICT alternative for everyone outside groups 133 and 25, and a closed
+    // alternative reads as `not_applicable`. The person still needs to be told they failed the
+    // qualification condition overall, so the occupation test travels as detail.
+    const row = connector()
+      .normalize(FIXTURE)
+      .find((r) => r.requirementId === 'lu.eu-blue-card.qualification.ict-experience');
+
+    expect(row?.kind).toBe('condition');
+    expect((row?.domainDetail as { citpGroups: string[] }).citpGroups).toEqual(['133', '25']);
+  });
+
+  it('cites the statute rather than the reglement for the qualification rows', () => {
+    // The salary comes from the règlement; the qualification comes from the loi. A row citing the
+    // wrong instrument is a provenance error even when the value is right.
+    const row = connector()
+      .normalize(FIXTURE)
+      .find((r) => r.requirementId === 'lu.eu-blue-card.qualification.diploma');
+
+    expect(row?.sourceUrl).toBe(FIXTURE.statute.sourceUrl);
+    expect((row?.domainDetail as { legalBasis: string }).legalBasis).toContain('art. 45');
   });
 });

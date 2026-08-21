@@ -214,8 +214,20 @@ professionnelle d'**au moins cinq ans** d'un niveau comparable à des diplômes 
 supérieur"*. **Luxembourg goes further than Germany here**, extending an experience route to every
 profession. Germany has no equivalent.
 
-**Neither is ingested.** `lu.eu-blue-card` currently carries the salary rules only, so a person
-qualifying under either route is not yet answered — a **coverage gap, not a modelling gap**.
+**All three limbs are ingested as of 2026-08-20**, as one `applies_to.anyOf` group — not as routes.
+Rule 6 says a route is one legal consequence, and these three reach the same permit under the same
+salary rule; and failing all three is `not_met` rather than `not_applicable`, so they are not gates
+either. **ADR-0024 rule 10 exists because of this article.**
+
+**The salary routes did not change.** A routeless any-of group is pathway-wide (rule 2), so the
+qualification is required whichever threshold applies and `general` / `citp-1-2` keep meaning exactly
+what they meant. **No stored `applies_to` was rewritten and rule 9's breaking-change cost was not
+incurred** — the migration this looked like it needed turned out not to exist.
+
+**The ICT occupation test is carried as detail, not as a gate.** A gate would close that alternative
+for everyone outside CITP-08 `133` and `25`, and a closed alternative reads `not_applicable` — which
+is right for a route and wrong here, because the person still has to be told whether they met the
+qualification condition at all.
 
 **Still `unknown`:** the regulated branch, which needs the assessing body and the 2016 law's own
 provisions. Those may well be origin-keyed for regulated professions under Directive 2005/36/EC —
