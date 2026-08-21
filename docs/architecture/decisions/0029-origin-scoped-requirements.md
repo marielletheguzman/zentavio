@@ -247,7 +247,13 @@ and needs no new concept.
   six integration tests against real PostgreSQL. **Retrieval is still pathway-only**, which is the
   half that waits on this ADR: no `recognition` row reaches the evaluator, so a licence-gated
   profession returns `unknown`. That is now the guard firing rather than an accident.
-- Document both keys in `requirement.md`'s `applies_to` section and in `immigration.md`.
+- ~~**Document both keys in `requirement.md`'s `applies_to` section and in `immigration.md`**~~
+  **Done** — 2026-08-21. `requirement.md` gained an `applies_to` scope-key section covering all four
+  keys the evaluator reads, the absent-means-broader rule and why it is the conservative direction,
+  the three placement outcomes, and why retrieval never queries these keys. `immigration.md` gained
+  the same semantics against its evaluation contract, and its numbered pass now has nine steps
+  rather than eight — placement is step 2, before evaluation. The licence-gated invariant is
+  restated as needing a recognition row **that could be about this person**.
 - A `ph.md` origin reference file (ADR-0010 follow-up, still open), naming the authority per
   origin-side domain — sourced, not assumed.
 - Per-profession recognition research for one destination and one profession, as the vertical slice

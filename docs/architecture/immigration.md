@@ -61,6 +61,10 @@ profession      registered-nurse       -- recognition and credential domains
 kind            eligibility | threshold | quota | document | timeline | condition | right | assessment
 value           typed; amounts carry currency and period
 appliesTo       occupation lists, qualification levels, age bands — explicit, never implied
+                  route                     the way in this rule belongs to (ADR-0024)
+                  anyOf                     the alternatives group it is one member of (ADR-0024 amendment)
+                  originJurisdiction        the origins it is written for (ADR-0029)
+                  destinationJurisdiction   the destinations it is written for (ADR-0029)
 effectiveFrom   date the rule took effect
 effectiveTo     null while current
 version         the source's own version, or our sequence
@@ -120,14 +124,16 @@ are what people actually plan around.
 **Deterministic code over retrieved rows. Never an LLM judgment.**
 
 ```text
-1  retrieve the pathway's rules as of today (or as of a stated date)
-2  evaluate each rule against the person's facts → met | not_met | undetermined
-3  undetermined never collapses to met or not_met
-4  group by route: a rule naming applies_to.route belongs to it, one naming none is pathway-wide
-5  a route's gates (kind: right) are ANY — one met gate opens it; its conditions are then ALL
-6  aggregate per route, then across routes: met if any route is met, undetermined dominates
-7  a route no gate opens is not_applicable, and so is every rule that sits only on it
-8  return per-rule results, per-route outcomes, what would change them, the evidence, disclaimer
+1  retrieve, as of today (or as of a stated date): the pathway's rules, the destination's rules
+     for the person's profession, and the origin state's own duties
+2  place each rule: a scope key it declares must contain the person's value, or it is not theirs
+3  evaluate each placed rule against the person's facts → met | not_met | undetermined
+4  undetermined never collapses to met or not_met
+5  group by route: a rule naming applies_to.route belongs to it, one naming none is pathway-wide
+6  a route's gates (kind: right) are ANY — one met gate opens it; its conditions are then ALL
+7  aggregate per route, then across routes: met if any route is met, undetermined dominates
+8  a route no gate opens is not_applicable, and so is every rule that sits only on it
+9  return per-rule results, per-route outcomes, what would change them, the evidence, disclaimer
 ```
 
 **A pathway with more than one way in is evaluated per route** ([ADR-0024]
@@ -141,6 +147,54 @@ statute does not apply to them.
 degree was never on the experience route; reporting its rules as `not_met` would be a false
 statement about a person. Every route is reported, open or not, so the verdict names the way in it
 used and the alternatives stay inspectable.
+
+### Which rules are about this person ([ADR-0029](decisions/0029-origin-scoped-requirements.md))
+
+A regulated profession is licensed at origin and re-assessed at destination, so the same
+destination holds different recognition rules for qualifications from different places. Two
+`appliesTo` keys carry that, and neither changes meaning per row:
+
+| Key | On a rule imposed by | Names |
+|---|---|---|
+| `originJurisdiction` | the destination | the origins whose qualifications it is written for |
+| `destinationJurisdiction` | the origin | the destinations it is written for |
+
+**The origin is where the person's qualification was awarded, never their nationality.** A citizen
+of one country holding another's nursing degree has that degree's recognition problem, not their
+passport's. The fact is `qualification_awarded_in`.
+
+**An absent key means broader, not narrower** — the same conservative reading `route` gets. Every
+rule ingested before this decision declares neither, and each keeps applying to everybody, so
+nothing needed backfilling. A scope that cannot be read — a number, an empty list — is treated as
+absent for the same reason: a typo must make a rule apply to more people, never to none. A rule that
+quietly applies to nobody is invisible in a way a wrong verdict is not.
+
+**Placing a rule has three outcomes, and the third is why this is not a filter:**
+
+| | |
+|---|---|
+| the key is absent, or contains the person's value | evaluate it |
+| the key is present and the person is outside it | `not_applicable` — a rule that was never about them, never one they failed |
+| the key is present and the person's value is unknown | `undetermined`, naming `qualification_awarded_in` |
+
+Guessing at the third fabricates a verdict in one direction or the other: assuming the rule applies
+invents a hurdle, assuming it does not invents compliance.
+
+**Retrieval never filters on `appliesTo`.** The database gathers candidates by pathway, profession,
+jurisdiction and imposing side; placement happens in the evaluator. A SQL predicate on a scope key
+would drop precisely the rules that declare none — the ones that apply to everybody. Gathering more
+than applies is safe, because the evaluator discards. Failing to gather is not: a rule never fetched
+cannot be discarded, and **its absence looks like compliance**.
+
+**A licence-gated profession needs a recognition rule that could be about this person.** One written
+for qualifications from elsewhere does not count — treating it as though it did would hand a nurse a
+visa-only verdict on the strength of a rule that was never about her. A rule that cannot be placed
+yet *does* count: it is `undetermined` and names the question she can answer, which is not the same
+as having nothing on file.
+
+**The destination is a property of the pathway**, not something the person tells us. A
+destination-scoped rule on a request that does not state one is `undetermined` and names **no**
+person fact — no answer of theirs would fix our omission.
 
 ```json
 {
