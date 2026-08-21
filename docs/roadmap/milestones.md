@@ -711,10 +711,23 @@ and an unanswered origin is `undetermined` naming the question. The licence-gate
 only recognition rules that are not excluded — a recognition rule for qualifications from elsewhere
 is not a recognition rule for this person.
 
-**A licence-gated profession still returns `unknown`**, and one thing stands between it and a real
-verdict: **no origin-scoped recognition rule has been sourced or ingested**. That is the expensive
-half, and it is not softened by the mechanism being finished. No rule declares either scope key
-today, so no stored verdict has changed.
+**The first origin-scoped recognition rules were sourced and ingested on 2026-08-21**, and the slice
+follows the product's own priority — IT, software and computer engineering — rather than the nursing
+example the ADRs used. The research produced **two** answers:
+
+- **Software and platform work is not a regulated profession in Germany.** Recognition does not
+  apply, which is an answer and not a gap, and it needs no rule to say so.
+- **The professional title `Ingenieur` is regulated, per Land.** BayIngG Art. 2 and Art. 3 are read
+  from the Free State's own portal, and `connectors/immigration-data/de-bayingg` stores three
+  `recognition` rows for Bavaria, scoped to `applies_to.origin_jurisdiction: ["PH"]`. A Philippine
+  degree is measured against Art. 2's programme requirements; a German one is told the rules are not
+  about it; an unanswered origin is asked. The permission itself stays `undetermined`, because only
+  the authority knows whether it was granted.
+
+**What this does not claim.** The title is gated, not the activity. Bavaria is one Land of sixteen.
+Nursing, teaching and the reserved engineering activities remain `unknown`, and a licence-gated
+career in any of them still returns `unknown` with recognition named — which is the honest answer,
+not a placeholder.
 
 ---
 

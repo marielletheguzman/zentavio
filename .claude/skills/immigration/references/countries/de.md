@@ -185,12 +185,30 @@ followed. `make-it-in-germany.com` stays off-limits — Radware bot protection, 
 **The narrow real exception: "Ingenieur" is a protected title, regulated per Land.** The federal
 portal returns it as *reglementiert* in Berlin, Baden-Württemberg and Bayern, and a foreign engineer
 applies for *"a licence to hold or use the German professional title of 'Engineer'"*. **It gates the
-title, not the activity** — software work is done under other titles. If ever modelled: `recognition`
-domain, **subdivision-scoped**. No Landesingenieurgesetz has been read, so the state mechanism is
-inferred.
+title, not the activity** — software work is done under other titles.
 
-**Still `unknown`, and deliberately:** every regulated profession — nursing, teaching, the licensed
-engineering activities. Until a profession's rules are ingested a **licence-gated profession returns
+**Sourced and modelled for Bavaria on 2026-08-21, and the inference is gone.** A Landesingenieurgesetz
+has now been read: BayIngG, promulgated 12 July 2016 (GVBl. S. 156), on the Free State's own
+BAYERN.RECHT portal.
+
+| Provision | What it states |
+|---|---|
+| **Art. 2 Abs. 1 Nr. 1** | the title may be used by someone holding a German degree in a technical-scientific field, with a *"Regelstudienzeit von mindestens sechs Semestern in Vollzeit"* and at least 180 ECTS points, in which mathematics, computer science, natural sciences and technology predominate |
+| **Art. 2 Abs. 1 Nr. 2** | or by someone who, *"nach Ausbildung im Ausland die Genehmigung hierzu erhalten hat"* |
+| **Art. 3 Abs. 1** | that permission is granted where the foreign qualification is recognised as equivalent under BayIngG and the **BayBQFG** |
+| **Art. 3 Abs. 4** | evidence from outside the EU/EEA must confirm *"ein den Anforderungen gemäß Art. 2 Abs. 1 Nr. 1 entsprechendes Studium"* — which is what makes Art. 2's numbers the test a Philippine degree is measured against |
+
+Modelled by `connectors/immigration-data/de-bayingg` as three `recognition` rows —
+`jurisdiction: DE`, `subdivision: BY`, `profession: ingenieur-protected-title`, no pathway — scoped
+to `applies_to.origin_jurisdiction: ["PH"]` under ADR-0029. The permission itself is
+`document-present`, which the evaluator answers `undetermined`, because only the authority knows.
+
+**Bavaria is one Land of sixteen.** Nothing here generalises to Berlin or Baden-Württemberg: their
+Ingenieurgesetze have not been read, and assuming Bavaria's terms would be exactly the invented
+coverage this file exists to avoid.
+
+**Still `unknown`, and deliberately:** nursing, teaching, and the licensed engineering *activities*
+(the title is modelled above; the activities reserved to Kammer members are not). Until a profession's rules are ingested a **licence-gated profession returns
 `unknown` with recognition named** rather than a visa-only verdict that reads as an answer.
 
 What the model already accounts for: § 18g Abs. 1 S. 5 widens what *counts* as the qualification —
@@ -198,10 +216,12 @@ an equivalent tertiary programme of at least three years at ISCED 2011 or EQF le
 lives in the qualification question's wording and its `domainDetail`, **not** as a separate rule,
 because it changes what the question means rather than adding a hurdle.
 
-**The open modelling question, recorded here because it will be decided by whoever sources this:**
-`user.md` places qualification recognition in the unbuilt, separately-encrypted
-`user_immigration_facts`, while a `credential`-domain requirement would read it as an ordinary
-`person_facts` input. Decide before the recognition rules land, not after.
+**The open modelling question is closed.** `user.md` placed qualification recognition in the unbuilt,
+separately-encrypted `user_immigration_facts`, while a `credential`-domain requirement would read it
+as an ordinary `person_facts` input. ADR-0029 split it along the line the table already drew: where a
+qualification was **awarded** is circumstance and is an ordinary `person_facts` kind
+(`qualification_awarded_in`, flagged sensitive); whether a licence has been **granted** is status and
+belongs in `user_immigration_facts`. `entities/person-fact.md` records it.
 
 ## Labor market
 

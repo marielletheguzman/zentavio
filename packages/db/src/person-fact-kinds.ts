@@ -202,6 +202,39 @@ export const PERSON_FACT_KINDS: readonly PersonFactKindSeed[] = [
     allowedValues: [],
   },
   {
+    key: 'degree_standard_duration_semesters',
+    valueType: 'integer',
+    unit: 'semesters',
+    // The statute measures the programme, not the person: `Regelstudienzeit` is the standard
+    // duration the course is designed to take. Someone who took eight semesters over a six-semester
+    // degree still holds a six-semester degree, and asking "how long did you study?" would collect
+    // the wrong number from exactly the people most likely to have taken longer.
+    prompt:
+      'How many semesters was your degree programme designed to take, full-time? (Its standard ' +
+      'duration, not how long you personally took.)',
+    rationale:
+      'Bavaria protects the professional title Ingenieurin/Ingenieur. A qualification earned ' +
+      'abroad is measured against the same programme requirements a German degree must meet — at ' +
+      'least six semesters full-time (BayIngG Art. 2 Abs. 1 Nr. 1 b), via Art. 3 Abs. 4).',
+    sensitive: false,
+    allowedValues: [],
+  },
+  {
+    key: 'degree_ects_credits',
+    valueType: 'integer',
+    unit: 'ECTS credits',
+    // Asked as a number the person can read off a transcript or a diploma supplement. Programmes
+    // outside the European system may state none, and an unanswered question is `undetermined`
+    // with the question named — which is the honest outcome, not a failure.
+    prompt: 'How many ECTS credits does your degree carry, if it states them?',
+    rationale:
+      'The same Bavarian provision requires that at least 180 ECTS credits be obtainable from the ' +
+      'programme. It is the second half of one test, and both halves have to be met before the ' +
+      'title may be applied for.',
+    sensitive: false,
+    allowedValues: [],
+  },
+  {
     key: 'isco_08_group',
     valueType: 'string',
     unit: null,
