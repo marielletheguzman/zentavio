@@ -125,6 +125,17 @@ export {
 } from './repositories/person-facts.ts';
 
 export { activePathways, pathwayById, type PathwayRow } from './repositories/pathways.ts';
+export {
+  CompletionInvariantError,
+  completionsForUser,
+  recordCompletion,
+  resourcesForSkill,
+  usableResources,
+  type LearningCompletionRow,
+  type LearningResourceRow,
+  type NewLearningResource,
+  type RecordCompletionOptions,
+} from './repositories/learning.ts';
 
 export {
   DocumentConflictError,
