@@ -843,12 +843,40 @@ resource durations`. Same surface, different provenance — that shift is the mi
 
 ---
 
-## M8 — Interview prep where support exists
+## M8 — Interview prep where support exists — **built 2026-08-22, verification debt outstanding**
 
 *Phase 5.* Process models above minimum support; honest generic prep below it.
 
 **Verified by:** a company with thin reports produces "we don't have enough reports yet" plus useful
 role-generic prep — never fabricated stages.
+
+**Everything the milestone needs is built and merged** (#133, #136–#139): the schema keyed on
+`(company, role_family)`, the support floors, the contribution flow, the surface, the integrity
+posture, and role-generic preparation. Four ADRs govern it — 0031 for the floors, 0032 for the
+contribution rules.
+
+**Behaviour verified through the real gateway and database**, not in a browser: a shortfall counting
+0 → 1 with the remainder shown; a duplicate returning `already-reported` so the surface can offer a
+correction; withdrawal removing the name and **keeping the count**; and role-generic preparation
+unchanged by six reports arriving about a company.
+
+**One item was closed by deciding not to build it.** An officially published process would be tier 1
+and would outrank reports — but no ingestible source is identified for the roles in scope, so no
+table, connector or field exists. Storage built for data nobody can supply is false completeness.
+`docs/features/interview-prep.md` records what would qualify, that this is an **evidence limitation
+rather than a claim that published processes do not exist**, and the trigger to revisit.
+
+### Verification debt, carried deliberately
+
+**Three surfaces have never been rendered in a browser** — the completions panel (#130), the
+interview surface (#137) and role-generic preparation (#139). The Chrome extension disconnected
+partway through the M6 session and has not reconnected since; routes and database behaviour are
+verified, page rendering is not.
+
+**This is why the milestone reads "built" rather than "met".** M4's gate exists because this
+repository shipped M1c with no CORS while every server-side check passed, and that failure is
+invisible to exactly the kind of verification these three surfaces have. The debt is recorded rather
+than discharged, and the roadmap is deliberately not blocked on it.
 
 ---
 

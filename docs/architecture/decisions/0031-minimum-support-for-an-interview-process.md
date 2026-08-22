@@ -149,7 +149,7 @@ because *"3 reports, we need 5"* is an invitation to contribute one and *"not en
   contribution flow — one report per person per pairing, authenticated — and are named as its work
   rather than pretended to be solved here.
 
-**Follow-up work.**
+**Follow-up work — all resolved as of 2026-08-22**, one of them by deciding not to build it.
 
 - ~~**Entity documentation and schema for interview reports and the process model, keyed on
   `(company, role_family)`.**~~ **Done** — #133. The floors live in
@@ -169,7 +169,14 @@ because *"3 reports, we need 5"* is an invitation to contribute one and *"not en
   **No questions**: generating them belongs to `ai/interview-prep`, which does not exist, and a
   question invented beside a company's name is the fabrication this milestone is written against. A
   test asserts the output is unchanged by six reports arriving about a company.
-- An officially published process, where one exists, as a tier-1 record that outranks reports.
+- ~~**An officially published process, where one exists, as a tier-1 record that outranks
+  reports.**~~ **Closed as not modelled** — 2026-08-22, recorded in `docs/features/interview-prep.md`.
+  What would qualify is stated there; no ingestible source is currently identified for the roles in
+  scope, so no table, connector or field exists. **Storage built for data nobody can supply is false
+  completeness**: it reads as coverage, queries as empty, and makes the absence look like a gap in
+  our data rather than in the world. This is an evidence limitation and **not** a claim that
+  published processes do not exist. The revisit trigger is a named employer or authority publishing
+  at a stable URL for a role family this product serves.
 
 **Reversal cost.** Low for the numbers, higher for the unit. Changing five to four is an edit;
 changing the unit from `(company, role_family)` to something else is a re-key of stored aggregates.

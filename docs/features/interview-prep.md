@@ -21,6 +21,32 @@ So every surfaced pattern carries `n`, its time window, and a confidence that is
 tier 4 has a ceiling no amount of consistency raises. An officially published process, where one exists,
 is tier 1 and outranks reports.
 
+### Published processes are not modelled, and that is an evidence limit
+
+**What would qualify.** A process published by the employer itself, or by an authority speaking for
+it — a careers page setting out the stages, a public hiring handbook, a regulator's description of a
+statutory selection process. Attributable, dated, and retrievable at a stable URL, like every other
+tier-1 source this product reads.
+
+**No such source is currently identified for the roles this product serves.** Software and IT
+employers overwhelmingly do not publish their interview stages; where something exists it is a
+recruiting blog post that changes without notice and describes intent rather than practice, which is
+not tier 1 whatever its author's job title.
+
+**So it is not modelled.** There is no table, no connector, and no `published_process` field
+anywhere — because storage built for data nobody can supply is false completeness: it reads as
+coverage, it queries as empty, and the absence looks like a gap in the data rather than a gap in the
+world.
+
+**This is a limitation of our evidence, not a claim about reality.** Some employers do publish, and
+some regulated selection processes are published by statute. We have not found an ingestible source
+for the roles in scope; that is a different sentence from "there is none", and this section exists so
+nobody later reads the missing model as the stronger claim.
+
+**Revisit when a concrete source is found** — a named employer or authority, publishing at a stable
+URL, for a role family this product actually serves. That is the trigger, and until it fires the
+report-derived process (capped at `medium`, ADR-0031) is the best available and says so.
+
 ## Below minimum support
 
 > "We don't have enough reports for this company yet."
