@@ -1,6 +1,7 @@
 # ADR-0033: A Lever board is a tier-2 source, and a posting states only what Lever states structurally
 
-- **Status:** Proposed
+- **Status:** Accepted
+- **Accepted:** 2026-08-22
 - **Date:** 2026-08-22
 - **Deciders:** project lead
 - **Affects:** `connectors/job-boards/lever`, `connectors/core/src/default-registry.ts`, `.claude/context/knowledge-sources.md`, `docs/database/entities/job.md`

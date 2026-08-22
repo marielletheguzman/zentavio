@@ -93,6 +93,6 @@ and the gap is recorded here rather than implied by an empty table.
 - `docs/database/entities/job.md` — the shape `normalize` targets
 - `.claude/context/knowledge-sources.md` — source tiers and what tier 2 means for confidence
 - `.claude/skills/connectors/SKILL.md` — the contract this implements
-- ADR-0033 — the tier, and what a posting may state (Proposed)
+- ADR-0033 — the tier, and what a posting may state
 - ADR-0002 — the registry as the only module that names a connector
 - ADR-0021 — why the board as served is archived
