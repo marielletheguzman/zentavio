@@ -86,22 +86,112 @@ export async function startAttempt(
 }
 
 /**
- * Submit a score and decide the attempt.
+ * The items of a version, **without the answer key**.
  *
- * **The threshold comes from the instrument, never from the caller.** A pass mark supplied alongside
- * the score is a pass mark chosen after seeing it.
+ * The key never leaves this module for a taker. Serving it alongside the question would make every
+ * attempt a formality, and the omission is enforced by the shape of what this returns rather than by
+ * a caller remembering to strip a field.
  */
-export async function submitAttempt(
+export function itemsToAnswer(db: Kysely<Database>, assessmentId: string) {
+  return db
+    .selectFrom('assessment_items')
+    .select(['id', 'position', 'stem', 'options'])
+    .where('assessment_id', '=', assessmentId)
+    .orderBy('position');
+}
+
+/** The items with what each one evidences — for explaining a pass, never for taking one. */
+export function itemsWithClaims(db: Kysely<Database>, assessmentId: string) {
+  return db
+    .selectFrom('assessment_items')
+    .select(['id', 'position', 'evidences', 'source_url'])
+    .where('assessment_id', '=', assessmentId)
+    .orderBy('position');
+}
+
+/**
+ * Publish a version.
+ *
+ * **Refuses an instrument that cannot support the claim a pass would make.** Three things have to be
+ * true, and none of them can be a database constraint: the items must exist and match the stated
+ * `item_count`, and `does_not_evidence` must be written. Publishing without the last one is the
+ * broader claim ADR-0030 refuses, made by omission.
+ */
+export async function publishAssessment(
   db: Kysely<Database>,
-  options: { readonly attemptId: string; readonly score: number; readonly at?: Date },
+  options: { readonly assessmentId: string; readonly at?: Date },
+): Promise<SkillAssessmentRow> {
+  const assessment = await db
+    .selectFrom('skill_assessments')
+    .selectAll()
+    .where('id', '=', options.assessmentId)
+    .executeTakeFirst();
+
+  if (assessment === undefined) {
+    throw new AssessmentInvariantError('assessment_id', 'no such assessment version');
+  }
+  if (assessment.status !== 'draft') {
+    throw new AssessmentInvariantError(
+      'status',
+      `this version is already ${assessment.status}`,
+    );
+  }
+  if (assessment.does_not_evidence === null || assessment.does_not_evidence.trim() === '') {
+    throw new AssessmentInvariantError(
+      'does_not_evidence',
+      'an instrument must say what passing it does not show before it may be published',
+    );
+  }
+
+  const { count } = await db
+    .selectFrom('assessment_items')
+    .select((eb) => eb.fn.countAll<string>().as('count'))
+    .where('assessment_id', '=', options.assessmentId)
+    .executeTakeFirstOrThrow();
+
+  if (Number(count) !== assessment.item_count) {
+    throw new AssessmentInvariantError(
+      'item_count',
+      `this version states ${String(assessment.item_count)} items and has ${count}; a threshold ` +
+        'counted against the wrong number of items is a threshold that means nothing',
+    );
+  }
+
+  return db
+    .updateTable('skill_assessments')
+    .set({ status: 'published', published_at: options.at ?? new Date() })
+    .where('id', '=', options.assessmentId)
+    .returningAll()
+    .executeTakeFirstOrThrow();
+}
+
+/**
+ * Grade an attempt from the answers given, and decide it.
+ *
+ * **The score is computed here, never supplied.** A caller passing its own score is a client
+ * deciding whether it passed, and no amount of validation downstream recovers from that. The
+ * threshold is read from the instrument for the same reason — a pass mark that arrives with the
+ * score is a pass mark chosen after seeing it.
+ *
+ * An unanswered item is wrong rather than skipped. Scoring only what was attempted would let
+ * somebody answer one item, get it right, and pass an instrument of ten.
+ */
+export async function gradeAttempt(
+  db: Kysely<Database>,
+  options: {
+    readonly attemptId: string;
+    /** `{ itemId: optionKey }`. Items absent from this map count as wrong. */
+    readonly answers: Readonly<Record<string, string>>;
+    readonly at?: Date;
+  },
 ): Promise<AssessmentAttemptRow> {
   const attempt = await db
     .selectFrom('assessment_attempts')
     .innerJoin('skill_assessments', 'skill_assessments.id', 'assessment_attempts.assessment_id')
     .select([
       'assessment_attempts.id as id',
+      'assessment_attempts.assessment_id as assessment_id',
       'assessment_attempts.outcome as outcome',
-      'skill_assessments.item_count as item_count',
       'skill_assessments.pass_threshold as pass_threshold',
     ])
     .where('assessment_attempts.id', '=', options.attemptId)
@@ -116,19 +206,31 @@ export async function submitAttempt(
       `this attempt is already ${attempt.outcome} and a decided attempt is not re-decided`,
     );
   }
-  if (!Number.isInteger(options.score) || options.score < 0 || options.score > attempt.item_count) {
+
+  const key = await db
+    .selectFrom('assessment_items')
+    .select(['id', 'correct_option'])
+    .where('assessment_id', '=', attempt.assessment_id)
+    .execute();
+
+  if (key.length === 0) {
     throw new AssessmentInvariantError(
-      'score',
-      `${String(options.score)} is not a possible score for an instrument of ${String(attempt.item_count)} items`,
+      'items',
+      'this version has no items, so there is nothing to grade against',
     );
   }
+
+  const score = key.reduce(
+    (correct, item) => (options.answers[item.id] === item.correct_option ? correct + 1 : correct),
+    0,
+  );
 
   return db
     .updateTable('assessment_attempts')
     .set({
-      score: options.score,
+      score,
       submitted_at: options.at ?? new Date(),
-      outcome: options.score >= attempt.pass_threshold ? 'passed' : 'failed',
+      outcome: score >= attempt.pass_threshold ? 'passed' : 'failed',
     })
     .where('id', '=', options.attemptId)
     .returningAll()

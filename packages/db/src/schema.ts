@@ -286,8 +286,39 @@ export interface SkillAssessmentsTable {
   pass_threshold: number;
   /** `draft` cannot be taken; `retired` keeps existing passes citable while accepting no new ones. */
   status: Generated<AssessmentStatusColumn>;
+  /**
+   * What passing this deliberately does **not** show.
+   *
+   * Not derivable from the items — it is a judgement about the distance between recall and
+   * competence. Required before publishing, because publishing without it is the broader claim
+   * ADR-0030 refuses.
+   */
+  does_not_evidence: string | null;
   published_at: Timestamp | null;
   retired_at: Timestamp | null;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+}
+
+/**
+ * One item of one version.
+ *
+ * Carries more than a question and a key: `evidences` is what a pass may say this item showed, and
+ * `source_url` is where the answer comes from. Both are columns rather than review conventions,
+ * because a convention is not checkable.
+ */
+export interface AssessmentItemsTable {
+  id: string;
+  assessment_id: string;
+  position: number;
+  stem: string;
+  /** `[{ key, text }, …]`. One document: an option is never read apart from its item. */
+  options: unknown;
+  correct_option: string;
+  /** The narrow capability this item supports, in the words the surface will use. */
+  evidences: string;
+  /** Official documentation the correct answer follows from. */
+  source_url: string;
   created_at: Generated<Timestamp>;
   updated_at: Generated<Timestamp>;
 }
@@ -783,6 +814,7 @@ export interface Database {
   connector_sources: ConnectorSourcesTable;
   skill_assessments: SkillAssessmentsTable;
   assessment_attempts: AssessmentAttemptsTable;
+  assessment_items: AssessmentItemsTable;
   learning_resources: LearningResourcesTable;
   learning_resource_skills: LearningResourceSkillsTable;
   learning_completions: LearningCompletionsTable;

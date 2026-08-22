@@ -100,6 +100,71 @@ and a different demonstration.
 **A score of null is not a score of zero.** An unfinished or abandoned attempt has no score; writing
 0 would record a failure that never happened.
 
+## `assessment_items`
+
+```sql
+CREATE TABLE assessment_items (
+  id             uuid         PRIMARY KEY,
+  assessment_id  uuid         NOT NULL,      -- the version
+  position       smallint     NOT NULL,
+  stem           text         NOT NULL,
+  options        jsonb        NOT NULL,      -- [{ key, text }, …]
+  correct_option text         NOT NULL,
+  evidences      text         NOT NULL,      -- the narrow capability this item supports
+  source_url     text         NOT NULL,      -- official documentation the answer follows from
+  created_at     timestamptz  NOT NULL DEFAULT now(),
+  updated_at     timestamptz  NOT NULL DEFAULT now(),
+
+  CONSTRAINT fk_ai__assessments FOREIGN KEY (assessment_id) REFERENCES skill_assessments(id) ON DELETE CASCADE,
+  CONSTRAINT ck_ai__position CHECK (position >= 1),
+  CONSTRAINT ck_ai__options CHECK (jsonb_typeof(options) = 'array' AND jsonb_array_length(options) >= 2),
+  CONSTRAINT ck_ai__correct_is_offered CHECK (
+    options @> jsonb_build_array(jsonb_build_object('key', correct_option))
+  ),
+  CONSTRAINT ck_ai__evidences CHECK (length(evidences) >= 20),
+  CONSTRAINT ck_ai__source_url CHECK (source_url ~ '^https://')
+);
+
+CREATE UNIQUE INDEX uq_ai__assessment_position ON assessment_items (assessment_id, position);
+```
+
+**An item carries more than a question and a key**, because ADR-0030 requires the surface to say what
+a pass covered. `evidences` is the sentence that appears in *"passing showed…"*; `source_url` is
+where the answer comes from. Both are columns rather than review conventions — a convention is not
+checkable, and an unsourced item is indistinguishable from a remembered one.
+
+**`ck_ai__correct_is_offered` catches a silent, total failure.** An item whose key is not among its
+options is answered wrongly by everybody: the pass rate drops, and nothing anywhere reports a fault.
+
+**`does_not_evidence` lives on the instrument, not the items.** What a pass fails to show is not the
+complement of what the items ask — it is a judgement about the distance between recall and
+competence. `publishAssessment` refuses to publish without it, because publishing without it makes
+the broader claim by omission.
+
+## Taking one
+
+`itemsToAnswer` returns id, position, stem and options — **never `correct_option`**. The omission is
+in what the query selects rather than in a caller remembering to strip a field.
+
+`gradeAttempt` computes the score from the stored key. **A caller never supplies a score**: that
+would be a client deciding whether it passed, which no validation downstream recovers from. An
+unanswered item counts as wrong rather than being skipped, or somebody could answer one item
+correctly and pass an instrument of ten.
+
+## Authoring
+
+Instruments are **curated content**, seeded from `packages/db/seeds/assessments/` at tier 3 — the
+same standing as the skill graph. `validateAssessmentSeed` refuses one before it is written when an
+item names no capability, cites no documentation, or offers a key that is not among its options; and
+`tests/unit/invariants/assessment-authoring.test.ts` runs the same checks against what is actually
+authored, plus three more: every item cites the same authority, no two items claim the same
+capability, and the threshold neither passes everybody nor nobody.
+
+**Re-seeding rewrites a version's items in place.** That is right while a version is being written
+and wrong once anybody has passed it, so a change to what the instrument *asks* is a new version
+rather than an edit. Nothing enforces that — it is a judgement about whether the questions changed,
+and the cost of getting it wrong is a pass citing a version that no longer asks what it asked.
+
 ## What promotes, and what it writes
 
 `promoteFromAttempt` in `packages/db/src/repositories/learning`'s sibling

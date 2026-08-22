@@ -1,0 +1,145 @@
+{
+  "$comment": "The first assessment instrument (ADR-0030). Git was chosen because its semantics have not materially changed in a decade, its documentation is authoritative and citable, and the negative claim is easy to state honestly. Every item's answer follows from the linked git-scm.com page; none is copied from it. Curated, tier 3 — the same standing as the skill graph.",
+  "assessment": {
+    "slug": "git-fundamentals",
+    "version": 1,
+    "skillSlug": "git",
+    "title": "Git — documented behaviour of everyday commands",
+    "description": "Ten questions about what Git commands do, as the official documentation defines them. Multiple choice, unproctored, and re-attemptable.",
+    "itemCount": 10,
+    "passThreshold": 7,
+    "doesNotEvidence": "Passing shows you can predict what these commands do. It does not show that you can recover a repository someone else broke, resolve a conflicted rebase under time pressure, design a branching strategy for a team, or diagnose a problem you have not seen before. It is unproctored and unattributed, so it also does not establish who sat it."
+  },
+  "items": [
+    {
+      "position": 1,
+      "stem": "You run `git reset --soft HEAD~1`. What happens to your staged changes and your working tree?",
+      "options": [
+        { "key": "a", "text": "The commit is undone; its changes remain staged, and the working tree is untouched." },
+        { "key": "b", "text": "The commit is undone and its changes are discarded entirely." },
+        { "key": "c", "text": "The commit is undone; its changes are unstaged but kept in the working tree." },
+        { "key": "d", "text": "Nothing changes locally until you push." }
+      ],
+      "correctOption": "a",
+      "evidences": "Knows that --soft moves the branch pointer without touching the index or the working tree.",
+      "sourceUrl": "https://git-scm.com/docs/git-reset"
+    },
+    {
+      "position": 2,
+      "stem": "A commit has already been pushed to a shared branch and turns out to be wrong. Which command undoes its effect without rewriting history other people have?",
+      "options": [
+        { "key": "a", "text": "`git reset --hard` to the previous commit." },
+        { "key": "b", "text": "`git revert`, which records a new commit undoing the changes." },
+        { "key": "c", "text": "`git commit --amend`." },
+        { "key": "d", "text": "`git rebase -i` and dropping the commit." }
+      ],
+      "correctOption": "b",
+      "evidences": "Distinguishes undoing a change by adding a commit from undoing it by rewriting history.",
+      "sourceUrl": "https://git-scm.com/docs/git-revert"
+    },
+    {
+      "position": 3,
+      "stem": "What does `git fetch` do that `git pull` does not stop at?",
+      "options": [
+        { "key": "a", "text": "`git fetch` updates remote-tracking branches only; `git pull` also integrates the changes into the current branch." },
+        { "key": "b", "text": "`git fetch` downloads nothing until you specify a branch." },
+        { "key": "c", "text": "They are the same command; `pull` is an alias." },
+        { "key": "d", "text": "`git fetch` updates the working tree; `git pull` only updates refs." }
+      ],
+      "correctOption": "a",
+      "evidences": "Knows that fetching updates remote-tracking refs and does not change the current branch.",
+      "sourceUrl": "https://git-scm.com/docs/git-fetch"
+    },
+    {
+      "position": 4,
+      "stem": "A file is already tracked by Git. You add its path to `.gitignore`. What happens on the next commit?",
+      "options": [
+        { "key": "a", "text": "The file is removed from the repository automatically." },
+        { "key": "b", "text": "Changes to it are still tracked and committed — .gitignore does not affect files already tracked." },
+        { "key": "c", "text": "Git refuses to commit until the conflict is resolved." },
+        { "key": "d", "text": "The file becomes untracked but stays on disk." }
+      ],
+      "correctOption": "b",
+      "evidences": "Knows that .gitignore governs untracked files, and that ignoring a tracked file requires removing it from the index.",
+      "sourceUrl": "https://git-scm.com/docs/gitignore"
+    },
+    {
+      "position": 5,
+      "stem": "You rebase a local branch onto an updated main. What happens to the commits that were on your branch?",
+      "options": [
+        { "key": "a", "text": "They keep their original hashes and are moved." },
+        { "key": "b", "text": "They are replaced by new commits with new hashes, applied on top of the new base." },
+        { "key": "c", "text": "They are merged into a single commit." },
+        { "key": "d", "text": "They are left untouched; only main moves." }
+      ],
+      "correctOption": "b",
+      "evidences": "Knows that rebasing creates new commits rather than relocating existing ones, which is why it rewrites history.",
+      "sourceUrl": "https://git-scm.com/docs/git-rebase"
+    },
+    {
+      "position": 6,
+      "stem": "Under what condition can Git complete a merge as a fast-forward?",
+      "options": [
+        { "key": "a", "text": "When the two branches have no conflicting files." },
+        { "key": "b", "text": "When the current branch's commit is an ancestor of the branch being merged in." },
+        { "key": "c", "text": "Whenever `--no-ff` is not passed." },
+        { "key": "d", "text": "When both branches have the same number of commits." }
+      ],
+      "correctOption": "b",
+      "evidences": "Knows that a fast-forward requires the current tip to be an ancestor of the merged commit, so no merge commit is needed.",
+      "sourceUrl": "https://git-scm.com/docs/git-merge"
+    },
+    {
+      "position": 7,
+      "stem": "What does `git cherry-pick <commit>` produce?",
+      "options": [
+        { "key": "a", "text": "A new commit on the current branch introducing the changes from that commit." },
+        { "key": "b", "text": "A move of that commit from its branch to this one." },
+        { "key": "c", "text": "A merge commit joining the two branches." },
+        { "key": "d", "text": "A patch file you apply manually." }
+      ],
+      "correctOption": "a",
+      "evidences": "Knows that cherry-picking copies a commit's changes as a new commit rather than moving the original.",
+      "sourceUrl": "https://git-scm.com/docs/git-cherry-pick"
+    },
+    {
+      "position": 8,
+      "stem": "You commit while in a detached HEAD state, then check out a branch without doing anything else. What is true of that commit?",
+      "options": [
+        { "key": "a", "text": "It was discarded when you checked out the branch." },
+        { "key": "b", "text": "It exists but no branch or tag points at it, so it is reachable only by its hash until one does." },
+        { "key": "c", "text": "It was added to the branch you checked out." },
+        { "key": "d", "text": "It is staged but not yet committed." }
+      ],
+      "correctOption": "b",
+      "evidences": "Knows that commits made on a detached HEAD are real objects that become unreferenced when HEAD moves.",
+      "sourceUrl": "https://git-scm.com/docs/git-checkout"
+    },
+    {
+      "position": 9,
+      "stem": "Why is `git commit --amend` risky after the commit has been pushed?",
+      "options": [
+        { "key": "a", "text": "It deletes the remote branch." },
+        { "key": "b", "text": "It replaces the commit with a new one, so the pushed commit and the local one diverge and a force push is needed." },
+        { "key": "c", "text": "It cannot be run once a commit is pushed." },
+        { "key": "d", "text": "It silently merges the remote version into yours." }
+      ],
+      "correctOption": "b",
+      "evidences": "Knows that amending creates a replacement commit rather than editing one in place.",
+      "sourceUrl": "https://git-scm.com/docs/git-commit"
+    },
+    {
+      "position": 10,
+      "stem": "What does `git stash` do with your uncommitted changes?",
+      "options": [
+        { "key": "a", "text": "Records them on a stack and reverts the working tree to the last commit, leaving no commit on any branch." },
+        { "key": "b", "text": "Creates a commit on the current branch." },
+        { "key": "c", "text": "Discards them permanently." },
+        { "key": "d", "text": "Pushes them to the remote as a draft." }
+      ],
+      "correctOption": "a",
+      "evidences": "Knows that stashing sets modifications aside without putting them on a branch, and that the working tree returns to HEAD.",
+      "sourceUrl": "https://git-scm.com/docs/git-stash"
+    }
+  ]
+}

@@ -23,6 +23,11 @@ import { Pool } from 'pg';
 import { databaseSchema, load } from '@zentavio/config';
 import { IMMIGRATION_PATHWAYS } from './immigration-pathways.ts';
 import { PERSON_FACT_KINDS } from './person-fact-kinds.ts';
+import {
+  applyAssessmentSeed,
+  loadAssessmentSeeds,
+  validateAssessmentSeed,
+} from './assessment-seeds.ts';
 import { uuidv7 } from './uuid.ts';
 
 export const EXIT = { OK: 0, FAILED: 1, USAGE: 2 } as const;
@@ -450,9 +455,14 @@ export async function run(options: RunOptions): Promise<number> {
     return EXIT.FAILED;
   }
 
+  const assessmentSeeds = await loadAssessmentSeeds(join(seedsDirectory, 'assessments'));
+
   const problems = [
     ...seeds.flatMap(({ name, seed }) => validateSeed(seed).map((problem) => `${name}: ${problem}`)),
     ...validateAcrossSeeds(seeds),
+    ...assessmentSeeds.flatMap(({ name, seed }) =>
+      validateAssessmentSeed(seed).map((problem) => `${name}: ${problem}`),
+    ),
   ];
   if (problems.length > 0) {
     err(`Seed data is invalid — nothing was written:`);
@@ -480,6 +490,21 @@ export async function run(options: RunOptions): Promise<number> {
     const plans = [];
     for (const { seed } of seeds) plans.push(await applySeed(pool, seed, { dryRun }));
     const plan = plans.reduce(sumPlans);
+
+    // Instruments come after the tracks, because an assessment names the skill it evidences and the
+    // skills are written above. A dry run reports and writes nothing, like everything else here.
+    let assessments = 0;
+    let items = 0;
+    for (const { seed } of assessmentSeeds) {
+      if (dryRun) {
+        assessments += 1;
+        items += seed.items.length;
+        continue;
+      }
+      const applied = await applyAssessmentSeed(pool, seed);
+      assessments += applied.assessmentsWritten;
+      items += applied.itemsWritten;
+    }
     out(
       `${dryRun ? 'Would apply' : 'Applied'}: ` +
         `${String(plan.careersInserted)} career(s), ` +
@@ -489,7 +514,8 @@ export async function run(options: RunOptions): Promise<number> {
         `${String(plan.careerSkillsInserted)} requirement(s), ` +
         `${String(plan.edgesInserted)} edge(s), ` +
         `${String(plan.factKindsUpserted)} fact kind(s), ` +
-        `${String(plan.pathwaysInserted)} pathway(s).`,
+        `${String(plan.pathwaysInserted)} pathway(s), ` +
+        `${String(assessments)} assessment(s) with ${String(items)} item(s).`,
     );
     if (dryRun) out('Nothing was written. Re-run without --dry-run to apply.');
     return EXIT.OK;
