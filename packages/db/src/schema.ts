@@ -287,6 +287,14 @@ export interface SkillAssessmentsTable {
   /** `draft` cannot be taken; `retired` keeps existing passes citable while accepting no new ones. */
   status: Generated<AssessmentStatusColumn>;
   /**
+   * How long after an attempt before the same person may start another.
+   *
+   * Slows key extraction by repetition — ten items of four options, attempted without limit, gives
+   * up the whole key in a handful of sittings. It does not prevent it, and nothing about a pass
+   * claims more because of it.
+   */
+  retry_interval: Generated<string>;
+  /**
    * What passing this deliberately does **not** show.
    *
    * Not derivable from the items — it is a judgement about the distance between recall and

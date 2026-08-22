@@ -15,6 +15,7 @@
  * says so, and `verified_attempt_id` is what lets it.
  */
 
+import { sql } from 'kysely';
 import type { Insertable, Kysely, Selectable } from 'kysely';
 import type {
   AssessmentAttemptsTable,
@@ -70,6 +71,45 @@ export async function startAttempt(
     throw new AssessmentInvariantError(
       'status',
       `this version is ${assessment.status}, so an attempt at it would evidence nothing`,
+    );
+  }
+
+  // **Already passed.** `uq_aa__passed_once` would refuse the second pass at grading time, which
+  // meant somebody answered ten questions and then met a constraint violation. Refusing at the
+  // start says the same thing before they spend the effort.
+  const passed = await db
+    .selectFrom('assessment_attempts')
+    .select('id')
+    .where('user_id', '=', options.userId)
+    .where('assessment_id', '=', options.assessmentId)
+    .where('outcome', '=', 'passed')
+    .executeTakeFirst();
+
+  if (passed !== undefined) {
+    throw new AssessmentInvariantError(
+      'outcome',
+      'you have already passed this version; a later version is a separate demonstration',
+    );
+  }
+
+  // **Attempt spacing.** The key never leaves the server, but repeated attempts give it up: ten
+  // items of four options, taken without limit, is a few sittings of work. Spacing makes that cost
+  // time rather than effort. It is a mitigation and not a fix — `docs/architecture/
+  // assessment-integrity.md` says so, and `does_not_evidence` already tells the person the
+  // instrument is unproctored.
+  const recent = await db
+    .selectFrom('assessment_attempts')
+    .innerJoin('skill_assessments', 'skill_assessments.id', 'assessment_attempts.assessment_id')
+    .select('assessment_attempts.started_at as started_at')
+    .where('assessment_attempts.user_id', '=', options.userId)
+    .where('assessment_attempts.assessment_id', '=', options.assessmentId)
+    .where(sql<boolean>`assessment_attempts.started_at + skill_assessments.retry_interval > now()`)
+    .executeTakeFirst();
+
+  if (recent !== undefined) {
+    throw new AssessmentInvariantError(
+      'retry_interval',
+      'this version was attempted too recently; the wait is stated on the instrument',
     );
   }
 
