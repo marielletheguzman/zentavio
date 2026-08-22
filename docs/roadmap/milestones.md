@@ -670,12 +670,16 @@ them. They stay open, and a later session must not read the closed gate as cover
 
 ---
 
-## M5 — Regulated professions get a real verdict
+## M5 — Regulated professions get a real verdict — **met 2026-08-22**
 
 *Phase 3.* Origin-side rules modelled; recognition evaluated alongside the visa.
 
 **Verified by:** a Filipino nurse or engineer receives a verdict that names recognition as the binding
 constraint where it is, instead of the `unknown` that honesty currently requires.
+
+**Met on 2026-08-22 by the engineer half of that sentence, not the nurse half**, and the distinction is
+recorded rather than rounded off. The rest of this section is the history of how it got there; the
+evidence is at the end.
 
 **No longer blocked on a decision.** The origin-jurisdiction ADR was written and **Accepted on
 2026-08-20 as ADR-0029** — origin scopes a requirement through `applies_to`, the person fact is where the
@@ -728,6 +732,40 @@ example the ADRs used. The research produced **two** answers:
 Nursing, teaching and the reserved engineering activities remain `unknown`, and a licence-gated
 career in any of them still returns `unknown` with recognition named — which is the honest answer,
 not a placeholder.
+
+### Evidence — one browser session, 2026-08-22
+
+Against the **real gateway, the real evaluator and the real database**, with the two originals
+archived in MinIO. Each row is **what was seen on the page**, not the word "passed". The person: an
+active `computer-engineer` target, `qualification_awarded_in = PH`, on `/eligibility` as of
+2026-08-22.
+
+| # | Observation | Result |
+|---|---|---|
+| 1 | a recognition rule reaches the verdict at all | **Observed.** `de.ingenieur-title.by.study-duration.ph` rendered **Met**, basis *"8 against a threshold of at least 6"*, decided by *Bayerisches Staatsministerium für Wirtschaft, Landesentwicklung und Energie*, in effect from 2016-08-01, with a working source link. Before ADR-0029 no `recognition` row could reach the evaluator at all — it carries a profession and no pathway |
+| 2 | recognition is named as what binds | **Observed.** The gateway returned `bindingDomain: recognition` and the page led with *"The rules are what stand in the way right now"* over *"One more answer and we can tell you — this is what binds."* Readiness sat beside it at 26%, not instead of it |
+| 3 | the unanswered rule names a question the person can actually answer | **Observed.** `de.ingenieur-title.by.ects-credits.ph` rendered *"Not answered yet — no value on file for degree_ects_credits"*, and the control below it asked the catalogue's own question, *"How many ECTS credits does your degree carry, if it states them?"*, with its rationale |
+| 4 | answering it moves the verdict | **Observed.** `240` was typed into that control and *Save and re-check* clicked. The same rule re-rendered **Met**, basis *"240 against a threshold of at least 180"*. The answer was written through the gateway, not into the database by hand |
+| 5 | a rule only an authority can decide stays undecided | **Observed.** `de.ingenieur-title.by.permission.ph` rendered *"Not answered yet — 'document-present' requires review that this evaluator does not perform"*, before and after answering. Nothing asserted that a Genehmigung exists |
+
+**Two defects this session found, both since fixed** (#121). The summary sentence rendered a raw
+catalogue key — *"until you supply degree_ects_credits"* — beside a control already asking it in
+words; and once that question was answered it still said *"supply one more input"* while the only
+remaining undetermined rule was one nobody can supply. Finding them is why the gate is a browser
+session and not a green suite: every test involved was passing throughout.
+
+**What this evidence does not cover, and must not be read as covering:**
+
+- **No nurse.** The verified-by line names a nurse *or* an engineer; an engineer is what was
+  observed. Philippine nursing → Germany is modelled on neither side, and `de.md` still says so.
+- **One Land.** Bavaria. The other fifteen Ingenieurgesetze have not been read.
+- **The title, not the work.** Every row carries `gatesTitleNotActivity`; a person may do the work
+  while the title is pending.
+- **No HTTP-boundary test.** The chain is covered in two halves — database and retrieval in vitest,
+  placement and verdict in pytest — and the join between them was verified by hand in this session
+  rather than by a test that would catch it breaking.
+- **Origin as a class is still one member at a time.** `["PH"]` is modelled; "outside the EU/EEA" is
+  not expressible as an inclusion test, so a second origin is a second row (ADR-0029).
 
 ---
 
