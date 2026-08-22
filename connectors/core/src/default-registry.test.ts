@@ -11,6 +11,9 @@ const stubDeps = {
     knownDocuments: ['AufenthG-18g'],
     fetchDocument: async () => null,
   },
+  deBayingg: {
+    fetchDocument: async () => null,
+  },
   luLegilux: {
     fetchInstruments: async () => null,
   },
@@ -24,6 +27,9 @@ const stubDeps = {
     fetchBoard: async () => null,
     configuredBoards: ['leverdemo'],
   },
+  gitScm: {
+    fetchPage: async () => null,
+  },
 };
 
 describe('createRegistry', () => {
@@ -35,6 +41,16 @@ describe('createRegistry', () => {
     expect(registry.ids()).toContain('de-aufenthg');
     expect(registry.byKind('immigration').map((c) => c.meta.id)).toContain('de-bundesanzeiger');
     expect(registry.byRegion('DE').map((c) => c.meta.id)).toContain('de-bundesanzeiger');
+  });
+
+  it('registers Bavaria, whose rules are a Land’s and not the federation’s', () => {
+    // `de-bayingg` shipped for M5 and was never composed here, which the connector-registration
+    // invariant found. A recognition rule nobody can reach through the registry is a rule a run
+    // silently omits — and this one is the only source of an origin-scoped `recognition` row.
+    const registry = createRegistry(stubDeps);
+
+    expect(registry.ids()).toContain('de-bayingg');
+    expect(registry.byRegion('DE').map((c) => c.meta.id)).toContain('de-bayingg');
   });
 
   it('registers Luxembourg, and keeps it out of the German region', () => {
@@ -76,6 +92,17 @@ describe('createRegistry', () => {
     expect(registry.ids()).toContain('lever');
     expect(registry.byKind('job-board').map((c) => c.meta.id)).toEqual(['lever']);
     expect(registry.byRegion('DE').map((c) => c.meta.id)).not.toContain('lever');
+  });
+
+  it('registers the Git documentation catalogue, which answers for no country', () => {
+    // A learning source is not a destination. `git-scm` shipped in #129 with its folder, its tests
+    // and a `connector_sources` row, and without this line — `registerConnectorSource` writes a
+    // database row and is also called registering, so the one that was skipped looked done.
+    const registry = createRegistry(stubDeps);
+
+    expect(registry.ids()).toContain('git-scm');
+    expect(registry.byKind('learning').map((c) => c.meta.id)).toEqual(['git-scm']);
+    expect(registry.byRegion('DE').map((c) => c.meta.id)).not.toContain('git-scm');
   });
 
   it('returns a fresh registry each call, so callers cannot share mutable state', () => {

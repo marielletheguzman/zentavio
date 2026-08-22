@@ -14,7 +14,9 @@
   "dependencies": {
     "@zentavio/connector-ch-sem": "workspace:*",
     "@zentavio/connector-de-aufenthg": "workspace:*",
+    "@zentavio/connector-de-bayingg": "workspace:*",
     "@zentavio/connector-de-bundesanzeiger": "workspace:*",
+    "@zentavio/connector-git-scm": "workspace:*",
     "@zentavio/connector-lever": "workspace:*",
     "@zentavio/connector-lu-legilux": "workspace:*",
     "@zentavio/connector-nz-inz": "workspace:*"

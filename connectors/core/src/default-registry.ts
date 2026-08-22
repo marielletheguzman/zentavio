@@ -12,7 +12,9 @@
  */
 
 import { AufenthgConnector, type AufenthgDeps } from '@zentavio/connector-de-aufenthg';
+import { BayIngGConnector, type BayIngGDeps } from '@zentavio/connector-de-bayingg';
 import { BundesanzeigerConnector, type BundesanzeigerDeps } from '@zentavio/connector-de-bundesanzeiger';
+import { GitScmConnector, type GitScmDeps } from '@zentavio/connector-git-scm';
 import { LegiluxConnector, type LegiluxDeps } from '@zentavio/connector-lu-legilux';
 import { LeverConnector, type LeverDeps } from '@zentavio/connector-lever';
 import { SemConnector, type SemDeps } from '@zentavio/connector-ch-sem';
@@ -28,6 +30,7 @@ import { ConnectorRegistry } from './registry.ts';
 export interface ConnectorDeps {
   readonly deBundesanzeiger: BundesanzeigerDeps;
   readonly deAufenthg: AufenthgDeps;
+  readonly deBayingg: BayIngGDeps;
   readonly luLegilux: LegiluxDeps;
   readonly nzInz: InzDeps;
   readonly chSem: SemDeps;
@@ -37,6 +40,7 @@ export interface ConnectorDeps {
    * which employers to read would be curating from the layer least able to say why.
    */
   readonly lever: LeverDeps;
+  readonly gitScm: GitScmDeps;
 }
 
 /**
@@ -47,8 +51,10 @@ export function createRegistry(deps: ConnectorDeps): ConnectorRegistry {
   return new ConnectorRegistry()
     .register(new BundesanzeigerConnector(deps.deBundesanzeiger))
     .register(new AufenthgConnector(deps.deAufenthg))
+    .register(new BayIngGConnector(deps.deBayingg))
     .register(new LegiluxConnector(deps.luLegilux))
     .register(new InzConnector(deps.nzInz))
     .register(new SemConnector(deps.chSem))
-    .register(new LeverConnector(deps.lever));
+    .register(new LeverConnector(deps.lever))
+    .register(new GitScmConnector(deps.gitScm));
 }
