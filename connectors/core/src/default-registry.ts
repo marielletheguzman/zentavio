@@ -14,6 +14,7 @@
 import { AufenthgConnector, type AufenthgDeps } from '@zentavio/connector-de-aufenthg';
 import { BundesanzeigerConnector, type BundesanzeigerDeps } from '@zentavio/connector-de-bundesanzeiger';
 import { LegiluxConnector, type LegiluxDeps } from '@zentavio/connector-lu-legilux';
+import { LeverConnector, type LeverDeps } from '@zentavio/connector-lever';
 import { SemConnector, type SemDeps } from '@zentavio/connector-ch-sem';
 import { InzConnector, type InzDeps } from '@zentavio/connector-nz-inz';
 
@@ -30,6 +31,12 @@ export interface ConnectorDeps {
   readonly luLegilux: LegiluxDeps;
   readonly nzInz: InzDeps;
   readonly chSem: SemDeps;
+  /**
+   * The first non-immigration source, and the first job data at all. Its boards come from
+   * configuration for the same reason its dependencies come from here: a registry that decided
+   * which employers to read would be curating from the layer least able to say why.
+   */
+  readonly lever: LeverDeps;
 }
 
 /**
@@ -42,5 +49,6 @@ export function createRegistry(deps: ConnectorDeps): ConnectorRegistry {
     .register(new AufenthgConnector(deps.deAufenthg))
     .register(new LegiluxConnector(deps.luLegilux))
     .register(new InzConnector(deps.nzInz))
-    .register(new SemConnector(deps.chSem));
+    .register(new SemConnector(deps.chSem))
+    .register(new LeverConnector(deps.lever));
 }

@@ -81,6 +81,9 @@ importers:
       '@zentavio/connector-de-bundesanzeiger':
         specifier: workspace:*
         version: link:../immigration-data/de-bundesanzeiger
+      '@zentavio/connector-lever':
+        specifier: workspace:*
+        version: link:../job-boards/lever
       '@zentavio/connector-lu-legilux':
         specifier: workspace:*
         version: link:../immigration-data/lu-legilux
@@ -134,6 +137,15 @@ importers:
         version: link:../../../packages/types
 
   connectors/immigration-data/nz-inz:
+    dependencies:
+      '@zentavio/connectors-core':
+        specifier: workspace:*
+        version: link:../../core
+      '@zentavio/types':
+        specifier: workspace:*
+        version: link:../../../packages/types
+
+  connectors/job-boards/lever:
     dependencies:
       '@zentavio/connectors-core':
         specifier: workspace:*

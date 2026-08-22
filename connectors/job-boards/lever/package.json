@@ -1,0 +1,17 @@
+{
+  "name": "@zentavio/connector-lever",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Published job postings from configured Lever employer boards.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zentavio/connectors-core": "workspace:*",
+    "@zentavio/types": "workspace:*"
+  }
+}
