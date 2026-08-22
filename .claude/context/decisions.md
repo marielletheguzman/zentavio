@@ -98,6 +98,8 @@ An ADR is numbered sequentially and never renumbered.
 | [0026](../../docs/architecture/decisions/0026-destination-comparison.md) | Destinations are compared, grouped and explained — never ranked by a score | Accepted |
 | [0027](../../docs/architecture/decisions/0027-quota-semantics.md) | A quota is a property of the pathway, never a requirement a person can fail | Accepted |
 | [0028](../../docs/architecture/decisions/0028-remote-as-a-destination.md) | `REMOTE` compares on employability alone, and its eligibility is `not_applicable` rather than unknown | Accepted |
+| [0029](../../docs/architecture/decisions/0029-origin-scoped-requirements.md) | Origin scopes a requirement through `applies_to`, and an origin with no rule is `unknown`, never `not_applicable` | Accepted |
+| [0030](../../docs/architecture/decisions/0030-what-may-promote-a-skill-to-evidenced.md) | An in-platform assessment is the only thing that may promote a skill to `evidenced`, and what it evidences is the attempt | Accepted |
 
 0001–0004 define the boundaries every skill and context file assumes: one repository, sources as
 plugins, a polyglot contract at the `ai/` boundary, and a vector store that is an index rather
