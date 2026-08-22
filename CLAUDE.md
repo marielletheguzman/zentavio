@@ -6,8 +6,19 @@ viability — using structured knowledge rather than keyword matching.
 
 ## Current state
 
-**M1, M2, M3 and M4 are complete** (M2 and M3 met 2026-08-11, M4 on 2026-08-12 subject to the
-evidence gate in `docs/roadmap/milestones.md`).
+**M1 through M5 are complete** (M2 and M3 met 2026-08-11, M4 on 2026-08-12 subject to the
+evidence gate in `docs/roadmap/milestones.md`, M5 on 2026-08-22).
+
+M5: a regulated qualification gets a real recognition verdict rather than `unknown`. **The engineer
+half of M5's verified-by line, not the nurse half** — the slice is IT and computer engineering
+(`.claude/skills/immigration/references/countries/de.md`, `ph.md`): software work in Germany is
+**not regulated**, so recognition does not apply and needs no rule; the protected title `Ingenieur`
+**is** regulated per Land, and BayIngG Art. 2 and Art. 3 are ingested by
+`connectors/immigration-data/de-bayingg` as three `recognition` rows scoped to
+`applies_to.origin_jurisdiction: ["PH"]` (ADR-0029). Browser-verified end to end on 2026-08-22 —
+what was seen is recorded in `milestones.md`, including the two rendering defects that session
+found. **Nursing, teaching and the reserved engineering activities remain `unknown`**, and Bavaria
+is one Land of sixteen.
 
 M1: a résumé uploads, becomes a versioned profile with a verbatim source span on every claim, is
 correctable, and can be compared against a career track to produce a dependency-ordered gap and a
