@@ -262,6 +262,59 @@ export interface ProfileSkillsTable {
   updated_at: Generated<Timestamp>;
 }
 
+// ── interview reports (ADR-0031) ─────────────────────────────────────────────
+
+/** One value today. A published process is tier 1, lives elsewhere, and outranks every report. */
+export type InterviewReportBasisColumn = 'self_reported';
+
+/**
+ * One person's account of one process, at one company, for one role family.
+ *
+ * **Tier 4.** A single report is never a fact about a company; support is counted per
+ * `(company_id, role_family)` and the floors live in the repository, because a `CHECK` cannot count
+ * rows in another table.
+ */
+export interface InterviewReportsTable {
+  id: string;
+  /** Null once erased — moves in step with `anonymized_at` (`ck_ir__anonymized`). */
+  user_id: string | null;
+  company_id: string;
+  /** Matches `careers.family`. The unit of support (ADR-0031). */
+  role_family: string;
+  /** When they interviewed, not when they told us. Recency is part of support. */
+  interviewed_on: string;
+  basis: Generated<InterviewReportBasisColumn>;
+  notes: string | null;
+  anonymized_at: Timestamp | null;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+}
+
+/**
+ * A closed vocabulary, deliberately.
+ *
+ * Free text makes aggregation impossible: "sys design", "system design round" and "architecture
+ * chat" are one stage described three ways, and a floor counted across them counts nothing.
+ */
+export type InterviewStageKindColumn =
+  | 'recruiter-screen'
+  | 'technical-screen'
+  | 'coding'
+  | 'system-design'
+  | 'take-home'
+  | 'behavioural'
+  | 'hiring-manager'
+  | 'panel'
+  | 'final';
+
+export interface InterviewReportStagesTable {
+  id: string;
+  report_id: string;
+  position: number;
+  kind: InterviewStageKindColumn;
+  created_at: Generated<Timestamp>;
+}
+
 // ── assessments (ADR-0030) ───────────────────────────────────────────────────
 
 export type AssessmentStatusColumn = 'draft' | 'published' | 'retired';
@@ -820,6 +873,8 @@ export interface Database {
   applications: ApplicationsTable;
   outcomes: OutcomesTable;
   connector_sources: ConnectorSourcesTable;
+  interview_reports: InterviewReportsTable;
+  interview_report_stages: InterviewReportStagesTable;
   skill_assessments: SkillAssessmentsTable;
   assessment_attempts: AssessmentAttemptsTable;
   assessment_items: AssessmentItemsTable;
