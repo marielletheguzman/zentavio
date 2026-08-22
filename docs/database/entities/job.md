@@ -25,6 +25,7 @@ CREATE TABLE job_postings (
   dedup_basis       text         NOT NULL,
 
   title             text         NOT NULL,
+  url               text         NOT NULL,          -- where a person applies (migration 20260823000500)
   company_id        uuid,                              -- null until resolved
   company_name_raw  text,                              -- what the source said, kept
   description       text,
@@ -128,6 +129,12 @@ an invented middle.
 
 **`stale_after`.** Derived at write time from the source's refresh window, so "is this posting still
 trustworthy?" is an indexed comparison rather than a computation.
+
+**`url`, separate from `job_posting_sources.source_url`.** One is where a person applies; the other is
+the endpoint the payload was read from. Conflating them sends somebody to an API response. The column
+was missing from the original table and added in `20260823000500` — invisible until a runner wired the
+path end to end, because the connector had been refusing unlinkable postings the whole time and
+persistence was quietly discarding the link it kept.
 
 **`dedup_basis` alongside `dedup_key`.** ADR-0034 gives deduplication to persistence, and the basis
 records **what a match would have meant**. `employer-title-location` can match across sources;

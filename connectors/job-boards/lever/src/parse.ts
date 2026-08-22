@@ -11,6 +11,8 @@
  * So the free-text location is carried verbatim for display and never mined.
  */
 
+import type { JobPosting } from '@zentavio/types';
+
 /** One posting as the API returns it. Only the fields this connector reads are declared. */
 export interface LeverPosting {
   readonly id?: string;
@@ -36,28 +38,7 @@ export interface PostingContext {
 }
 
 /** `null` when the posting cannot be linked to or named — never a row with a placeholder. */
-export function toPosting(
-  posting: LeverPosting,
-  context: PostingContext,
-): {
-  readonly externalId: string;
-  readonly title: string;
-  readonly url: string;
-  readonly companyBoard: string;
-  readonly countryCode: string | null;
-  readonly locationText: string | null;
-  readonly isRemote: boolean;
-  readonly remoteScope: null;
-  readonly department: string | null;
-  readonly team: string | null;
-  readonly commitment: string | null;
-  readonly salaryIsStated: false;
-  readonly postedAt: string | null;
-  readonly sourceId: string;
-  readonly sourceTier: 2;
-  readonly sourceUrl: string;
-  readonly retrievedAt: string;
-} | null {
+export function toPosting(posting: LeverPosting, context: PostingContext): JobPosting | null {
   const externalId = typeof posting.id === 'string' && posting.id !== '' ? posting.id : null;
   const title = typeof posting.text === 'string' && posting.text.trim() !== '' ? posting.text.trim() : null;
   // `hostedUrl` is the posting page; `applyUrl` is the form. Either lets somebody act on it, and a
@@ -72,10 +53,14 @@ export function toPosting(
       : null;
 
   return {
+    sourceId: context.sourceId,
+    // A board slug is a namespace, never an employer.
+    sourceScope: context.board,
     externalId,
     title,
     url,
-    companyBoard: context.board,
+    // Lever names no employer. Deriving one from the board slug is the invention this refuses.
+    companyNameRaw: null,
     countryCode: country,
     // Carried for display, never mined. The country above came from the field that states it.
     locationText: posting.categories?.location ?? null,
@@ -85,14 +70,17 @@ export function toPosting(
     department: posting.categories?.department ?? null,
     team: posting.categories?.team ?? null,
     commitment: posting.categories?.commitment ?? null,
-    // Lever publishes no structured pay. The column exists to say "the source was silent" rather
-    // than to leave a reader guessing whether we failed to parse one.
+    // Lever publishes no structured pay. The flag says "the source was silent" rather than leaving a
+    // reader guessing whether we failed to parse one.
     salaryIsStated: false,
+    salaryMin: null,
+    salaryMax: null,
+    currency: null,
+    salaryPeriod: null,
     postedAt:
       typeof posting.createdAt === 'number' && Number.isFinite(posting.createdAt)
         ? new Date(posting.createdAt).toISOString()
         : null,
-    sourceId: context.sourceId,
     sourceTier: 2,
     sourceUrl: `https://api.lever.co/v0/postings/${context.board}?mode=json`,
     retrievedAt: context.fetchedAt,

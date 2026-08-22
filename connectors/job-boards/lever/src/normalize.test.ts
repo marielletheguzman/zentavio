@@ -35,10 +35,13 @@ describe('the rows this produces', () => {
 
   it('carries the posting as the source states it', () => {
     expect(rows[0]).toEqual({
+      sourceId: 'lever',
+      // The board is the namespace the posting id belongs to, and nothing more.
+      sourceScope: 'leverdemo',
       externalId: '33538a2f-d27d-4a96-8f05-fa4b0e4d940e',
       title: 'AbelsonTaylor Writer',
       url: 'https://jobs.lever.co/leverdemo/33538a2f-d27d-4a96-8f05-fa4b0e4d940e',
-      companyBoard: 'leverdemo',
+      companyNameRaw: null,
       countryCode: 'US',
       locationText: 'Arlington, TX',
       isRemote: false,
@@ -47,10 +50,13 @@ describe('the rows this produces', () => {
       team: 'Professional Services',
       commitment: 'Regular Full Time (Salary)',
       salaryIsStated: false,
+      salaryMin: null,
+      salaryMax: null,
+      currency: null,
+      salaryPeriod: null,
       // `createdAt` is epoch milliseconds, read as UTC. Anything local-time here would pass in one
       // timezone and fail in another — the bug class CI structurally cannot catch.
       postedAt: '2019-03-21T16:33:55.299Z',
-      sourceId: 'lever',
       sourceTier: 2,
       sourceUrl: 'https://api.lever.co/v0/postings/leverdemo?mode=json',
       retrievedAt: '2026-08-22T00:00:00Z',

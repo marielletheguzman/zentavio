@@ -8,6 +8,7 @@
     "@aws-sdk/client-s3": "^3.741.0",
     "@zentavio/auth": "workspace:*",
     "@zentavio/config": "workspace:*",
+    "@zentavio/connectors-core": "workspace:*",
     "@zentavio/connector-de-aufenthg": "workspace:*",
     "@zentavio/connector-de-bayingg": "workspace:*",
     "@zentavio/connector-git-scm": "workspace:*",
@@ -17,6 +18,7 @@
     "@zentavio/db": "workspace:*",
     "@zentavio/ingestion": "workspace:*",
     "@zentavio/storage": "workspace:*",
+    "@zentavio/types": "workspace:*",
     "kysely": "^0.29.4"
   }
 }

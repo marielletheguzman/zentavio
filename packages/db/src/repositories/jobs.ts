@@ -42,6 +42,8 @@ export interface SourceIdentity {
 /** The posting itself, as a connector normalized it. Every field the source omitted is null. */
 export interface PostingFields {
   readonly title: string;
+  /** Where a person applies. A posting nobody can act on is not worth a row. */
+  readonly url: string;
   readonly companyId?: string | null;
   readonly companyNameRaw?: string | null;
   readonly description?: string | null;
@@ -154,6 +156,7 @@ function staleAfter(sourceId: string, retrievedAt: Date) {
 function columnsFrom(fields: PostingFields) {
   return {
     title: fields.title,
+    url: fields.url,
     company_id: fields.companyId ?? null,
     company_name_raw: fields.companyNameRaw ?? null,
     description: fields.description ?? null,

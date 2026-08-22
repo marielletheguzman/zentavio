@@ -57,9 +57,10 @@ async function ingestBoard() {
   for (const row of rows()) {
     stored.push(
       await upsertPostingFromSource(db, {
-        identity: { sourceId: row.sourceId, sourceScope: row.companyBoard, externalId: row.externalId },
+        identity: { sourceId: row.sourceId, sourceScope: row.sourceScope, externalId: row.externalId },
         fields: {
           title: row.title,
+          url: row.url,
           locationRaw: row.locationText,
           countryCode: row.countryCode,
           isRemote: row.isRemote,
@@ -125,7 +126,7 @@ describe('identity', () => {
     // The failure this prevents: a source numbering postings per employer, whose id 1 on one board
     // is a different job from id 1 on another. Merging them would look like deduplication working.
     const [first] = rows();
-    const shared = { title: first!.title, postedAt: new Date(first!.postedAt!) };
+    const shared = { title: first!.title, url: first!.url, postedAt: new Date(first!.postedAt!) };
 
     const a = await upsertPostingFromSource(db, {
       identity: { sourceId: 'lever', sourceScope: 'board-a', externalId: 'shared-1' },
@@ -167,7 +168,12 @@ describe('deduplication', () => {
 
   it('derives a matchable key only when an employer identity exists', () => {
     const identity = { sourceId: 'lever', sourceScope: BOARD, externalId: 'abc' };
-    const fields = { title: 'Senior Backend Engineer', locationRaw: 'Berlin, Germany', postedAt: new Date('2026-08-01T00:00:00Z') };
+    const fields = {
+      title: 'Senior Backend Engineer',
+      url: 'https://jobs.example.invalid/senior-backend',
+      locationRaw: 'Berlin, Germany',
+      postedAt: new Date('2026-08-01T00:00:00Z'),
+    };
 
     const withoutEmployer = dedupKeyFor(identity, fields);
     const withEmployer = dedupKeyFor(identity, { ...fields, companyNameRaw: 'Testfirma GmbH' });
@@ -185,12 +191,17 @@ describe('deduplication', () => {
   it('refuses to merge when a recomputed key would collide, and records the refusal', async () => {
     // Two postings that acquire an employer and become indistinguishable. Merging them is
     // destructive — matches and applications already point at both — so both rows stay.
-    const employer = { companyNameRaw: 'Testfirma GmbH', title: 'Platform Engineer', locationRaw: 'Berlin' };
+    const employer = {
+      companyNameRaw: 'Testfirma GmbH',
+      title: 'Platform Engineer',
+      url: 'https://jobs.example.invalid/platform-engineer',
+      locationRaw: 'Berlin',
+    };
     const first = { sourceId: 'lever', sourceScope: BOARD, externalId: 'collide-1' };
     const second = { sourceId: 'lever', sourceScope: BOARD, externalId: 'collide-2' };
 
-    await upsertPostingFromSource(db, { identity: first, fields: { title: 'Platform Engineer' }, observation: observation() });
-    await upsertPostingFromSource(db, { identity: second, fields: { title: 'Platform Engineer' }, observation: observation() });
+    await upsertPostingFromSource(db, { identity: first, fields: { title: 'Platform Engineer', url: 'https://jobs.example.invalid/platform-engineer' }, observation: observation() });
+    await upsertPostingFromSource(db, { identity: second, fields: { title: 'Platform Engineer', url: 'https://jobs.example.invalid/platform-engineer' }, observation: observation() });
 
     await upsertPostingFromSource(db, { identity: first, fields: employer, observation: observation() });
     const collided = await upsertPostingFromSource(db, { identity: second, fields: employer, observation: observation() });
@@ -336,7 +347,7 @@ describe('what a source may state', () => {
     await expect(
       upsertPostingFromSource(db, {
         identity: { sourceId: 'lever', sourceScope: BOARD, externalId: 'invented-pay' },
-        fields: { title: 'Engineer', salaryIsStated: true },
+        fields: { title: 'Engineer', url: 'https://jobs.example.invalid/e', salaryIsStated: true },
         observation: observation(),
       }),
     ).rejects.toThrow(/ck_job_postings__stated_salary_has_amount/);
@@ -346,7 +357,7 @@ describe('what a source may state', () => {
     await expect(
       upsertPostingFromSource(db, {
         identity: { sourceId: 'lever', sourceScope: BOARD, externalId: 'invented-scope' },
-        fields: { title: 'Engineer', isRemote: null, remoteScope: 'worldwide' },
+        fields: { title: 'Engineer', url: 'https://jobs.example.invalid/e', isRemote: null, remoteScope: 'worldwide' },
         observation: observation(),
       }),
     ).rejects.toThrow(/ck_job_postings__scope_needs_remote/);
@@ -380,13 +391,13 @@ describe('tier and staleness', () => {
     const identity = { sourceId: 'lever', sourceScope: BOARD, externalId: 'tiered' };
     await upsertPostingFromSource(db, {
       identity,
-      fields: { title: 'Staff Engineer' },
+      fields: { title: 'Staff Engineer', url: 'https://jobs.example.invalid/staff' },
       observation: observation({ sourceTier: 1 }),
     });
 
     const worse = await upsertPostingFromSource(db, {
       identity,
-      fields: { title: 'staff engineer (m/f/d)' },
+      fields: { title: 'staff engineer (m/f/d)', url: 'https://jobs.example.invalid/staff' },
       observation: observation({ sourceTier: 3, retrievedAt: new Date('2026-08-23T00:00:00Z') }),
     });
 

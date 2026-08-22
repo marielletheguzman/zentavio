@@ -10,7 +10,8 @@
  * retire jobs somebody is tracking because our fetch broke.
  */
 
-import { LeverConnector, REGISTRATION, type BoardRaw, type JobPostingRecord } from '@zentavio/connector-lever';
+import { LeverConnector, REGISTRATION, type BoardRaw } from '@zentavio/connector-lever';
+import type { JobPosting } from '@zentavio/types';
 import { registerConnectorSource, livePostings } from '@zentavio/db';
 import type { Database } from '@zentavio/db';
 import { executePostingPlan, planPostingIngest, type RunOutcome } from '@zentavio/ingestion';
@@ -55,10 +56,11 @@ async function ingest(board: BoardRaw = FIXTURE, run: RunOutcome = { completed: 
     meta: source.meta,
     sourceScope: board.board,
     observation: observation(),
-    postings: rows.map((row: JobPostingRecord) => ({
+    postings: rows.map((row: JobPosting) => ({
       externalId: row.externalId,
       fields: {
         title: row.title,
+        url: row.url,
         locationRaw: row.locationText,
         countryCode: row.countryCode,
         isRemote: row.isRemote,
