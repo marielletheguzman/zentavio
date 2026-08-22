@@ -88,6 +88,7 @@ export {
 export type {
   Database,
   EvaluationColumn,
+  InterviewStageKindColumn,
   ImmigrationPathwaysTable,
   ImposedByColumn,
   RequirementDomainColumn,
@@ -127,7 +128,11 @@ export {
 export { activePathways, pathwayById, type PathwayRow } from './repositories/pathways.ts';
 export {
   anonymizeInterviewReports,
+  correctInterviewReport,
   InterviewReportInvariantError,
+  reportForPairing,
+  reportsByUser,
+  withdrawInterviewReport,
   PAIRING_SUPPORT_FLOOR,
   processForPairing,
   recordInterviewReport,

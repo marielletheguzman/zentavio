@@ -31,6 +31,8 @@ import { GapController } from './gap/gap.controller.ts';
 import { GapService } from './gap/gap.service.ts';
 import { ComparisonController } from './comparison/comparison.controller.ts';
 import { ComparisonService } from './comparison/comparison.service.ts';
+import { InterviewsController } from './interviews/interviews.controller.ts';
+import { InterviewsService } from './interviews/interviews.service.ts';
 import { LearningController } from './learning/learning.controller.ts';
 import { LearningService } from './learning/learning.service.ts';
 import { AssessmentsController } from './assessments/assessments.controller.ts';
@@ -52,6 +54,7 @@ import { DATABASE, ELIGIBILITY_CLIENT, GAP_CLIENT, PARSER_CLIENT, SUBJECT_RESOLV
     ApplicationsController,
     AssessmentsController,
     LearningController,
+    InterviewsController,
     HealthController,
   ],
   providers: [
@@ -90,6 +93,7 @@ import { DATABASE, ELIGIBILITY_CLIENT, GAP_CLIENT, PARSER_CLIENT, SUBJECT_RESOLV
     ApplicationsService,
     AssessmentsService,
     LearningService,
+    InterviewsService,
     {
       provide: SUBJECT_RESOLVER,
       useFactory: (db: Kysely<Database>): SubjectResolver => {
