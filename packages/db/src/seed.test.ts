@@ -8,7 +8,15 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { normalizeAlias, requiresCycles, validateSeed, type SeedFile } from './seed.ts';
+import {
+  loadSeedDirectory,
+  normalizeAlias,
+  requiresCycles,
+  seedsDirectory,
+  validateAcrossSeeds,
+  validateSeed,
+  type SeedFile,
+} from './seed.ts';
 
 function seedWith(skills: SeedFile['skills']): SeedFile {
   return {
@@ -226,5 +234,79 @@ describe('validateSeed — the graph', () => {
       ],
     });
     expect(problems.some((p) => p.startsWith('duplicate careerSkills entry'))).toBe(true);
+  });
+});
+
+
+/**
+ * Seeds became a directory when a second career track arrived, and the interesting failure is the
+ * one that only exists between files: skills are upserted by slug, so two tracks describing the
+ * same skill differently do not collide — the later file silently wins and the earlier track's
+ * closed set changes underneath it.
+ */
+describe('more than one seed file', () => {
+  const track = (slug: string, skills: SeedFile['skills']): { name: string; seed: SeedFile } => ({
+    name: `${slug}.json`,
+    seed: {
+      career: {
+        slug,
+        name: slug,
+        family: 'software-it',
+        description: 'x',
+        profession: null,
+        licenceGated: false,
+        sourceTier: 3,
+        basis: 'curated',
+        sourceUrl: null,
+      },
+      skills,
+      careerSkills: [],
+      edges: [],
+    } as unknown as SeedFile,
+  });
+
+  const python = { slug: 'python', name: 'Python', kind: 'technology', sourceUrl: null, aliases: [] };
+
+  it('accepts two tracks reusing a skill described identically', () => {
+    // Reuse is the point: a shared slug is what makes two tracks comparable.
+    expect(
+      validateAcrossSeeds([track('a', [python]), track('b', [python])] as never),
+    ).toEqual([]);
+  });
+
+  it('refuses two tracks describing the same slug differently', () => {
+    const renamed = { ...python, name: 'Python 3' };
+    const problems = validateAcrossSeeds([track('a', [python]), track('b', [renamed])] as never);
+
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('python');
+  });
+
+  it('refuses two files claiming the same career slug', () => {
+    const problems = validateAcrossSeeds([track('a', [python]), track('a', [python])] as never);
+    expect(problems.some((problem) => problem.includes('career slug a'))).toBe(true);
+  });
+
+  it('loads every seed file in the directory, and each one is valid on its own', async () => {
+    // The directory is data, so this is the test that notices a new track being added broken.
+    const seeds = await loadSeedDirectory(seedsDirectory);
+
+    expect(seeds.length).toBeGreaterThanOrEqual(2);
+    for (const { name, seed } of seeds) {
+      expect(validateSeed(seed), name).toEqual([]);
+    }
+    expect(validateAcrossSeeds(seeds)).toEqual([]);
+  });
+
+  it('carries a profession on the track that names a protected title', async () => {
+    // `ck_careers__licence_profession` permits a profession without `licenceGated`, and its comment
+    // says why: the same occupation is regulated in one jurisdiction and not another. Bavaria gates
+    // the title `Ingenieur`, not engineering work — so the track names the profession and stays
+    // ungated, which is what lets the BayIngG rows reach the person without forcing `unknown`.
+    const seeds = await loadSeedDirectory(seedsDirectory);
+    const engineer = seeds.find(({ seed }) => seed.career.slug === 'computer-engineer');
+
+    expect(engineer?.seed.career.profession).toBe('ingenieur-protected-title');
+    expect(engineer?.seed.career.licenceGated).toBe(false);
   });
 });

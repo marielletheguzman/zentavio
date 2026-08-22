@@ -116,6 +116,37 @@ def compose(
     )
 
 
+def _undetermined_reason(eligibility: Verdict) -> str:
+    """Why nothing has been decided, in words a person can act on — or told they cannot.
+
+    Deliberately never "you are not eligible": nothing here says no.
+
+    **This sentence names no catalogue key.** A browser check on 2026-08-22 rendered *"until you
+    supply degree_ects_credits"* to a person, beside a control already asking the same thing in
+    words. ``needs_from_user`` is the structured list a surface renders prompts from
+    (``person_fact_kinds.prompt``); putting keys into prose duplicates that badly and leaks an
+    internal identifier into a sentence somebody reads.
+
+    **Undetermined with nothing to supply is a different sentence**, and the same check found the
+    old one promising an action that did not exist: it still said "supply one more input" once the
+    answerable question had been answered, while what remained was a rule an authority decides.
+    Telling somebody to supply something they cannot is worse than saying plainly that this one is
+    not theirs to move.
+    """
+    if eligibility.needs_from_user:
+        count = len(eligibility.needs_from_user)
+        question = "question" if count == 1 else "questions"
+        return (
+            f"Nothing here says no. We cannot finish checking until you answer {count} "
+            f"{question}, below."
+        )
+
+    return (
+        "Nothing here says no. A rule here cannot be decided from what is on file, and no answer "
+        "from you would settle it — it is listed below with who decides it."
+    )
+
+
 def _binding(eligibility: Verdict, employability: Employability) -> tuple[BindingConstraint, str]:
     """Which axis binds, and why.
 
@@ -147,13 +178,7 @@ def _binding(eligibility: Verdict, employability: Employability) -> tuple[Bindin
         )
 
     if eligibility.status == "undetermined":
-        # Deliberately not "you are not eligible". Nothing here says no — a question is unanswered,
-        # and the input that resolves it is already in the verdict.
-        needed = ", ".join(eligibility.needs_from_user) or "one more input"
-        return (
-            "eligibility",
-            f"Nothing here says no. We cannot finish checking until you supply {needed}.",
-        )
+        return ("eligibility", _undetermined_reason(eligibility))
 
     # Eligible. Employability is what is left to decide.
     if employability.status == "unknown":
