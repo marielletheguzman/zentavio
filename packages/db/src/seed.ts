@@ -15,7 +15,8 @@
  * put in a startup script or run against an environment nobody is sure about.
  */
 
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { Pool } from 'pg';
@@ -347,6 +348,80 @@ export async function loadSeedFile(path: string): Promise<SeedFile> {
   return JSON.parse(await readFile(path, 'utf8')) as SeedFile;
 }
 
+/**
+ * Every seed file in the directory, in a stable order.
+ *
+ * **One file per career track.** The loader used to name a single file, which made a second track
+ * an edit to this module rather than a data addition — the thing `seeds/README.md` says a seed is
+ * for. Sorted by name so two runs apply the same files in the same order and a diff of two seeded
+ * databases means something.
+ */
+export async function loadSeedDirectory(directory: string): Promise<readonly NamedSeed[]> {
+  const names = (await readdir(directory)).filter((name) => name.endsWith('.json')).sort();
+  const seeds: NamedSeed[] = [];
+  for (const name of names) {
+    seeds.push({ name, seed: await loadSeedFile(join(directory, name)) });
+  }
+  return seeds;
+}
+
+export interface NamedSeed {
+  readonly name: string;
+  readonly seed: SeedFile;
+}
+
+/**
+ * Problems that only exist between files.
+ *
+ * Skills are upserted by slug, so two files describing `python` differently do not conflict in the
+ * database — the later one silently wins and the earlier track's closed set changes underneath it.
+ * A track reusing a skill must therefore describe it **identically**, and this is where that is
+ * enforced. Reuse itself is intended: a shared slug is what makes two tracks comparable.
+ */
+export function validateAcrossSeeds(seeds: readonly NamedSeed[]): readonly string[] {
+  const problems: string[] = [];
+  const seen = new Map<string, { readonly file: string; readonly name: string; readonly kind: string }>();
+  const careers = new Map<string, string>();
+
+  for (const { name: file, seed } of seeds) {
+    const existingCareer = careers.get(seed.career.slug);
+    if (existingCareer !== undefined) {
+      problems.push(`career slug ${seed.career.slug} is declared by both ${existingCareer} and ${file}`);
+    }
+    careers.set(seed.career.slug, file);
+
+    for (const skill of seed.skills) {
+      const previous = seen.get(skill.slug);
+      if (previous === undefined) {
+        seen.set(skill.slug, { file, name: skill.name, kind: skill.kind });
+        continue;
+      }
+      if (previous.name !== skill.name || previous.kind !== skill.kind) {
+        problems.push(
+          `skill ${skill.slug} is described differently by ${previous.file} and ${file}: ` +
+            `"${previous.name}" (${previous.kind}) vs "${skill.name}" (${skill.kind})`,
+        );
+      }
+    }
+  }
+
+  return problems;
+}
+
+/** Totals across the seed files, so the report is one line however many tracks there are. */
+function sumPlans(left: SeedPlan, right: SeedPlan): SeedPlan {
+  return {
+    careersInserted: left.careersInserted + right.careersInserted,
+    skillsInserted: left.skillsInserted + right.skillsInserted,
+    skillsUpdated: left.skillsUpdated + right.skillsUpdated,
+    aliasesInserted: left.aliasesInserted + right.aliasesInserted,
+    careerSkillsInserted: left.careerSkillsInserted + right.careerSkillsInserted,
+    edgesInserted: left.edgesInserted + right.edgesInserted,
+    factKindsUpserted: left.factKindsUpserted + right.factKindsUpserted,
+    pathwaysInserted: left.pathwaysInserted + right.pathwaysInserted,
+  };
+}
+
 export async function run(options: RunOptions): Promise<number> {
   const { out, err } = options;
 
@@ -369,12 +444,18 @@ export async function run(options: RunOptions): Promise<number> {
     return EXIT.USAGE;
   }
 
-  const seedPath = new URL('cloud-platform-engineering.json', new URL('../seeds/', import.meta.url));
-  const seed = await loadSeedFile(fileURLToPath(seedPath));
+  const seeds = await loadSeedDirectory(seedsDirectory);
+  if (seeds.length === 0) {
+    err(`No seed files found in ${seedsDirectory}`);
+    return EXIT.FAILED;
+  }
 
-  const problems = validateSeed(seed);
+  const problems = [
+    ...seeds.flatMap(({ name, seed }) => validateSeed(seed).map((problem) => `${name}: ${problem}`)),
+    ...validateAcrossSeeds(seeds),
+  ];
   if (problems.length > 0) {
-    err(`Seed file is invalid — nothing was written:`);
+    err(`Seed data is invalid — nothing was written:`);
     for (const problem of problems) err(`  ${problem}`);
     return EXIT.FAILED;
   }
@@ -394,7 +475,11 @@ export async function run(options: RunOptions): Promise<number> {
   });
 
   try {
-    const plan = await applySeed(pool, seed, { dryRun });
+    // Applied one file at a time, each in its own transaction. A track that fails to load leaves
+    // the tracks before it intact rather than rolling back a registry other data already references.
+    const plans = [];
+    for (const { seed } of seeds) plans.push(await applySeed(pool, seed, { dryRun }));
+    const plan = plans.reduce(sumPlans);
     out(
       `${dryRun ? 'Would apply' : 'Applied'}: ` +
         `${String(plan.careersInserted)} career(s), ` +

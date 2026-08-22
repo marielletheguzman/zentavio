@@ -1,0 +1,253 @@
+{
+  "$comment": "Second career track. Exists because M5's recognition slice needs a career whose `profession` names the protected title `Ingenieur` — without one, the ingested BayIngG rows are stored correctly and reach nobody. Skills are REUSED from cloud-platform-engineering.json with identical definitions; none is invented here. See seeds/README.md for what tier 3 means and why it is not higher.",
+  "career": {
+    "slug": "computer-engineer",
+    "name": "Computer Engineer",
+    "family": "software-it",
+    "description": "Designs and builds computing systems across the hardware/software boundary — embedded and systems software, firmware, and the platforms that run them. Distinct from a platform engineer, who operates infrastructure rather than designing the systems on it.",
+    "profession": "ingenieur-protected-title",
+    "licenceGated": false,
+    "sourceTier": 3,
+    "basis": "curated",
+    "sourceUrl": null
+  },
+  "skills": [
+    {
+      "slug": "linux-fundamentals",
+      "name": "Linux Fundamentals",
+      "kind": "practice",
+      "sourceUrl": "https://www.kernel.org/doc/html/latest/",
+      "aliases": [
+        "linux",
+        "gnu/linux",
+        "linux administration"
+      ]
+    },
+    {
+      "slug": "networking-fundamentals",
+      "name": "Networking Fundamentals",
+      "kind": "practice",
+      "sourceUrl": null,
+      "aliases": [
+        "tcp/ip",
+        "networking",
+        "dns",
+        "network fundamentals"
+      ]
+    },
+    {
+      "slug": "git",
+      "name": "Git",
+      "kind": "tool",
+      "sourceUrl": "https://git-scm.com/doc",
+      "aliases": [
+        "git scm",
+        "version control with git"
+      ]
+    },
+    {
+      "slug": "python",
+      "name": "Python",
+      "kind": "technology",
+      "sourceUrl": "https://docs.python.org/3/",
+      "aliases": [
+        "python3",
+        "python programming"
+      ]
+    },
+    {
+      "slug": "go",
+      "name": "Go",
+      "kind": "technology",
+      "sourceUrl": "https://go.dev/doc/",
+      "aliases": [
+        "golang",
+        "go lang"
+      ]
+    },
+    {
+      "slug": "bash-scripting",
+      "name": "Bash Scripting",
+      "kind": "technology",
+      "sourceUrl": "https://www.gnu.org/software/bash/manual/",
+      "aliases": [
+        "bash",
+        "shell scripting",
+        "sh scripting"
+      ]
+    },
+    {
+      "slug": "docker",
+      "name": "Docker",
+      "kind": "tool",
+      "sourceUrl": "https://docs.docker.com/",
+      "aliases": [
+        "dockerfile",
+        "docker engine",
+        "containerisation with docker"
+      ]
+    },
+    {
+      "slug": "containers",
+      "name": "Containers",
+      "kind": "practice",
+      "sourceUrl": "https://opencontainers.org/",
+      "aliases": [
+        "containerization",
+        "containerisation",
+        "oci containers"
+      ]
+    },
+    {
+      "slug": "ci-cd",
+      "name": "CI/CD",
+      "kind": "practice",
+      "sourceUrl": null,
+      "aliases": [
+        "ci/cd",
+        "continuous integration",
+        "continuous delivery",
+        "continuous deployment",
+        "cicd"
+      ]
+    },
+    {
+      "slug": "observability",
+      "name": "Observability",
+      "kind": "practice",
+      "sourceUrl": "https://opentelemetry.io/docs/",
+      "aliases": [
+        "monitoring and observability",
+        "telemetry"
+      ]
+    },
+    {
+      "slug": "postgresql",
+      "name": "PostgreSQL",
+      "kind": "technology",
+      "sourceUrl": "https://www.postgresql.org/docs/",
+      "aliases": [
+        "postgres",
+        "psql",
+        "postgre sql"
+      ]
+    },
+    {
+      "slug": "cloud-fundamentals",
+      "name": "Cloud Fundamentals",
+      "kind": "practice",
+      "sourceUrl": null,
+      "aliases": [
+        "cloud computing",
+        "cloud concepts",
+        "cloud architecture basics"
+      ]
+    },
+    {
+      "slug": "german",
+      "name": "German",
+      "kind": "language",
+      "sourceUrl": "https://www.coe.int/en/web/common-european-framework-reference-languages",
+      "aliases": [
+        "deutsch",
+        "german language"
+      ]
+    },
+    {
+      "slug": "english",
+      "name": "English",
+      "kind": "language",
+      "sourceUrl": "https://www.coe.int/en/web/common-european-framework-reference-languages",
+      "aliases": [
+        "english language"
+      ]
+    }
+  ],
+  "careerSkills": [
+    {
+      "skill": "linux-fundamentals",
+      "weight": 0.9,
+      "cluster": "core",
+      "marketScope": null
+    },
+    {
+      "skill": "networking-fundamentals",
+      "weight": 0.88,
+      "cluster": "core",
+      "marketScope": null
+    },
+    {
+      "skill": "git",
+      "weight": 0.85,
+      "cluster": "core",
+      "marketScope": null
+    },
+    {
+      "skill": "python",
+      "weight": 0.8,
+      "cluster": "core",
+      "marketScope": null
+    },
+    {
+      "skill": "go",
+      "weight": 0.55,
+      "cluster": "peripheral",
+      "marketScope": null
+    },
+    {
+      "skill": "bash-scripting",
+      "weight": 0.7,
+      "cluster": "core",
+      "marketScope": null
+    },
+    {
+      "skill": "docker",
+      "weight": 0.65,
+      "cluster": "supporting",
+      "marketScope": null
+    },
+    {
+      "skill": "containers",
+      "weight": 0.62,
+      "cluster": "supporting",
+      "marketScope": null
+    },
+    {
+      "skill": "ci-cd",
+      "weight": 0.68,
+      "cluster": "supporting",
+      "marketScope": null
+    },
+    {
+      "skill": "observability",
+      "weight": 0.6,
+      "cluster": "supporting",
+      "marketScope": null
+    },
+    {
+      "skill": "postgresql",
+      "weight": 0.5,
+      "cluster": "peripheral",
+      "marketScope": null
+    },
+    {
+      "skill": "cloud-fundamentals",
+      "weight": 0.58,
+      "cluster": "supporting",
+      "marketScope": null
+    },
+    {
+      "skill": "german",
+      "weight": 0.45,
+      "cluster": "supporting",
+      "marketScope": "DE"
+    },
+    {
+      "skill": "english",
+      "weight": 0.9,
+      "cluster": "core",
+      "marketScope": null
+    }
+  ],
+  "edges": []
+}
