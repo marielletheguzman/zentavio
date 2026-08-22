@@ -47,6 +47,7 @@ already ruled out and how the rule is enforced.
 | [0031](0031-minimum-support-for-an-interview-process.md) | A company’s interview process is described per role family, above a stated support floor, and never from a single report | Accepted | 2026-08-22 |
 | [0032](0032-interview-report-contribution.md) | Anyone signed in may report a pairing once, corrections recompute, and withdrawal detaches rather than deletes | Accepted | 2026-08-22 |
 | [0033](0033-job-board-source-tier-and-what-a-posting-may-state.md) | A Lever board is a tier-2 source, and a posting states only what Lever states structurally | Accepted | 2026-08-22 |
+| [0034](0034-job-posting-identity-and-lifecycle.md) | A posting’s identity is the source’s, deduplication belongs to persistence, and absence expires nothing unless the source lists exhaustively | Accepted | 2026-08-22 |
 
 **0010 is Accepted, and the rename is done** — `immigration_rules` is now `requirements`, with `domain`,
 `imposed_by`, and `authority`. Regulated professions remain blocked on **data**, not schema: nursing,
