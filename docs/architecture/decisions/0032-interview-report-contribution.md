@@ -139,17 +139,26 @@ describing an employer's process is exposed if that is traceable to them.
 - **A person could report a pairing they know nothing about**, in good faith or otherwise, and the
   stage floor is the only thing standing between that and a described process.
 
-**Follow-up work.**
+**Follow-up work — all complete as of 2026-08-22.** One carries an owed observation: the
+contribution surface has not been rendered in a browser.
 
-- The contribution surface: closed vocabulary as a form, one submission per pairing, correction of
-  an existing report, and withdrawal with its disclosure stated **before** submitting.
-- Gateway routes, with the same ownership rule the assessment routes use — a report that belongs to
-  somebody else gets the same answer as one that does not exist.
-- `interview-integrity.md`, the honest account of what is and is not defended, in the shape
-  `assessment-integrity.md` took for ADR-0030.
-- A revisit trigger written into that document: **if reports ever become worth gaming** — shown to
-  employers, ranked, sold, or used as a gate — this decision is not adequate and must be reopened
-  before that ships, not after.
+- ~~**The contribution surface: closed vocabulary as a form, one submission per pairing, correction
+  of an existing report, and withdrawal with its disclosure stated before submitting.**~~ **Done** —
+  #137. The disclosure is on the form and repeated on the withdraw button. A duplicate returns
+  `already-reported` with the id rather than a rejection, because the person already contributed and
+  what they want is to correct it. **Not browser-verified**: the extension was disconnected, so the
+  routes and database behaviour are checked and the page's rendering is not.
+- ~~**Gateway routes, with the same ownership rule the assessment routes use — a report that belongs
+  to somebody else gets the same answer as one that does not exist.**~~ **Done** — #136. 404 from the
+  routes, `undefined` and `false` from the repository, asserted both ways.
+- ~~**`interview-integrity.md`, the honest account of what is and is not defended.**~~ **Done** —
+  2026-08-22. Five attacks named: three closed (support floors, the per-stage floor, withdrawal
+  detaching), one narrowed *barely* (seeding — five accounts and five submissions, which is friction
+  rather than a defence), and staleness narrowed only by the window.
+- ~~**A revisit trigger written into that document.**~~ **Done** — it names three: reports becoming
+  worth gaming, a pairing's reports arriving in a burst from accounts with no other activity (which
+  nothing currently watches for, and the document says so), and a company-specific question bank
+  inheriting the same problem.
 
 **Reversal cost.** Low. Adding an eligibility gate later is a check at the write boundary and
 invalidates no stored data; the reports already collected stay valid under a stricter rule, because
