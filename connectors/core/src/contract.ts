@@ -61,6 +61,19 @@ export interface ConnectorMeta {
    * (`docs/architecture/connectors.md`, "Legal and ethical constraints").
    */
   readonly termsUrl: string;
+  /**
+   * Whether a complete run of this source lists **everything live** in a scope (ADR-0034).
+   *
+   * A Lever board is `exhaustive` by construction — the API returns every published posting, so a
+   * disappearance means the posting is gone. A keyword search is `partial`: fewer results than last
+   * time may mean a ranking change, a quota, or an outage.
+   *
+   * **This declares a capability, not an outcome.** It says what the source can do when a run
+   * succeeds; whether a given run actually finished is the run's own report, and expiry requires
+   * both. Absent means `partial`, so a connector that says nothing expires nothing — the safe
+   * direction, because the failure being avoided is retiring a posting somebody is tracking.
+   */
+  readonly listing?: 'exhaustive' | 'partial';
 }
 
 /**

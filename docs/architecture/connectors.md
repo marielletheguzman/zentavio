@@ -108,6 +108,20 @@ Shared helpers in `connectors/core`, never hand-rolled per connector:
 - **Reliability** is observed from validation pass rate, uptime, freshness accuracy, and outcome
   feedback. The tier bounds the ceiling; observation sets the value.
 
+## Listing completeness
+
+A connector declares whether a successful run of it lists **everything live** in a scope:
+
+```typescript
+readonly listing?: 'exhaustive' | 'partial';   // absent means partial
+```
+
+A Lever board is `exhaustive` — the API returns every published posting. A keyword search is
+`partial`. **The declaration is a capability, not an outcome**: whether a given run finished is the
+run's own report (`RunOutcome.completed`), and expiring a posting requires both (ADR-0034). A board
+that declares itself exhaustive and dies on page two returns a short list that looks exactly like a
+smaller board, and acting on it retires jobs on our own failure.
+
 ## Identity and deduplication
 
 **The connector states identity; persistence deduplicates** (ADR-0034).

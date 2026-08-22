@@ -125,6 +125,10 @@ export class LeverConnector implements Connector<BoardRaw, readonly JobPostingRe
     rateLimit: { requests: 60, windowMs: 60_000, minIntervalMs: 1000 },
     reliability: 0,
     termsUrl: REGISTRATION.termsUrl,
+    // The API returns every posting in the `published` state, so a board read completely is a
+    // complete list and a disappearance means the posting is gone (ADR-0034). It says nothing about
+    // whether a given run finished — that is the run's report, and expiry needs both.
+    listing: 'exhaustive',
   };
 
   readonly #deps: LeverDeps;

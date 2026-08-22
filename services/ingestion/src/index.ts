@@ -17,6 +17,22 @@ export {
 
 export { executePlan, type ExecutionReport } from './executor.ts';
 
+export { executePostingPlan, type PostingExecutionReport } from './posting-executor.ts';
+
+export {
+  expiryLicenceFor,
+  planPostingIngest,
+  summarizePostings,
+  type ExpiryLicence,
+  type PostingAction,
+  type PostingCandidate,
+  type PostingDecision,
+  type PostingIngestInput,
+  type PostingPlan,
+  type PostingPlanSummary,
+  type RunOutcome,
+} from './posting-ingest.ts';
+
 export {
   dayBefore,
   planIngest,

@@ -198,6 +198,27 @@ Columns, indexes, constraints, the repository API and the ingest path are a sepa
 from these decisions. What it must carry forward: the identity triple, `dedup_basis`, the exhaustive
 listing flag, `expiry_reason`'s two values, and the ban on defaulting a silent field.
 
+## Amendment, Accepted 2026-08-22 — the declaration lives in **both** places
+
+The follow-up this ADR left open ("`ConnectorMeta`, or a per-run result") is answered: **the source
+declares a capability, the run reports an outcome, and expiry requires both.**
+
+- `ConnectorMeta.listing: 'exhaustive' | 'partial'` says what the source can do when a run succeeds.
+  **Absent means `partial`**, so a connector that says nothing expires nothing.
+- The run reports whether it actually finished — every page consumed, nothing thrown, nothing
+  truncated — as `RunOutcome.completed`, with a reason when it did not.
+
+Neither alone is enough, and the reason is one failure: a board that declares itself exhaustive and
+then dies on its second page returns a short list **indistinguishable from a board with fewer jobs**.
+Trusting the declaration there retires postings on our own failure. Trusting only the run would mean
+asking every connector — including the five immigration ones, for which the concept does not apply —
+to set a field on every page, where a forgotten field becomes a silent `exhaustive`.
+
+`planPostingIngest` adds a third refusal the ADR did not anticipate: **a complete run that listed
+nothing sweeps nothing.** An employer with no open roles and a silently empty response look the same
+from here, and only one of them is safe to act on. The cost is a delayed expiry; the alternative cost
+is the whole scope.
+
 ## Consequences
 
 **Accepted costs.**
@@ -223,8 +244,8 @@ listing flag, `expiry_reason`'s two values, and the ban on defaulting a silent f
   a path that does not exist — it is `src/default-registry.ts`.
 - Update `docs/database/entities/job.md`: the `(source_id, external_id)` index, `dedup_basis`, the
   `is_remote` default, and the expiry rule.
-- Decide where the exhaustive-listing declaration lives — `ConnectorMeta`, or a per-run result — when
-  the ingest path is built.
+- ~~Decide where the exhaustive-listing declaration lives~~ — **answered by the amendment above**,
+  Accepted 2026-08-22 and implemented in `services/ingestion/src/posting-ingest.ts`.
 - The `job_postings` migration slice, which this ADR does not authorise.
 
 **Reversal cost.** Low while the table does not exist, and this is the last moment that is true.
