@@ -10,6 +10,7 @@
  */
 
 import { AssessmentPanel } from './assessment-panel.tsx';
+import { CompletionsPanel } from './completions-panel.tsx';
 
 // Read at render on the server. No `process.env` here — configuration is `packages/config`'s job
 // (ADR-0005), and these are the values the browser genuinely needs handed to it.
@@ -34,6 +35,15 @@ export default function AssessPage() {
       </p>
 
       <AssessmentPanel
+        gatewayUrl={GATEWAY_URL}
+        devUserId={SEEDED_TEST_USER}
+        skillSlug={SKILL_ID_PARAM}
+      />
+
+      {/* Deliberately on the same page. The milestone's sentence is "visible to the user, so nobody
+          optimizes for completions", and the way to make that visible is to put the thing that does
+          not move readiness beside the thing that does. */}
+      <CompletionsPanel
         gatewayUrl={GATEWAY_URL}
         devUserId={SEEDED_TEST_USER}
         skillSlug={SKILL_ID_PARAM}

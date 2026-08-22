@@ -31,6 +31,8 @@ import { GapController } from './gap/gap.controller.ts';
 import { GapService } from './gap/gap.service.ts';
 import { ComparisonController } from './comparison/comparison.controller.ts';
 import { ComparisonService } from './comparison/comparison.service.ts';
+import { LearningController } from './learning/learning.controller.ts';
+import { LearningService } from './learning/learning.service.ts';
 import { AssessmentsController } from './assessments/assessments.controller.ts';
 import { AssessmentsService } from './assessments/assessments.service.ts';
 import { ApplicationsController } from './applications/applications.controller.ts';
@@ -49,6 +51,7 @@ import { DATABASE, ELIGIBILITY_CLIENT, GAP_CLIENT, PARSER_CLIENT, SUBJECT_RESOLV
     ComparisonController,
     ApplicationsController,
     AssessmentsController,
+    LearningController,
     HealthController,
   ],
   providers: [
@@ -86,6 +89,7 @@ import { DATABASE, ELIGIBILITY_CLIENT, GAP_CLIENT, PARSER_CLIENT, SUBJECT_RESOLV
     // application is the readiness score computed by the same code that shows it (ADR-0019).
     ApplicationsService,
     AssessmentsService,
+    LearningService,
     {
       provide: SUBJECT_RESOLVER,
       useFactory: (db: Kysely<Database>): SubjectResolver => {
