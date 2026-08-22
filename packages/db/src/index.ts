@@ -195,6 +195,13 @@ export {
 } from './repositories/jobs.ts';
 
 export {
+  dueSources,
+  recordRunFailure,
+  recordRunSuccess,
+  type DueSource,
+} from './repositories/connector-runs.ts';
+
+export {
   DocumentConflictError,
   attachDocument,
   recordDocument,

@@ -22,6 +22,16 @@ export { executePostingPlan, type PostingExecutionReport } from './posting-execu
 export { runJobBoards, type RunReport, type RunnerDeps, type ScopeReport } from './posting-runner.ts';
 
 export {
+  composeArchive,
+  composeRegistry,
+  composeRunnerDeps,
+  type CompositionDeps,
+  type IngestionConfig,
+} from './composition.ts';
+
+export { runDueJobBoards, type ScheduledRunReport } from './scheduled-run.ts';
+
+export {
   expiryLicenceFor,
   planPostingIngest,
   summarizePostings,
