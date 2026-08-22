@@ -255,3 +255,149 @@ export function anonymizeInterviewReports(db: Kysely<Database>, userId: string) 
     .set({ user_id: null, anonymized_at: sql`now()`, updated_at: sql`now()` })
     .where('user_id', '=', userId);
 }
+
+/** What one person has contributed, so a surface can offer a correction rather than a duplicate. */
+export function reportForPairing(
+  db: Kysely<Database>,
+  options: { readonly userId: string; readonly companyId: string; readonly roleFamily: string },
+) {
+  return db
+    .selectFrom('interview_reports')
+    .selectAll()
+    .where('user_id', '=', options.userId)
+    .where('company_id', '=', options.companyId)
+    .where('role_family', '=', options.roleFamily)
+    .executeTakeFirst();
+}
+
+/** Every report one person still owns. Withdrawn ones are gone from here by construction. */
+export function reportsByUser(db: Kysely<Database>, userId: string) {
+  return db
+    .selectFrom('interview_reports')
+    .selectAll()
+    .where('user_id', '=', userId)
+    .orderBy('interviewed_on', 'desc');
+}
+
+/**
+ * Correct a report in place (ADR-0032 part 3).
+ *
+ * **Safe because nothing is cached.** `processForPairing` aggregates at read time, so a corrected
+ * report is simply counted correctly from then on — there is no stored aggregate to go stale and no
+ * version chain to maintain. A typo that misdescribes a company should be fixable by the person who
+ * made it.
+ *
+ * The stages are replaced wholesale rather than merged. A correction is a person saying "it went
+ * like this", not a patch against what they said before, and merging would leave a stage nobody
+ * currently claims.
+ */
+export async function correctInterviewReport(
+  db: Kysely<Database>,
+  options: {
+    readonly reportId: string;
+    /** The author. A report belonging to somebody else is not correctable, and not distinguishable. */
+    readonly userId: string;
+    readonly interviewedOn?: string;
+    readonly stages?: readonly { readonly position: number; readonly kind: InterviewStageKindColumn }[];
+    readonly notes?: string | null;
+    readonly newId: () => string;
+    readonly now?: () => Date;
+  },
+): Promise<InterviewReportRow | undefined> {
+  const existing = await db
+    .selectFrom('interview_reports')
+    .selectAll()
+    .where('id', '=', options.reportId)
+    .where('user_id', '=', options.userId)
+    .executeTakeFirst();
+
+  // Undefined for "not yours" and for "does not exist" alike. The caller cannot tell them apart, so
+  // this route cannot be used to discover that somebody else reported a company.
+  if (existing === undefined) return undefined;
+
+  if (options.stages !== undefined) {
+    if (options.stages.length === 0) {
+      throw new InterviewReportInvariantError(
+        'stages',
+        'a correction cannot empty a report — withdraw it instead',
+      );
+    }
+
+    const positions = new Set(options.stages.map((stage) => stage.position));
+    if (positions.size !== options.stages.length) {
+      throw new InterviewReportInvariantError(
+        'position',
+        'two stages at the same position describe a process nobody could have observed',
+      );
+    }
+  }
+
+  if (options.interviewedOn !== undefined) {
+    const when = new Date(options.interviewedOn);
+    if (Number.isNaN(when.getTime())) {
+      throw new InterviewReportInvariantError('interviewed_on', `'${options.interviewedOn}' is not a date`);
+    }
+    if (when.getTime() > (options.now ?? (() => new Date()))().getTime()) {
+      throw new InterviewReportInvariantError(
+        'interviewed_on',
+        'an interview that has not happened yet cannot be reported',
+      );
+    }
+  }
+
+  return db.transaction().execute(async (trx) => {
+    const updated = await trx
+      .updateTable('interview_reports')
+      .set({
+        ...(options.interviewedOn === undefined
+          ? {}
+          : { interviewed_on: options.interviewedOn.slice(0, 10) }),
+        ...(options.notes === undefined ? {} : { notes: options.notes }),
+        updated_at: sql`now()`,
+      })
+      .where('id', '=', options.reportId)
+      .returningAll()
+      .executeTakeFirstOrThrow();
+
+    if (options.stages !== undefined) {
+      await trx.deleteFrom('interview_report_stages').where('report_id', '=', options.reportId).execute();
+      await trx
+        .insertInto('interview_report_stages')
+        .values(
+          options.stages.map((stage) => ({
+            id: options.newId(),
+            report_id: options.reportId,
+            position: stage.position,
+            kind: stage.kind,
+          })),
+        )
+        .execute();
+    }
+
+    return updated;
+  });
+}
+
+/**
+ * Withdraw a report (ADR-0032 part 4).
+ *
+ * **Detaches; it does not delete.** Removing the row would let anybody drop a pairing below its
+ * support floor at will, changing what a stranger is told about a company. So the attribution goes
+ * and the count stays — and the surface must say that **before** the report is made, because a
+ * person consenting to contribute is entitled to know what they cannot take back.
+ *
+ * Returns false when the report is not theirs, which is the same answer as it not existing.
+ */
+export async function withdrawInterviewReport(
+  db: Kysely<Database>,
+  options: { readonly reportId: string; readonly userId: string },
+): Promise<boolean> {
+  const result = await db
+    .updateTable('interview_reports')
+    .set({ user_id: null, anonymized_at: sql`now()`, updated_at: sql`now()` })
+    .where('id', '=', options.reportId)
+    .where('user_id', '=', options.userId)
+    .executeTakeFirst();
+
+  return Number(result.numUpdatedRows) === 1;
+}

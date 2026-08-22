@@ -16,9 +16,12 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { eraseUser } from '../../../packages/db/src/repositories/erasure.ts';
 import {
+  correctInterviewReport,
   InterviewReportInvariantError,
   processForPairing,
   recordInterviewReport,
+  reportForPairing,
+  withdrawInterviewReport,
 } from '../../../packages/db/src/repositories/interview-reports.ts';
 import type { Database, InterviewStageKindColumn } from '../../../packages/db/src/schema.ts';
 import { uuidv7 } from '../../../packages/db/src/uuid.ts';
@@ -286,5 +289,135 @@ describe('erasure detaches rather than deletes', () => {
     );
     expect(rows[0]?.user_id).toBeNull();
     expect(rows[0]?.anonymized_at).not.toBeNull();
+  });
+});
+
+describe('correcting and withdrawing (ADR-0032)', () => {
+  it('corrects in place, and the pairing count is unchanged', async () => {
+    // Safe because `processForPairing` aggregates at read time: there is no stored aggregate to go
+    // stale, so a corrected report is simply counted correctly from then on.
+    for (let i = 0; i < 4; i += 1) await report();
+    const userId = await newUser();
+    const original = await recordInterviewReport(db, {
+      userId,
+      companyId,
+      roleFamily: ROLE_FAMILY,
+      interviewedOn: '2026-06-01',
+      stages: TYPICAL,
+      newId: uuidv7,
+      now: () => new Date(AS_OF),
+    });
+
+    const corrected = await correctInterviewReport(db, {
+      reportId: original.id,
+      userId,
+      stages: [
+        { position: 1, kind: 'recruiter-screen' },
+        { position: 2, kind: 'take-home' },
+      ],
+      newId: uuidv7,
+      now: () => new Date(AS_OF),
+    });
+
+    expect(corrected?.id).toBe(original.id);
+
+    const support = await processForPairing(db, { companyId, roleFamily: ROLE_FAMILY, asOf: AS_OF });
+    expect(support).toMatchObject({ kind: 'described', reportCount: 5 });
+
+    const { rows } = await pool.query('SELECT kind FROM interview_report_stages WHERE report_id = $1', [
+      original.id,
+    ]);
+    // Replaced wholesale, not merged: a correction is "it went like this", and merging would leave a
+    // stage nobody currently claims.
+    expect(rows.map((row) => row.kind).sort()).toEqual(['recruiter-screen', 'take-home']);
+  });
+
+  it('will not correct somebody else’s report, and says nothing about its existence', async () => {
+    const mine = await newUser();
+    const theirs = await newUser();
+    const report = await recordInterviewReport(db, {
+      userId: theirs,
+      companyId,
+      roleFamily: ROLE_FAMILY,
+      interviewedOn: '2026-06-01',
+      stages: TYPICAL,
+      newId: uuidv7,
+      now: () => new Date(AS_OF),
+    });
+
+    // Undefined is the same answer as "no such report". Describing an employer's process is not
+    // something to be traceable for.
+    expect(
+      await correctInterviewReport(db, { reportId: report.id, userId: mine, notes: 'x', newId: uuidv7 }),
+    ).toBeUndefined();
+  });
+
+  it('refuses a correction that empties a report', async () => {
+    const userId = await newUser();
+    const report = await recordInterviewReport(db, {
+      userId,
+      companyId,
+      roleFamily: ROLE_FAMILY,
+      interviewedOn: '2026-06-01',
+      stages: TYPICAL,
+      newId: uuidv7,
+      now: () => new Date(AS_OF),
+    });
+
+    await expect(
+      correctInterviewReport(db, { reportId: report.id, userId, stages: [], newId: uuidv7 }),
+    ).rejects.toBeInstanceOf(InterviewReportInvariantError);
+  });
+
+  it('withdrawal keeps the count and removes the attribution', async () => {
+    // **The promise the form makes before anybody contributes.** Removing the row would let anybody
+    // drop a pairing below its floor and change what a stranger is told.
+    const users: string[] = [];
+    for (let i = 0; i < 5; i += 1) users.push(await report());
+
+    const own = await reportForPairing(db, {
+      userId: users[0]!,
+      companyId,
+      roleFamily: ROLE_FAMILY,
+    });
+    expect(await withdrawInterviewReport(db, { reportId: own!.id, userId: users[0]! })).toBe(true);
+
+    const support = await processForPairing(db, { companyId, roleFamily: ROLE_FAMILY, asOf: AS_OF });
+    expect(support).toMatchObject({ kind: 'described', reportCount: 5 });
+
+    const { rows } = await pool.query<{ user_id: string | null; anonymized_at: string | null }>(
+      'SELECT user_id, anonymized_at FROM interview_reports WHERE id = $1',
+      [own!.id],
+    );
+    expect(rows[0]?.user_id).toBeNull();
+    expect(rows[0]?.anonymized_at).not.toBeNull();
+  });
+
+  it('will not withdraw somebody else’s report', async () => {
+    const theirs = await report();
+    const mine = await newUser();
+    const own = await reportForPairing(db, { userId: theirs, companyId, roleFamily: ROLE_FAMILY });
+
+    expect(await withdrawInterviewReport(db, { reportId: own!.id, userId: mine })).toBe(false);
+  });
+
+  it('lets somebody contribute again for a pairing they withdrew from', async () => {
+    // A consequence of detaching rather than deleting, and ADR-0032 says so rather than hiding it:
+    // the unique index is partial, so a withdrawn report no longer blocks a new one.
+    const userId = await report();
+    const own = await reportForPairing(db, { userId, companyId, roleFamily: ROLE_FAMILY });
+    await withdrawInterviewReport(db, { reportId: own!.id, userId });
+
+    await expect(
+      recordInterviewReport(db, {
+        userId,
+        companyId,
+        roleFamily: ROLE_FAMILY,
+        interviewedOn: '2026-07-01',
+        stages: TYPICAL,
+        newId: uuidv7,
+        now: () => new Date(AS_OF),
+      }),
+    ).resolves.toBeTruthy();
   });
 });
