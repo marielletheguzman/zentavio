@@ -102,6 +102,7 @@ An ADR is numbered sequentially and never renumbered.
 | [0030](../../docs/architecture/decisions/0030-what-may-promote-a-skill-to-evidenced.md) | An in-platform assessment is the only thing that may promote a skill to `evidenced`, and what it evidences is the attempt | Accepted |
 | [0031](../../docs/architecture/decisions/0031-minimum-support-for-an-interview-process.md) | A company's interview process is described per role family, above a stated support floor, and never from a single report | Accepted |
 | [0032](../../docs/architecture/decisions/0032-interview-report-contribution.md) | Anyone signed in may report a pairing once, corrections recompute, and withdrawal detaches rather than deletes | Accepted |
+| [0033](../../docs/architecture/decisions/0033-job-board-source-tier-and-what-a-posting-may-state.md) | A Lever board is a tier-2 source, and a posting states only what Lever states structurally | Proposed |
 
 0001–0004 define the boundaries every skill and context file assumes: one repository, sources as
 plugins, a polyglot contract at the `ai/` boundary, and a vector store that is an index rather

@@ -20,6 +20,10 @@ const stubDeps = {
   chSem: {
     fetchDirective: async () => null,
   },
+  lever: {
+    fetchBoard: async () => null,
+    configuredBoards: ['leverdemo'],
+  },
 };
 
 describe('createRegistry', () => {
@@ -61,6 +65,17 @@ describe('createRegistry', () => {
     expect(new Set(registry.all().flatMap((c) => c.meta.regions))).toEqual(
       new Set(['DE', 'LU', 'NZ', 'CH']),
     );
+  });
+
+  it('registers the first job board, and it answers for no country', () => {
+    // A source is not necessarily a country. Lever's coverage is whatever the configured employers
+    // happen to post, which is unknown until a board is read — so it declares no regions rather
+    // than claiming one, and `byRegion` keeps answering with immigration sources alone.
+    const registry = createRegistry(stubDeps);
+
+    expect(registry.ids()).toContain('lever');
+    expect(registry.byKind('job-board').map((c) => c.meta.id)).toEqual(['lever']);
+    expect(registry.byRegion('DE').map((c) => c.meta.id)).not.toContain('lever');
   });
 
   it('returns a fresh registry each call, so callers cannot share mutable state', () => {
