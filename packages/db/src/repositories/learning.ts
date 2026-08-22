@@ -169,3 +169,128 @@ export function completionsForUser(db: Kysely<Database>, userId: string) {
     .where('deleted_at', 'is', null)
     .orderBy('completed_at', 'desc');
 }
+
+/** What a connector is, as `connector_sources` stores it. */
+export interface ConnectorRegistration {
+  readonly id: string;
+  readonly kind: 'job-board' | 'salary' | 'company' | 'immigration' | 'learning' | 'market';
+  readonly displayName: string;
+  readonly connectorVersion: string;
+  readonly sourceTier: number;
+  readonly termsUrl: string;
+  /** Why we are permitted to fetch this at all. A sentence, because "we checked" is not a record. */
+  readonly legalBasis: string;
+  readonly rateLimit: unknown;
+  readonly refreshWindow: string;
+  readonly schedule: string;
+}
+
+/**
+ * Register a connector, or refresh what it says about itself.
+ *
+ * **Observed state is never overwritten here.** `reliability`, the breaker, the failure counters and
+ * the cursor are what running the connector produced; re-registering describes the connector, and a
+ * description should not reset a circuit breaker or restore a reliability score the source lost.
+ */
+export function registerConnectorSource(db: Kysely<Database>, source: ConnectorRegistration) {
+  return db
+    .insertInto('connector_sources')
+    .values({
+      id: source.id,
+      kind: source.kind,
+      display_name: source.displayName,
+      connector_version: source.connectorVersion,
+      source_tier: source.sourceTier,
+      terms_url: source.termsUrl,
+      legal_basis: source.legalBasis,
+      rate_limit: JSON.stringify(source.rateLimit),
+      refresh_window: source.refreshWindow,
+      schedule: source.schedule,
+    })
+    .onConflict((conflict) =>
+      conflict.column('id').doUpdateSet({
+        display_name: source.displayName,
+        connector_version: source.connectorVersion,
+        source_tier: source.sourceTier,
+        terms_url: source.termsUrl,
+        legal_basis: source.legalBasis,
+        rate_limit: JSON.stringify(source.rateLimit),
+        refresh_window: source.refreshWindow,
+        schedule: source.schedule,
+        updated_at: new Date(),
+      }),
+    )
+    .returningAll();
+}
+
+/**
+ * Store a catalogue row and what it teaches.
+ *
+ * Upserted on `(provider, external_id)`: re-running a connector refreshes a page's title and its
+ * link health rather than adding a second row for the same page.
+ */
+export async function upsertLearningResource(
+  db: Kysely<Database>,
+  row: {
+    readonly provider: string;
+    readonly externalId: string;
+    readonly title: string;
+    readonly url: string;
+    readonly format: string;
+    readonly language: string;
+    readonly costBand: string;
+    readonly sourceId: string;
+    readonly sourceTier: number;
+    readonly sourceUrl: string;
+    readonly retrievedAt: string;
+    readonly skillId: string;
+    readonly coverage: string;
+    readonly newId: () => string;
+  },
+): Promise<string> {
+  const existing = await db
+    .selectFrom('learning_resources')
+    .select('id')
+    .where('provider', '=', row.provider)
+    .where('external_id', '=', row.externalId)
+    .where('deleted_at', 'is', null)
+    .executeTakeFirst();
+
+  const id = existing?.id ?? row.newId();
+  const at = new Date(row.retrievedAt);
+
+  if (existing === undefined) {
+    await db
+      .insertInto('learning_resources')
+      .values({
+        id,
+        provider: row.provider,
+        external_id: row.externalId,
+        title: row.title,
+        url: row.url,
+        format: row.format as never,
+        language: row.language,
+        cost_band: row.costBand as never,
+        source_id: row.sourceId,
+        source_tier: row.sourceTier,
+        source_url: row.sourceUrl,
+        retrieved_at: at,
+        last_verified_at: at,
+      })
+      .execute();
+  } else {
+    await db
+      .updateTable('learning_resources')
+      .set({ title: row.title, url: row.url, retrieved_at: at, last_verified_at: at })
+      .where('id', '=', id)
+      .execute();
+  }
+
+  await db
+    .insertInto('learning_resource_skills')
+    .values({ id: row.newId(), resource_id: id, skill_id: row.skillId, coverage: row.coverage as never, basis: 'curated' })
+    .onConflict((conflict) => conflict.columns(['resource_id', 'skill_id']).doNothing())
+    .execute();
+
+  return id;
+}

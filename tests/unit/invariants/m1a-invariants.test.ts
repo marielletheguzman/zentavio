@@ -163,7 +163,13 @@ describe('privacy — no résumé text in any committed fixture', () => {
   it('every email address in a fixture is on a reserved test domain', () => {
     // Duplicated deliberately in the Python suite: this is the check that a helpful "let me just
     // drop my own CV in" never survives review, and it should fail in whichever suite runs first.
-    const emails = /[\w.+-]+@[\w-]+\.[\w.]+/g;
+    //
+    // **The trailing group excludes filenames.** A git-scm.com fixture contains `logo@2x.png`,
+    // which the earlier pattern read as an address on the domain `2x.png` — a false positive, and
+    // the kind that gets a real check disabled by whoever hits it next. An address ends in letters,
+    // and an asset reference ends in an extension.
+    const emails = /[\w.+-]+@[\w-]+\.[\w.]*[a-z]{2,}/gi;
+    const ASSET = /\.(png|jpe?g|gif|svg|webp|css|js|woff2?|ico)$/i;
     const root = fileURLToPath(new URL('../../fixtures/', import.meta.url));
 
     // Binary fixtures are skipped, and it is worth being precise about what that costs. Read as
@@ -185,7 +191,7 @@ describe('privacy — no résumé text in any committed fixture', () => {
       });
 
     for (const contents of scan(root)) {
-      for (const address of contents.match(emails) ?? []) {
+      for (const address of (contents.match(emails) ?? []).filter((found) => !ASSET.test(found))) {
         expect(
           address.endsWith('.invalid') || address.includes('example.'),
           `${address} is not a reserved test domain`,

@@ -142,6 +142,9 @@ export {
 export {
   CompletionInvariantError,
   completionsForUser,
+  registerConnectorSource,
+  upsertLearningResource,
+  type ConnectorRegistration,
   recordCompletion,
   resourcesForSkill,
   usableResources,

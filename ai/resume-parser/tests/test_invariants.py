@@ -235,7 +235,12 @@ class TestPrivacy:
         # (`tests/unit/invariants/m1a-invariants.test.ts`) still skips binaries and says so; this
         # side closes the gap because ADR-0016's extractor lives here.
         fixture_root = Path(__file__).resolve().parents[3] / "tests" / "fixtures"
-        email = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+")
+        # The trailing group excludes filenames: a git-scm.com fixture contains `logo@2x.png`,
+        # which the earlier pattern read as an address on the domain `2x.png`. A false positive is
+        # how a real check gets disabled by whoever hits it next. An address ends in letters; an
+        # asset reference ends in an extension.
+        email = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]*[a-zA-Z]{2,}")
+        asset = re.compile(r"\.(png|jpe?g|gif|svg|webp|css|js|woff2?|ico)$", re.IGNORECASE)
         reserved = (".invalid", ".example", "example.com", "example.invalid")
 
         for path in fixture_root.rglob("*"):
@@ -255,6 +260,8 @@ class TestPrivacy:
                 text = path.read_text(encoding="utf-8", errors="ignore")
 
             for address in email.findall(text):
+                if asset.search(address):
+                    continue
                 assert address.endswith(reserved), (
                     f"{path.name} contains {address}, which is not a reserved test domain"
                 )
