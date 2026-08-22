@@ -59,12 +59,19 @@ how a fabricated course reaches a user (`docs/prompts/learning-paths/README.md`)
 | Verification | Effect on the profile |
 |---|---|
 | assessment passed in-platform | promotes to `evidenced` |
-| project artifact / repository | promotes to `evidenced` |
-| recognized certification | promotes to `evidenced`, at the cert's own weight |
+| project artifact / repository | **stays `claimed`** — refused for now (ADR-0030) |
+| recognized certification | **stays `claimed`** — refused for now (ADR-0030) |
 | course completion claimed | stays `claimed` |
 | self-report | stays `claimed` |
 
 Said explicitly to the user, or they optimize for completions. Only evidenced skills move readiness.
+
+**This table originally promoted all three of the first rows.** ADR-0030 narrowed it to one, and the
+reasons are worth keeping here rather than only in the decision record. A self-submitted artifact is a
+URL and a claim — weaker than the résumé line this product already discounts — and a human reviewer is
+an operational commitment that does not exist. A certification we cannot verify the person holds is
+self-report about a third party's judgement, one layer further from proof again; it becomes real when
+an issuer's verification endpoint is integrated, which is the revisit trigger ADR-0030 names.
 
 ## Progress
 

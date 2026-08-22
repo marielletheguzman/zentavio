@@ -44,8 +44,10 @@ Evaluated against a rubric derived from the role's requirement facts — not fro
   better".
 - **One focus at a time.** Interview prep fails on overwhelm, so one thing to fix is returned even when
   several points are missing.
-- **A strong answer can promote a skill toward `evidenced`; a weak one never demotes an evidenced
-  skill.**
+- **A practice answer promotes nothing** (ADR-0030). It is unproctored, ungraded against a fixed
+  instrument, and marked by us against a rubric we wrote — which is a coaching signal, not evidence.
+  A strong answer moves **Interview Readiness**, which is about this process at this company; a weak
+  one never demotes an evidenced skill, because nothing here touches `profile_skills` at all.
 
 ## Interview Readiness
 
