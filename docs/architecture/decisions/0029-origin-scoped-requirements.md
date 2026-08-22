@@ -217,9 +217,16 @@ and needs no new concept.
 - **This ADR creates no data.** Same caveat ADR-0010 carried and worth repeating: accepting this
   unblocks the model; the research is still the expensive part.
 
-**Follow-up work.**
+**Follow-up work — all complete as of 2026-08-22.** Kept struck rather than deleted, because what a
+decision cost to carry out is part of the record, and two of these landed differently from how this
+section imagined them.
 
-- Add `qualification_awarded_in` to `person_fact_kinds`, with its prompt and rationale, `sensitive`.
+- ~~**Add `qualification_awarded_in` to `person_fact_kinds`, with its prompt and rationale,
+  `sensitive`.**~~ **Done** — #115. `string` rather than `enum`: an enum's `allowedValues` would close
+  the world to the countries we have modelled, and somebody holding a US or Nigerian qualification
+  could not answer a question the product asks them. The cost is that `Philippines` is accepted where
+  `PH` was meant; it matches no origin scope and falls through to the broader rules, so it reads as
+  *no origin rule* rather than as a wrong verdict.
 - ~~**Extend `requirementsAsOf` with an origin scope; change the gateway to gather across domains**~~
   **Done** — 2026-08-21. The scope gained `imposedBy` and `includeProfessionless`, and the gateway
   now runs three reads instead of one: the pathway's rules, the destination's rules for the career's

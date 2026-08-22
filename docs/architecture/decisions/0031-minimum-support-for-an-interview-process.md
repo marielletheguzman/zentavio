@@ -151,8 +151,13 @@ because *"3 reports, we need 5"* is an invitation to contribute one and *"not en
 
 **Follow-up work.**
 
-- Entity documentation and schema for interview reports and the process model, keyed on
-  `(company, role_family)`.
+- ~~**Entity documentation and schema for interview reports and the process model, keyed on
+  `(company, role_family)`.**~~ **Done** — #133. The floors live in
+  `packages/db/src/repositories/interview-reports.ts` rather than in the schema, because a `CHECK`
+  cannot count rows in another table, and `processForPairing` returns a described process or a
+  shortfall — never raw reports for a caller to aggregate. Erasure **detaches** a report rather than
+  deleting it, for the reason `outcomes` does: deleting would drop a pairing below its floor and
+  change what a stranger is told.
 - The contribution flow the backlog already names as preceding M8, with its own anti-gaming posture —
   the same treatment `assessment-integrity.md` gave the assessment.
 - The below-threshold surface, showing the count and what is still needed.

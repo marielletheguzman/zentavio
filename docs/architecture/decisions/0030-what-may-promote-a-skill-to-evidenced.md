@@ -144,11 +144,23 @@ assessment. That is a stated limit, not a footnote, and it is the reason part 2 
 - **Two paths stay closed** that users will ask for, repeatedly: their certification and their
   GitHub. The answer is "not yet, and here is why", which is a worse user experience than saying yes.
 
-**Follow-up work.**
+**Follow-up work — complete as of 2026-08-22, apart from the Option C revisit**, which is a trigger
+rather than a task and stays open by design.
 
-- Schema and entity documentation for assessments and attempts: the instrument, its version, and one
-  recorded attempt per person per version.
-- The single promotion writer, with a test that no other code path sets `verified_at`.
+- ~~**Schema and entity documentation for assessments and attempts: the instrument, its version, and
+  one recorded attempt per person per version.**~~ **Done** — #125. One row per *version*, because a
+  pass has to keep citing what it was earned against; attempts are append-only, because a failed one
+  is a fact about what happened. This ADR said "one recorded attempt per person per version" and the
+  built rule is narrower: every attempt is kept, and only a second **pass** is refused
+  (`uq_aa__passed_once`). Re-attempts are part 3 of this decision, and forbidding them would have
+  contradicted it.
+- ~~**The single promotion writer, with a test that no other code path sets `verified_at`.**~~
+  **Done** — #125, and the test asserts something narrower than this line asked for. `profiles.ts`
+  legitimately writes `verified_at` when copying a version forward, so "one writer" was the wrong
+  rule: what is enforced is that `verified_at` never appears without `verified_attempt_id`. That
+  distinction caught a real defect — `applyCorrection` carried the timestamp and not the attempt id,
+  and would have started failing the moment somebody with an assessed skill corrected an unrelated
+  one.
 - ~~**Items for one skill first**, drawn from the seeded track and the product's own priority — IT,
   software and computer engineering — as the vertical slice that proves the model before it is
   repeated.~~ **Done** — `git-fundamentals` v1, ten items, threshold seven, each item naming what it
