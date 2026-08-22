@@ -769,12 +769,68 @@ session and not a green suite: every test involved was passing throughout.
 
 ---
 
-## M6 — Learning is verified, not claimed
+## M6 — Learning is verified, not claimed — **met 2026-08-22**
 
 *Phase 4.* Assessment and artifact verification promote a skill to `evidenced`.
 
 **Verified by:** completing a course does **not** move readiness; passing the assessment does. Visible to
 the user, so nobody optimizes for completions.
+
+**Met by the assessment path only.** ADR-0030 decided that an in-platform assessment is the *only*
+thing that may promote a skill, and refused artifact review and certification for reasons recorded
+there. So the milestone's own heading — "assessment **and artifact** verification" — is half
+implemented, deliberately, and that half is not outstanding work: it is a decision.
+
+### What was built
+
+| | |
+|---|---|
+| `learning_resources`, `learning_resource_skills`, `learning_completions`, `connector_sources` | #123 |
+| ADR-0030 — only an assessment may promote, and a pass evidences the attempt | #124, Accepted |
+| `skill_assessments`, `assessment_attempts`, the single promotion writer | #125 |
+| `git-fundamentals` v1 — ten authored items, each naming what it evidences and citing its source | #126 |
+| `/assess` — take it, and see what a pass did and did not claim | #127 |
+| Attempt spacing, and `assessment-integrity.md` | #128 |
+| `git-scm` — the first learning connector, ten catalogued pages | #129 |
+| The completions panel — record what you read, beside the thing that counts | #130 |
+
+### Evidence
+
+**The assessment half was browser-verified on 2026-08-22**, against the real gateway, database and
+seeded instrument. What was seen: the limit rendered *before* the Start button; ten questions with
+no `correct_option` anywhere in the payload; eight correct and two wrong scored **8 of 10 —
+Passed**; the result listed exactly those eight claims, each linking its git-scm.com page, with the
+two missed items absent; and *"What it does not show"* on the same screen. The database then held
+`git │ evidenced │ assessment │ verified`, citing `git-fundamentals` v1 from an attempt scored 8.
+
+**The completion half was measured over HTTP and the database, not in a browser.**
+
+| | readiness | `profile_skills` | completions |
+|---|---|---|---|
+| before | 0.2606 – 0.2606 | 25 | 0 |
+| after | **0.2606 – 0.2606** | **25** | 1 |
+
+### The gap in this evidence, stated rather than implied
+
+**Nobody has loaded the completions panel.** The Chrome extension disconnected during the session
+that built it, and the page's own rendering is unverified — the routes and the database behaviour
+are not. This repository shipped M1c with no CORS at all while every server-side check passed, which
+is exactly the failure that measurement cannot catch and loading the page can.
+
+**This is the one owed observation**, and it is narrow: `/assess` itself was loaded and exercised in
+#127; only the panel added in #130 has never been rendered. A later session should load it, record
+what it saw here, and correct this section if what it sees disagrees.
+
+### What this does not claim
+
+- **Coverage is one skill.** `git-fundamentals` is the only instrument that exists. Every other
+  skill stays `claimed`, and readiness stays conservative — the honest direction, and it will read
+  as the product not working.
+- **A pass is unproctored and unattributed.** It evidences the attempt, not the person, and
+  `assessment-integrity.md` names two attacks that are **not** mitigated: sharing items, and
+  somebody else sitting it.
+- **`grants_evidence` still has no reader.** Whether a certification may promote is ADR-0030's
+  deferred question, and an invariant test keeps it deferred rather than answered by accident.
 
 ---
 

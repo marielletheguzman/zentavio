@@ -6,8 +6,17 @@ viability — using structured knowledge rather than keyword matching.
 
 ## Current state
 
-**M1 through M5 are complete** (M2 and M3 met 2026-08-11, M4 on 2026-08-12 subject to the
-evidence gate in `docs/roadmap/milestones.md`, M5 on 2026-08-22).
+**M1 through M6 are complete** (M2 and M3 met 2026-08-11, M4 on 2026-08-12 subject to the
+evidence gate in `docs/roadmap/milestones.md`, M5 and M6 on 2026-08-22).
+
+M6: learning is verified rather than claimed. **By the assessment path only** — ADR-0030 decided an
+in-platform assessment is the *only* thing that may promote a skill to `evidenced`, and refused
+artifact review and certification with reasons. A pass evidences **the attempt**, not the person:
+`git-fundamentals` v1 is the one instrument that exists, it is unproctored, and
+`docs/architecture/assessment-integrity.md` names two attacks it does not mitigate. Recording a
+course completion promotes nothing and moves no readiness — measured at 0.2606 either side of one.
+**One owed observation:** nobody has loaded the completions panel in a browser; `milestones.md`
+records that rather than rounding it off.
 
 M5: a regulated qualification gets a real recognition verdict rather than `unknown`. **The engineer
 half of M5's verified-by line, not the nurse half** — the slice is IT and computer engineering
