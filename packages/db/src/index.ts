@@ -127,6 +127,12 @@ export {
 
 export { activePathways, pathwayById, type PathwayRow } from './repositories/pathways.ts';
 export {
+  MAX_THEMES,
+  rolePreparation,
+  type PreparationTheme,
+  type RolePreparation,
+} from './repositories/role-preparation.ts';
+export {
   anonymizeInterviewReports,
   correctInterviewReport,
   InterviewReportInvariantError,

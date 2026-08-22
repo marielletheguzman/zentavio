@@ -50,6 +50,19 @@ export class InterviewsController {
     return this.#service.process(companyId, roleFamily, asOf);
   }
 
+  /**
+   * Preparation for the person's own target role.
+   *
+   * **A 200 with nothing in it when they have no target**, not a 404: the route worked, and what is
+   * missing is a career they have chosen — which is something they can fix and a 404 would not say.
+   */
+  @Get('role-preparation')
+  @HttpCode(HttpStatus.OK)
+  async preparation(@CurrentSubject() subject: Subject) {
+    const preparation = await this.#service.preparation(subject.userId);
+    return preparation ?? { careerId: null, themes: [], requirementCount: 0 };
+  }
+
   /** Who can be reported on. Names only — nothing here says anything about anybody's interview. */
   @Get('companies')
   @HttpCode(HttpStatus.OK)

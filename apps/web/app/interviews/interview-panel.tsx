@@ -59,6 +59,20 @@ type Support =
       readonly windowMonths: number;
     };
 
+interface Theme {
+  readonly skillId: string;
+  readonly name: string;
+  readonly weight: number;
+  readonly cluster: string;
+  readonly standing: 'evidenced' | 'claimed' | 'missing';
+}
+
+interface Preparation {
+  readonly careerId: string | null;
+  readonly themes: readonly Theme[];
+  readonly requirementCount: number;
+}
+
 interface MyReport {
   readonly id: string;
   readonly company_id: string;
@@ -80,6 +94,7 @@ export function InterviewPanel({
   const [roleFamily, setRoleFamily] = useState<string>(ROLE_FAMILIES[0]);
   const [support, setSupport] = useState<Support | null>(null);
   const [mine, setMine] = useState<readonly MyReport[]>([]);
+  const [preparation, setPreparation] = useState<Preparation | null>(null);
   const [stages, setStages] = useState<readonly StageKind[]>([]);
   const [interviewedOn, setInterviewedOn] = useState('');
   const [note, setNote] = useState<string | null>(null);
@@ -105,6 +120,11 @@ export function InterviewPanel({
       setCompanies(body.companies);
       setCompanyId((current) => current || (body.companies[0]?.id ?? ''));
       await loadMine();
+
+      // Fetched once and shown regardless of the pairing: it is about the role, not the company,
+      // and it is what almost everybody will actually read.
+      const prep = await fetch(`${gatewayUrl}/v1/role-preparation`, { headers: headers() });
+      if (prep.ok) setPreparation((await prep.json()) as Preparation);
     })();
   }, [gatewayUrl, headers, loadMine]);
 
@@ -239,6 +259,40 @@ export function InterviewPanel({
               </li>
             ))}
           </ol>
+        </div>
+      )}
+
+      {preparation === null || preparation.themes.length === 0 ? null : (
+        <div className="card">
+          <h3>What to prepare anyway</h3>
+          <p className="hint">
+            From what your target role requires — not from this company. It says the same thing
+            whether five people reported them or nobody has. Showing{' '}
+            {preparation.themes.length} of {preparation.requirementCount} requirements, heaviest
+            first.
+          </p>
+          <ul>
+            {preparation.themes.map((theme) => (
+              <li key={theme.skillId}>
+                {theme.name}{' '}
+                <span className="hint">
+                  — {theme.cluster}, weight {theme.weight.toFixed(2)}
+                  {theme.standing === 'evidenced'
+                    ? ' · you already evidence this'
+                    : theme.standing === 'claimed'
+                      ? ' · claimed on your profile, not yet evidenced'
+                      : ' · not on your profile'}
+                </span>
+              </li>
+            ))}
+          </ul>
+          {/* No questions. Generated questions belong to `ai/interview-prep`, which does not exist,
+              and a question invented here beside a company's name is the fabrication this milestone
+              is written against. */}
+          <p className="hint">
+            These are themes, not questions. We don&rsquo;t generate questions yet, and we
+            won&rsquo;t attribute one to a company we haven&rsquo;t heard from.
+          </p>
         </div>
       )}
 

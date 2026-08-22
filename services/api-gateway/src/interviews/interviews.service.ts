@@ -16,17 +16,20 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { Kysely } from 'kysely';
 import {
+  currentProfile,
   InterviewReportInvariantError,
   correctInterviewReport,
   processForPairing,
   recordInterviewReport,
   reportForPairing,
   reportsByUser,
+  rolePreparation,
   uuidv7,
   withdrawInterviewReport,
   type Database,
   type InterviewReportRow,
   type ProcessSupport,
+  type RolePreparation,
 } from '@zentavio/db';
 import type { InterviewStageKindColumn } from '@zentavio/db';
 
@@ -69,6 +72,36 @@ export class InterviewsService {
       .where('deleted_at', 'is', null)
       .orderBy('canonical_name')
       .execute();
+  }
+
+  /**
+   * Preparation from what the person's own target role requires — no company in it.
+   *
+   * **The career comes from their target, never from the request.** A client naming a career would
+   * be a client choosing what it wants to be prepared for, and the answer would stop being about
+   * them. `undefined` when they have no target: there is no role to prepare for, and inventing one
+   * would be worse than saying so.
+   */
+  async preparation(userId: string): Promise<RolePreparation | undefined> {
+    const target = await this.#db
+      .selectFrom('user_targets')
+      .innerJoin('careers', 'careers.id', 'user_targets.career_id')
+      .select('careers.id as career_id')
+      .where('user_targets.user_id', '=', userId)
+      .where('user_targets.status', '=', 'active')
+      .where('user_targets.deleted_at', 'is', null)
+      .where('careers.deleted_at', 'is', null)
+      .orderBy('user_targets.rank', 'asc')
+      .executeTakeFirst();
+
+    if (target === undefined) return undefined;
+
+    const profile = await currentProfile(this.#db, userId);
+
+    return rolePreparation(this.#db, {
+      careerId: target.career_id,
+      ...(profile === undefined ? {} : { profileId: profile.id }),
+    });
   }
 
   /** What may be said about a pairing today: a described process, or the shortfall and its count. */
