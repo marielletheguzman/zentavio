@@ -176,6 +176,8 @@ export async function runJobBoards(registry: ConnectorRegistry, deps: RunnerDeps
             title: posting.title,
             url: posting.url,
             companyNameRaw: posting.companyNameRaw,
+            description: posting.description,
+            requirementsText: posting.requirementsText,
             countryCode: posting.countryCode,
             locationRaw: posting.locationText,
             isRemote: posting.isRemote,

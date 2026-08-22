@@ -29,6 +29,22 @@ export interface JobPosting {
   readonly url: string;
   /** What the source called the employer, when it said anything. Never derived from a scope. */
   readonly companyNameRaw: string | null;
+  /**
+   * The posting's own prose, as the source rendered it in plain text.
+   *
+   * Stored, **never read for facts** (ADR-0033). It is here because skill extraction needs an input
+   * and nothing else in a posting carries one: without it, every posting ingested is permanently
+   * un-extractable, since the raw payload is only archived where a document store is configured.
+   */
+  readonly description: string | null;
+  /**
+   * The source's own requirement lists — "Qualifications", "Duties" — flattened to plain text.
+   *
+   * Separate from `description` because this is where a posting states what it wants, and merging
+   * the two would lose which sentences were requirements and which were company prose. A connector
+   * flattening markup performs a **mechanical** transformation and no interpretation.
+   */
+  readonly requirementsText: string | null;
   readonly countryCode: string | null;
   /** Free text, carried for display and never mined for a country. */
   readonly locationText: string | null;

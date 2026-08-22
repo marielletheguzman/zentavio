@@ -47,6 +47,8 @@ export interface PostingFields {
   readonly companyId?: string | null;
   readonly companyNameRaw?: string | null;
   readonly description?: string | null;
+  /** The source's requirement lists, flattened by the connector. Stored, never mined. */
+  readonly requirementsText?: string | null;
   readonly locationRaw?: string | null;
   readonly countryCode?: string | null;
   readonly region?: string | null;
@@ -160,6 +162,7 @@ function columnsFrom(fields: PostingFields) {
     company_id: fields.companyId ?? null,
     company_name_raw: fields.companyNameRaw ?? null,
     description: fields.description ?? null,
+    requirements_text: fields.requirementsText ?? null,
     location_raw: fields.locationRaw ?? null,
     country_code: fields.countryCode ?? null,
     region: fields.region ?? null,
