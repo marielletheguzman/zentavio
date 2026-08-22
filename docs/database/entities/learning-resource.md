@@ -104,6 +104,57 @@ CREATE UNIQUE INDEX uq_lrs__resource_skill ON learning_resource_skills (resource
 `coverage` matters when building a path: a step wants a `primary` resource. A course that merely
 *mentions* Terraform does not close a Terraform gap.
 
+## `learning_completions`
+
+What a person says they finished. **Built 2026-08-22, with `learning_resources` and
+`learning_resource_skills`.**
+
+```sql
+CREATE TABLE learning_completions (
+  id            uuid         PRIMARY KEY,
+  user_id       uuid         NOT NULL,
+  resource_id   uuid         NOT NULL,
+  completed_at  timestamptz  NOT NULL,       -- when they say they finished, not when they told us
+  basis         text         NOT NULL DEFAULT 'self_reported',
+  evidence_url  text,                        -- stored, never read
+  note          text,
+  created_at    timestamptz  NOT NULL DEFAULT now(),
+  updated_at    timestamptz  NOT NULL DEFAULT now(),
+  deleted_at    timestamptz,
+
+  CONSTRAINT fk_lc__users     FOREIGN KEY (user_id)     REFERENCES users(id)              ON DELETE CASCADE,
+  CONSTRAINT fk_lc__resources FOREIGN KEY (resource_id) REFERENCES learning_resources(id) ON DELETE RESTRICT,
+  CONSTRAINT ck_lc__basis CHECK (basis IN ('self_reported'))
+);
+
+CREATE UNIQUE INDEX uq_lc__user_resource ON learning_completions (user_id, resource_id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_lc__user_completed ON learning_completions (user_id, completed_at DESC) WHERE deleted_at IS NULL;
+```
+
+**It holds no skill, and that is the whole point.** A completion is a claim about a *resource*;
+`evidenced` is a claim about a person's competence, and `ai/skill-gap` credits only the second
+(`_CREDIT_STATUSES`). Nothing in `repositories/learning.ts` writes `profile_skills`, and
+`tests/integration/db/learning-constraints.test.ts` pins that — including for a resource whose
+`grants_evidence` is true, because the flag existing is not the same as the mechanism existing.
+
+**`basis` has one value.** `self_reported` is all we can currently observe: the person tells us. A
+provider callback or a verified certificate would be a different basis, added when one exists rather
+than reserved for one that does not.
+
+**`evidence_url` is stored and never read.** Somebody may offer a certificate link; keeping it costs
+nothing and discarding it would be rude. A link is not a verification, and nothing treats it as one.
+
+**One row per person per resource.** Finishing a course twice is one fact about them, and two rows
+would double whatever an observed-pace estimate later reads. Re-recording updates in place — and
+because the index is partial (`WHERE deleted_at IS NULL`), the `ON CONFLICT` arbiter repeats that
+predicate or PostgreSQL refuses the statement.
+
+**No "not in the future" constraint, and that is a limitation rather than an oversight.** PostgreSQL
+refuses a non-immutable function in a `CHECK`, so `completed_at <= now()` cannot be written as one.
+A future-dated completion is a typo or a lie and would corrupt an observed-pace estimate, so the
+guard lives in `recordCompletion` — which means it holds for everything written through the
+repository, and not for a hand-written `INSERT`.
+
 ## `learning_paths` and `learning_path_steps`
 
 Derived. Each step ties to exactly one gap item — a step with no gap item behind it is padding, and

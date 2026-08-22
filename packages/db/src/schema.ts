@@ -254,6 +254,142 @@ export interface ProfileSkillsTable {
   updated_at: Generated<Timestamp>;
 }
 
+// ── learning (entities/learning-resource.md, entities/connector-source.md) ───
+
+export type ConnectorKindColumn =
+  | 'job-board'
+  | 'salary'
+  | 'company'
+  | 'immigration'
+  | 'learning'
+  | 'market';
+
+export type BreakerStateColumn = 'closed' | 'open' | 'half-open';
+
+/**
+ * One registered connector.
+ *
+ * **The immigration connectors do not have rows here yet.** They predate this table and carry
+ * provenance on the requirement itself; adding rows would claim an integration that does not exist.
+ */
+export interface ConnectorSourcesTable {
+  /** The connector's own `meta.id` — kebab-case, permanent, never reused. */
+  id: string;
+  kind: ConnectorKindColumn;
+  display_name: string;
+  connector_version: string;
+  source_tier: number;
+  regions: Generated<string[]>;
+  terms_url: string;
+  /** Why we are permitted to fetch this at all. */
+  legal_basis: string;
+  rate_limit: unknown;
+  /** How long a fact from here stays current. Copied onto facts as their staleness horizon. */
+  refresh_window: string;
+  schedule: string;
+  is_enabled: Generated<boolean>;
+  /** Observed, never declared. The tier bounds the ceiling; observation sets the value. */
+  reliability: Generated<Numeric>;
+  breaker_state: Generated<BreakerStateColumn>;
+  breaker_opened_at: Timestamp | null;
+  last_success_at: Timestamp | null;
+  last_failure_at: Timestamp | null;
+  last_failure_kind: string | null;
+  consecutive_failures: Generated<number>;
+  /** Resumable position. `| null` because the column is, and the drift test reads this literally. */
+  cursor: unknown | null;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+  deleted_at: Timestamp | null;
+}
+
+export type LearningFormatColumn =
+  | 'course'
+  | 'documentation'
+  | 'book'
+  | 'lab'
+  | 'certification'
+  | 'video'
+  | 'tutorial';
+
+export type LearningLevelColumn = 'beginner' | 'intermediate' | 'advanced';
+export type CostBandColumn = 'free' | 'low' | 'mid' | 'high' | 'unknown';
+export type LinkStatusColumn = 'ok' | 'redirected' | 'dead';
+export type DurationBasisColumn = 'published' | 'observed';
+
+export interface LearningResourcesTable {
+  id: string;
+  provider: string;
+  external_id: string;
+  title: string;
+  url: string;
+  format: LearningFormatColumn;
+  level: LearningLevelColumn | null;
+  language: string;
+  typical_duration: string | null;
+  /** Whether the duration is what the provider published or what we observed. */
+  duration_basis: DurationBasisColumn | null;
+  cost_amount: Numeric | null;
+  cost_currency: string | null;
+  cost_band: CostBandColumn;
+  is_certification: Generated<boolean>;
+  cert_authority: string | null;
+  /**
+   * Whether completing this *could* promote a skill to `evidenced`.
+   *
+   * **Read by nothing today.** Which verification path may promote, and how, is its own decision.
+   */
+  grants_evidence: Generated<boolean>;
+  source_id: string;
+  source_tier: number;
+  source_url: string;
+  retrieved_at: Timestamp;
+  last_verified_at: Timestamp;
+  link_status: Generated<LinkStatusColumn>;
+  retired_at: Timestamp | null;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+  deleted_at: Timestamp | null;
+}
+
+export type CoverageColumn = 'primary' | 'partial' | 'mentioned';
+export type CoverageBasisColumn = 'provider-stated' | 'syllabus-extraction' | 'curated';
+
+export interface LearningResourceSkillsTable {
+  id: string;
+  resource_id: string;
+  skill_id: string;
+  /** A course that merely *mentions* a skill does not close a gap in it. */
+  coverage: CoverageColumn;
+  basis: CoverageBasisColumn;
+  created_at: Generated<Timestamp>;
+}
+
+/** The only basis we can actually observe today: the person tells us. */
+export type CompletionBasisColumn = 'self_reported';
+
+/**
+ * What a person says they finished.
+ *
+ * **A claim about a resource, never about a skill.** Nothing here writes `profile_skills`, and
+ * `ai/skill-gap` credits only `evidenced` skills — so recording a completion does not move
+ * readiness, which is the property M6 exists to hold.
+ */
+export interface LearningCompletionsTable {
+  id: string;
+  user_id: string;
+  resource_id: string;
+  /** When they say they finished, not when they told us — `created_at` is the second fact. */
+  completed_at: Timestamp;
+  basis: Generated<CompletionBasisColumn>;
+  /** Stored, never trusted. Nothing reads it: a link is not a verification. */
+  evidence_url: string | null;
+  note: string | null;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+  deleted_at: Timestamp | null;
+}
+
 // ── the skill graph and what a track requires (entities/skill.md) ────────────
 
 export type SkillEdgeTypeColumn =
@@ -584,6 +720,10 @@ export interface Database {
   company_aliases: CompanyAliasesTable;
   applications: ApplicationsTable;
   outcomes: OutcomesTable;
+  connector_sources: ConnectorSourcesTable;
+  learning_resources: LearningResourcesTable;
+  learning_resource_skills: LearningResourceSkillsTable;
+  learning_completions: LearningCompletionsTable;
   person_fact_kinds: PersonFactKindsTable;
   person_facts: PersonFactsTable;
   schema_migrations: SchemaMigrationsTable;
