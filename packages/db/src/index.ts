@@ -178,6 +178,23 @@ export {
 } from './repositories/learning.ts';
 
 export {
+  dedupKeyFor,
+  expireBecauseNotFetched,
+  expireMissing,
+  livePostings,
+  sourcesForPosting,
+  upsertPostingFromSource,
+  type ExpiryResult,
+  type ExpirySweep,
+  type JobPostingRow,
+  type PostingFields,
+  type SourceIdentity,
+  type SourceObservation,
+  type UpsertAction,
+  type UpsertResult,
+} from './repositories/jobs.ts';
+
+export {
   DocumentConflictError,
   attachDocument,
   recordDocument,

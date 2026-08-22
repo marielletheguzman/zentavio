@@ -102,6 +102,15 @@ what ADR-0033 forbids. `tests/unit/invariants/no-connector-dedup-key.test.ts` en
 
 Company and location resolution likewise happen later, in the knowledge engine.
 
+### If your source lists postings, declare its completeness
+
+`meta.listing` is `'exhaustive'` only when a **successful** run returns everything live in the scope.
+If a run can be truncated, ranked, quota-limited, or filtered by a query, it is `'partial'`. Leaving
+it out means `'partial'`, which expires nothing — the safe direction.
+
+You do not declare whether a *run* finished: ingestion reports that (`RunOutcome`), and expiry needs
+both (ADR-0034).
+
 ## Step 6 — Use the shared helpers
 
 Rate limiting, retry with jitter, circuit breaking, and cursor persistence come from `connectors/core`.
