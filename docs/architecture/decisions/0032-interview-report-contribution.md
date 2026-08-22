@@ -1,6 +1,7 @@
 # ADR 0032: Anyone signed in may report a pairing once, corrections recompute, and withdrawal detaches rather than deletes
 
-- **Status:** Proposed
+- **Status:** Accepted
+- **Accepted:** 2026-08-22
 - **Date:** 2026-08-22
 - **Deciders:** project lead
 - **Affects:** `services/api-gateway`, `apps/web`, `packages/db` (`interview_reports`), `docs/features/interview-prep.md`
