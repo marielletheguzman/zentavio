@@ -38,7 +38,11 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
+  // `profile_skills` cascades from `user_profiles`, and attempts must go before the skills they
+  // reference — `fk_sa__skills` is RESTRICT, so a leftover assessment pins its skill row.
   await pool.query('DELETE FROM user_profiles');
+  await pool.query('DELETE FROM assessment_attempts');
+  await pool.query('DELETE FROM skill_assessments');
   await pool.query('DELETE FROM users');
   await pool.query('DELETE FROM career_skills');
   await pool.query('DELETE FROM skill_edges');
@@ -209,6 +213,24 @@ describe('applyCorrection — the milestone property', () => {
   it('does not carry verification onto a corrected row', async () => {
     // Verification is in-platform. A user editing a skill has not re-verified it, and
     // ck_profile_skills__verified_is_evidenced would reject the downgrade anyway.
+    //
+    // A real attempt is created because a verification must name the one that produced it
+    // (ADR-0030); a fabricated id would fail the foreign key.
+    const assessmentId = uuidv7();
+    await pool.query(
+      `INSERT INTO skill_assessments
+         (id, slug, version, skill_id, title, item_count, pass_threshold, status, published_at)
+       VALUES ($1,'kubernetes-fundamentals',1,$2,'Kubernetes Fundamentals',10,7,'published',now())`,
+      [assessmentId, kubernetesId],
+    );
+    const attemptId = uuidv7();
+    await pool.query(
+      `INSERT INTO assessment_attempts
+         (id, user_id, assessment_id, submitted_at, score, outcome)
+       VALUES ($1,$2,$3,now(),9,'passed')`,
+      [attemptId, userId, assessmentId],
+    );
+
     await createProfileVersion(db, {
       userId,
       skills: [
@@ -218,7 +240,10 @@ describe('applyCorrection — the milestone property', () => {
           evidence_kind: 'assessment',
           source_span: 'Passed the in-platform assessment',
           confidence: 'high',
+          // Verification and its basis travel together since ADR-0030. A `verified_at` alone is
+          // refused by `ck_profile_skills__attempt_verified` — the pair is the fact.
           verified_at: new Date(),
+          verified_attempt_id: attemptId,
         },
       ],
     });
@@ -231,6 +256,9 @@ describe('applyCorrection — the milestone property', () => {
 
     const skill = (await profileSkills(db, corrected.id)).find((s) => s.slug === 'kubernetes');
     expect(skill?.verified_at).toBeNull();
+    // Both halves go. A user editing a skill has not re-taken the assessment, and leaving the
+    // attempt id behind would point at evidence the row no longer claims.
+    expect(skill?.verified_attempt_id).toBeNull();
   });
 
   it('refuses to correct a user with no profile', async () => {
@@ -242,14 +270,18 @@ describe('applyCorrection — the milestone property', () => {
 
 describe('validateProfileSkill', () => {
   it('reports every violation at once', () => {
+    // Two things are wrong with this row, and both are reported: a claimed skill cannot be
+    // verified, and a verification with no attempt cannot say what verified it (ADR-0030).
     const errors = validateProfileSkill({
       skill_id: uuidv7(),
       status: 'claimed',
       confidence: 'high',
       verified_at: new Date(),
     });
-    expect(errors).toHaveLength(1);
-    expect(errors[0]?.rule).toBe('ck_profile_skills__verified_is_evidenced');
+    expect(errors.map((error) => error.rule).sort()).toEqual([
+      'ck_profile_skills__attempt_verified',
+      'ck_profile_skills__verified_is_evidenced',
+    ]);
   });
 
   it('accepts a self-reported evidenced skill without a span', () => {

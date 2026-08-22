@@ -38,6 +38,13 @@ export interface ProfileSkillInput {
   readonly confidence: 'high' | 'medium' | 'low';
   readonly self_reported?: boolean;
   readonly verified_at?: Date | null;
+  /**
+   * The attempt that verified it (ADR-0030).
+   *
+   * Travels with `verified_at` or not at all. A version carrying verification with no citable
+   * instrument is a promotion whose basis was lost in the copy.
+   */
+  readonly verified_attempt_id?: string | null;
 }
 
 /**
@@ -54,6 +61,21 @@ export function validateProfileSkill(row: ProfileSkillInput): readonly ProfileIn
         'ck_profile_skills__evidence',
         'an evidenced skill must say what evidences it. Without evidence_kind, "evidenced" is a ' +
           'label rather than a claim, and a padded skills list inflates readiness.',
+      ),
+    );
+  }
+
+  // Mirrors ck_profile_skills__attempt_verified. The pair travels together: a `verified_at` with no
+  // attempt cannot say what verified it, and an attempt id with no timestamp is a promotion that
+  // never happened.
+  const hasVerifiedAt = row.verified_at !== null && row.verified_at !== undefined;
+  const hasAttempt = row.verified_attempt_id !== null && row.verified_attempt_id !== undefined;
+  if (hasVerifiedAt !== hasAttempt) {
+    errors.push(
+      new ProfileInvariantError(
+        'ck_profile_skills__attempt_verified',
+        'verification and the attempt that produced it are one fact: a verified skill must name ' +
+          'the attempt, and an attempt id means nothing without the time it verified.',
       ),
     );
   }
@@ -189,6 +211,7 @@ async function insertSkills(
         confidence: skill.confidence,
         self_reported: skill.self_reported ?? false,
         verified_at: skill.verified_at ?? null,
+        verified_attempt_id: skill.verified_attempt_id ?? null,
       })),
     )
     .execute();
@@ -219,6 +242,7 @@ export function profileSkills(db: Kysely<Database>, profileId: string) {
       'profile_skills.confidence',
       'profile_skills.self_reported',
       'profile_skills.verified_at',
+      'profile_skills.verified_attempt_id',
       'skills.slug',
       'skills.name',
     ])
@@ -273,7 +297,10 @@ export async function applyCorrection(
       source_span: row.source_span,
       confidence: row.confidence,
       self_reported: row.self_reported,
+      // Carried, not created. An assessment pass survives a later correction to a different skill,
+      // and it keeps citing the attempt it came from.
       verified_at: row.verified_at,
+      verified_attempt_id: row.verified_attempt_id,
     }));
 
   if (correction.kind === 'upsert') {
@@ -287,7 +314,9 @@ export async function applyCorrection(
       source_span: previous?.source_span ?? null,
       confidence: correction.confidence ?? 'high',
       self_reported: true,
+      // A user editing a skill has not re-taken an assessment, so both halves go.
       verified_at: null,
+      verified_attempt_id: null,
     });
   }
 

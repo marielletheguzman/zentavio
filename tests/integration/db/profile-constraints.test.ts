@@ -26,6 +26,9 @@ beforeEach(async () => {
   // profile_skills cascades from user_profiles; the rest are cleared explicitly. Order matters —
   // every foreign key here is RESTRICT except that one.
   await pool.query('DELETE FROM user_profiles');
+  // Attempts and instruments before the skills they reference — `fk_sa__skills` is RESTRICT.
+  await pool.query('DELETE FROM assessment_attempts');
+  await pool.query('DELETE FROM skill_assessments');
   await pool.query('DELETE FROM career_skills');
   await pool.query('DELETE FROM skill_edges');
   await pool.query('DELETE FROM skill_aliases');
@@ -95,6 +98,25 @@ async function insertProfile(
   return id;
 }
 
+/** A published instrument and one passed attempt at it, so a row may legitimately cite verification. */
+async function insertPassedAttempt(userId: string, skillId: string): Promise<string> {
+  const assessmentId = newId();
+  await pool.query(
+    `INSERT INTO skill_assessments
+       (id, slug, version, skill_id, title, item_count, pass_threshold, status, published_at)
+     VALUES ($1, $2, 1, $3, 'An instrument', 10, 7, 'published', now())`,
+    [assessmentId, `instrument-${assessmentId.slice(-8)}`, skillId],
+  );
+
+  const attemptId = newId();
+  await pool.query(
+    `INSERT INTO assessment_attempts (id, user_id, assessment_id, submitted_at, score, outcome)
+     VALUES ($1, $2, $3, now(), 9, 'passed')`,
+    [attemptId, userId, assessmentId],
+  );
+  return attemptId;
+}
+
 async function insertProfileSkill(
   profileId: string,
   skillId: string,
@@ -103,12 +125,13 @@ async function insertProfileSkill(
     evidenceKind?: string | null;
     confidence?: string;
     verifiedAt?: string | null;
+    verifiedAttemptId?: string | null;
   } = {},
 ): Promise<string> {
   const id = newId();
   await pool.query(
-    `INSERT INTO profile_skills (id, user_profile_id, skill_id, status, evidence_kind, confidence, verified_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+    `INSERT INTO profile_skills (id, user_profile_id, skill_id, status, evidence_kind, confidence, verified_at, verified_attempt_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
     [
       id,
       profileId,
@@ -117,6 +140,7 @@ async function insertProfileSkill(
       overrides.evidenceKind ?? null,
       overrides.confidence ?? 'medium',
       overrides.verifiedAt ?? null,
+      overrides.verifiedAttemptId ?? null,
     ],
   );
   return id;
@@ -285,14 +309,40 @@ describe('profile_skills — the evidenced/claimed distinction', () => {
   it('refuses a verified skill that is merely claimed', async () => {
     // Verification is in-platform only and produces evidence. A verified `claimed` row would mean
     // the platform checked something it never recorded.
+    //
+    // **A real attempt is supplied so this test still isolates its own rule.** Since ADR-0030 a
+    // `verified_at` with no attempt violates `ck_profile_skills__attempt_verified` as well, and
+    // PostgreSQL names whichever it evaluates first — so without the attempt this asserted the
+    // wrong constraint and proved nothing about the claimed/verified rule.
+    const userId = await insertUser();
+    const profileId = await insertProfile(userId);
+    const skillId = await insertSkill();
+    const attemptId = await insertPassedAttempt(userId, skillId);
+
+    const violation = await expectViolation(pool, () =>
+      insertProfileSkill(profileId, skillId, {
+        status: 'claimed',
+        verifiedAt: 'now()',
+        verifiedAttemptId: attemptId,
+      }),
+    );
+    expect(violation.constraint).toBe('ck_profile_skills__verified_is_evidenced');
+  });
+
+  it('refuses a verification that cannot say which attempt produced it', async () => {
+    // The rule the test above had to work around, asserted on its own (ADR-0030).
     const userId = await insertUser();
     const profileId = await insertProfile(userId);
     const skillId = await insertSkill();
 
     const violation = await expectViolation(pool, () =>
-      insertProfileSkill(profileId, skillId, { status: 'claimed', verifiedAt: 'now()' }),
+      insertProfileSkill(profileId, skillId, {
+        status: 'evidenced',
+        evidenceKind: 'assessment',
+        verifiedAt: 'now()',
+      }),
     );
-    expect(violation.constraint).toBe('ck_profile_skills__verified_is_evidenced');
+    expect(violation.constraint).toBe('ck_profile_skills__attempt_verified');
   });
 
   it('refuses a confidence outside the closed set', async () => {

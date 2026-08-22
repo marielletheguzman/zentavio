@@ -138,6 +138,7 @@ CREATE TABLE profile_skills (
   confidence        text        NOT NULL,        -- 'high' | 'medium' | 'low'
   self_reported     boolean     NOT NULL DEFAULT false,
   verified_at       timestamptz,                 -- set only by in-platform verification
+  verified_attempt_id uuid,                      -- the attempt that verified it (ADR-0030)
   created_at        timestamptz NOT NULL DEFAULT now(),
   updated_at        timestamptz NOT NULL DEFAULT now(),
 
@@ -162,6 +163,11 @@ it.** A row claiming `evidenced` with no `evidence_kind` cannot be written.
 `ck_profile_skills__verified_is_evidenced` closes the matching hole from the other side: verification
 is in-platform only, and in-platform verification *produces* evidence. A `verified_at` on a merely
 `claimed` row would mean the platform checked something it never recorded.
+
+`ck_profile_skills__attempt_verified` closes the third: **`verified_at` and `verified_attempt_id` are
+null together or set together.** `verified_at` says *when* and nothing said *what*, so a promoted
+skill could not name the instrument behind it — which ADR-0030 requires, because a surface that can
+only say "verified" is making the broader claim the ADR refuses. See `entities/assessment.md`.
 
 The `uq` on `(user_profile_id, skill_id)` is why a résumé mentioning Kubernetes four times is one
 claim with the strongest evidence rather than four rows that quadruple its weight.
