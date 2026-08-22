@@ -713,6 +713,8 @@ export interface JobPostingsTable {
   dedup_key: string;
   dedup_basis: DedupBasisColumn;
   title: string;
+  /** Where a person applies. `job_posting_sources.source_url` is provenance, not a destination. */
+  url: string;
   company_id: string | null;
   /** What the source said, kept permanently as the evidence for a later resolution. */
   company_name_raw: string | null;

@@ -19,6 +19,8 @@ export { executePlan, type ExecutionReport } from './executor.ts';
 
 export { executePostingPlan, type PostingExecutionReport } from './posting-executor.ts';
 
+export { runJobBoards, type RunReport, type RunnerDeps, type ScopeReport } from './posting-runner.ts';
+
 export {
   expiryLicenceFor,
   planPostingIngest,

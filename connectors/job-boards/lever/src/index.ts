@@ -49,6 +49,8 @@ import {
   type ValidationResult,
 } from '@zentavio/connectors-core';
 
+import type { JobPosting } from '@zentavio/types';
+
 import { toPosting, type LeverPosting } from './parse.ts';
 
 /** One configured board, as fetched. */
@@ -61,28 +63,14 @@ export interface BoardRaw {
   readonly postings: readonly LeverPosting[];
 }
 
-/** One posting, in the shape `job_postings` stores (`docs/database/entities/job.md`). */
-export interface JobPostingRecord {
-  readonly externalId: string;
-  readonly title: string;
-  readonly url: string;
-  readonly companyBoard: string;
-  readonly countryCode: string | null;
-  readonly locationText: string | null;
-  readonly isRemote: boolean;
-  /** Always null. `workplaceType` says remote; nothing says worldwide, country or region. */
-  readonly remoteScope: null;
-  readonly department: string | null;
-  readonly team: string | null;
-  readonly commitment: string | null;
-  /** Always false, and the amounts always null: Lever publishes no structured pay. */
-  readonly salaryIsStated: false;
-  readonly postedAt: string | null;
-  readonly sourceId: string;
-  readonly sourceTier: 2;
-  readonly sourceUrl: string;
-  readonly retrievedAt: string;
-}
+/**
+ * One posting, in the shape ingestion stores.
+ *
+ * `@zentavio/types`' shared shape, not this package's own: a runner that iterates the registry
+ * cannot turn a connector's output into rows without one, and a per-source adapter would be a source
+ * named where ADR-0002 forbids it.
+ */
+export type JobPostingRecord = JobPosting;
 
 export const SOURCE_ID = 'lever';
 
@@ -114,7 +102,7 @@ export interface LeverDeps {
   readonly configuredBoards: readonly string[];
 }
 
-export class LeverConnector implements Connector<BoardRaw, readonly JobPostingRecord[]> {
+export class LeverConnector implements Connector<BoardRaw, readonly JobPosting[]> {
   readonly meta: ConnectorMeta = {
     id: SOURCE_ID,
     version: '1.0.0',
@@ -165,13 +153,13 @@ export class LeverConnector implements Connector<BoardRaw, readonly JobPostingRe
    * cannot link to is a job somebody cannot apply for, and listing it would waste the one thing this
    * feature is supposed to save them.
    */
-  normalize(raw: BoardRaw): readonly JobPostingRecord[] {
+  normalize(raw: BoardRaw): readonly JobPosting[] {
     return raw.postings
       .map((posting) => toPosting(posting, { board: raw.board, fetchedAt: raw.fetchedAt, sourceId: SOURCE_ID }))
-      .filter((record): record is JobPostingRecord => record !== null);
+      .filter((record): record is JobPosting => record !== null);
   }
 
-  validate(normalized: readonly JobPostingRecord[]): ValidationResult {
+  validate(normalized: readonly JobPosting[]): ValidationResult {
     const issues: ValidationIssue[] = [];
     const seen = new Set<string>();
 
