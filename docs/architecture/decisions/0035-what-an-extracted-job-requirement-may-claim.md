@@ -1,6 +1,7 @@
 # ADR-0035: A skill read out of a posting's prose is a mention with a span, never a stated requirement
 
-- **Status:** Proposed
+- **Status:** Accepted
+- **Accepted:** 2026-08-23
 - **Date:** 2026-08-23
 - **Deciders:** project lead
 - **Affects:** `ai/` (a new extraction capability), `packages/db` (`job_posting_skills`), `services/matching`, `docs/prompts/`, `docs/database/entities/job.md`, `docs/features/job-matching.md`
@@ -97,7 +98,9 @@ deferring a feature, it is missing its purpose.
 
 ## Decision
 
-**Option B**, with Option C as its degraded path, and four rules on what a row may claim.
+**Option B**, with Option C as its degraded path, and four rules on what a row may claim. Accepted
+2026-08-23 by the project lead. Acceptance binds the implementation to these rules; it authorises no
+code by itself.
 
 ### 1 — Basis is `description-extraction`, and `stated-requirement` is reserved
 
