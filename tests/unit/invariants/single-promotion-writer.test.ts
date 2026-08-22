@@ -44,9 +44,20 @@ function sourceFiles(directory: string): string[] {
   return found;
 }
 
+/**
+ * Comments stripped before scanning.
+ *
+ * A doc comment explaining *why* a column is not read is not a reader, and treating it as one makes
+ * the honest thing — writing down what you deliberately did not do — the thing that fails the build.
+ * The `git-scm` connector's comment about `grants_evidence` is what surfaced this.
+ */
+function code(text: string): string {
+  return text.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/.*$/gm, '$1');
+}
+
 const files = SEARCHED.flatMap((directory) => sourceFiles(join(ROOT, directory))).map((path) => ({
   relative: path.slice(ROOT.length),
-  text: readFileSync(path, 'utf8'),
+  text: code(readFileSync(path, 'utf8')),
 }));
 
 describe('only one module promotes a skill by assessment', () => {

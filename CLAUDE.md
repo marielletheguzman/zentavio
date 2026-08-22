@@ -72,7 +72,7 @@ countries/`). One pathway sourced end to end; labour market, compensation, cost 
 culture all marked `unknown` and unsourced, because a plausible guess in those sections is the
 most harmful and least detectable thing this repository could contain.
 
-21 tables. **1 534 tests — 738 unit, 353 integration, 443 pytest** (measured 2026-08-22 by running
+21 tables. **1 554 tests — 751 unit, 360 integration, 443 pytest** (measured 2026-08-22 by running
 all three suites, integration included, against local PostgreSQL and MinIO — not estimated). The
 integration suite needs `ZENTAVIO_TEST_DATABASE_URL` pointing at a database whose name ends `_test`;
 it is dropped and rebuilt, so it never touches the dev database. It also needs the four
@@ -87,7 +87,7 @@ that looks like a code failure and is not. CI blocking on `main`.
 | `services/api-gateway`, `services/ingestion` — requirement ingest only | `matching`, `notifications`, `billing`; ingestion's job-listing and scheduling half |
 | `ai/resume-parser`, `ai/skill-gap`, `ai/shared`, `ai/career-roadmap` — eligibility, routes, viability | `embeddings`, `interview-prep`, `learning-paths` |
 | `apps/web` — upload, gap, eligibility with its routes, applications, the comparison | `apps/admin`, `apps/mobile` |
-| `connectors/core`, `connectors/immigration-data/` — `de-bundesanzeiger`, `de-aufenthg`, `de-bayingg`, `lu-legilux` | every other connector, all of `knowledge-engine/` |
+| `connectors/core`, `connectors/immigration-data/` — `de-bundesanzeiger`, `de-aufenthg`, `de-bayingg`, `lu-legilux`; `connectors/learning-resources/git-scm` | every other connector, all of `knowledge-engine/` |
 | the seeded skill graph — in `packages/db/seeds/` and four tables, **not** `knowledge-engine/` (ADR-0020) | |
 
 Not built at all: any deployed environment. ADR-0015's Supabase project is

@@ -1,0 +1,17 @@
+{
+  "name": "@zentavio/connector-git-scm",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The official Git reference documentation as learning resources.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zentavio/connectors-core": "workspace:*",
+    "@zentavio/types": "workspace:*"
+  }
+}
