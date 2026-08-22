@@ -67,6 +67,17 @@ feature is supposed to save them. One broken posting does not take the rest of t
 fault would make every quiet employer look like a broken integration. A board that is no longer
 served is `degraded`; so is having no boards configured at all.
 
+## What it stores of the posting's prose
+
+`description` is Lever's own plain-text rendering, carried verbatim. `requirementsText` is the
+`lists` — "Qualifications", "Duties" — flattened from `<li>` markup to plain lines. The flattening is
+**mechanical**: tags removed, entities decoded, nothing summarised, reordered or judged.
+
+**Stored, never read for facts.** No salary, country or remote scope is derived from either — that is
+ADR-0033 and it does not bend for prose that happens to mention a number. They exist so skill
+extraction has an input at all, and because a posting ingested without them is un-extractable unless
+it is fetched again.
+
 ## Where its postings go
 
 `job_postings` and `job_posting_sources` exist as of ADR-0034, and this connector's records reach them

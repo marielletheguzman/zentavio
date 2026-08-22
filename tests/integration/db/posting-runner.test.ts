@@ -94,6 +94,23 @@ describe('a run over the registry', () => {
     expect(stored.every((row) => row.url.startsWith('https://jobs.lever.co/leverdemo/'))).toBe(true);
   });
 
+  it('keeps the prose extraction will need, and keeps requirements apart from it', async () => {
+    // Nothing reads these yet. They are stored because a posting ingested without them can never be
+    // extracted from without fetching it again, and the raw payload is archived only where a
+    // document store is configured — which is nowhere today.
+    await runJobBoards(registryWith(), deps());
+
+    const stored = await db
+      .selectFrom('job_postings')
+      .select(['description', 'requirements_text'])
+      .where('title', '=', 'AbelsonTaylor Writer')
+      .executeTakeFirstOrThrow();
+
+    expect(stored.description).toContain('Demo Job Listing');
+    expect(stored.requirements_text).toContain('Qualifications:');
+    expect(stored.requirements_text).not.toContain('<li>');
+  });
+
   it('runs a second time as an update, and sweeps', async () => {
     await runJobBoards(registryWith(), deps());
     const second = await runJobBoards(registryWith(), deps());

@@ -718,7 +718,10 @@ export interface JobPostingsTable {
   company_id: string | null;
   /** What the source said, kept permanently as the evidence for a later resolution. */
   company_name_raw: string | null;
+  /** The posting's own prose. Stored so extraction has an input; never read for facts (ADR-0033). */
   description: string | null;
+  /** The source's requirement lists as plain text — where a posting states what it wants. */
+  requirements_text: string | null;
   /** Carried verbatim for display and never mined for a country (ADR-0033). */
   location_raw: string | null;
   country_code: string | null;

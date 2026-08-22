@@ -17,6 +17,10 @@ import type { JobPosting } from '@zentavio/types';
 export interface LeverPosting {
   readonly id?: string;
   readonly text?: string;
+  /** The source's own plain-text rendering of the posting body. Stored, never read for facts. */
+  readonly descriptionPlain?: string;
+  /** "Qualifications", "Duties" — the lists where a posting states what it wants. */
+  readonly lists?: readonly { readonly text?: string; readonly content?: string }[];
   readonly hostedUrl?: string;
   readonly applyUrl?: string;
   readonly createdAt?: number;
@@ -29,6 +33,43 @@ export interface LeverPosting {
     readonly commitment?: string | null;
     readonly location?: string | null;
   } | null;
+}
+
+/**
+ * Lever's list markup, flattened to plain text.
+ *
+ * `<li>be smart</li><li>be very smart</li>` becomes two lines. **Mechanical and interpretation-free**:
+ * tags are removed and entities decoded, nothing is summarised, reordered or judged. Storing the HTML
+ * instead would push the same flattening into every future reader, each doing it slightly differently.
+ */
+function flatten(content: string): string {
+  return content
+    .replace(/<li[^>]*>/gi, '\n- ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&#39;|&rsquo;/g, "'")
+    .replace(/&quot;/g, '"')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line !== '' && line !== '-')
+    .join('\n');
+}
+
+/** The requirement lists, each under its own heading, or null when the posting states none. */
+function requirementsFrom(posting: LeverPosting): string | null {
+  const sections = (posting.lists ?? [])
+    .map((list) => {
+      const body = flatten(list.content ?? '');
+      if (body === '') return null;
+      const heading = typeof list.text === 'string' && list.text.trim() !== '' ? `${list.text.trim()}:\n` : '';
+      return `${heading}${body}`;
+    })
+    .filter((section): section is string => section !== null);
+
+  return sections.length === 0 ? null : sections.join('\n\n');
 }
 
 export interface PostingContext {
@@ -61,6 +102,13 @@ export function toPosting(posting: LeverPosting, context: PostingContext): JobPo
     url,
     // Lever names no employer. Deriving one from the board slug is the invention this refuses.
     companyNameRaw: null,
+    // Kept verbatim. Nothing here reads it — it exists so extraction has an input later, and because
+    // a posting ingested without it can never be extracted from without fetching it again.
+    description:
+      typeof posting.descriptionPlain === 'string' && posting.descriptionPlain.trim() !== ''
+        ? posting.descriptionPlain.trim()
+        : null,
+    requirementsText: requirementsFrom(posting),
     countryCode: country,
     // Carried for display, never mined. The country above came from the field that states it.
     locationText: posting.categories?.location ?? null,

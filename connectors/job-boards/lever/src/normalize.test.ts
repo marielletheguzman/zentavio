@@ -26,6 +26,17 @@ function connector(board: BoardRaw | null = FIXTURE, boards: readonly string[] =
   return new LeverConnector({ fetchBoard: async () => board, configuredBoards: boards });
 }
 
+/**
+ * A posting with a field genuinely absent, rather than present and `undefined`. That is the shape
+ * the API actually serves for a field it omits, and the repository's `exactOptionalPropertyTypes`
+ * is what keeps the two from being confused here.
+ */
+function without(posting: LeverPosting, ...keys: readonly (keyof LeverPosting)[]): LeverPosting {
+  const copy: Record<string, unknown> = { ...posting };
+  for (const key of keys) delete copy[key];
+  return copy as LeverPosting;
+}
+
 describe('the rows this produces', () => {
   const rows = connector().normalize(FIXTURE);
 
@@ -42,6 +53,10 @@ describe('the rows this produces', () => {
       title: 'AbelsonTaylor Writer',
       url: 'https://jobs.lever.co/leverdemo/33538a2f-d27d-4a96-8f05-fa4b0e4d940e',
       companyNameRaw: null,
+      // The prose itself is asserted by its own tests below rather than pasted here: a golden object
+      // holding four paragraphs stops being readable as a contract.
+      description: rows[0]?.description ?? null,
+      requirementsText: rows[0]?.requirementsText ?? null,
       countryCode: 'US',
       locationText: 'Arlington, TX',
       isRemote: false,
@@ -89,6 +104,28 @@ describe('the rows this produces', () => {
     expect(rows[2]?.commitment).toBeNull();
   });
 
+  it('keeps the posting’s own prose, and its requirement lists apart from it', () => {
+    // Stored so extraction has an input later, and never read for facts (ADR-0033). Two fields, not
+    // one: merging them would lose which sentences were requirements and which were company prose.
+    expect(rows[0]?.description).toContain('Demo Job Listing');
+    expect(rows[0]?.requirementsText).toContain('Qualifications:');
+    expect(rows[0]?.requirementsText).toContain('- be very smart');
+    // The requirements are not buried inside the prose, which is what makes them separable later.
+    expect(rows[0]?.description).not.toContain('be very smart');
+  });
+
+  it('flattens list markup mechanically, keeping the text and dropping the tags', () => {
+    // `<b>bold text</b>` is a formatting choice, not a fact. The words survive; the markup does not,
+    // and nothing is summarised or reordered on the way through.
+    expect(rows[0]?.requirementsText).toContain('- bold text');
+    expect(rows[0]?.requirementsText).not.toContain('<');
+  });
+
+  it('states no requirements rather than an empty string when the source lists none', () => {
+    // "Said nothing" and "we stored nothing" must not look alike.
+    expect(toPosting(without(FIXTURE.postings[0]!, 'lists'), CONTEXT)?.requirementsText).toBeNull();
+  });
+
   it('calls a role remote only when the source does', () => {
     // `hybrid` and `unspecified` are both in the fixture, and neither is remote.
     expect(rows.map((row) => row.isRemote)).toEqual([false, false, false]);
@@ -98,17 +135,6 @@ describe('the rows this produces', () => {
 
 describe('postings it refuses to write a row for', () => {
   const first = FIXTURE.postings[0]!;
-
-  /**
-   * A posting with a field genuinely absent, rather than present and `undefined`. That is the shape
-   * the API actually serves for a field it omits, and the repository's `exactOptionalPropertyTypes`
-   * is what keeps the two from being confused here.
-   */
-  function without(posting: LeverPosting, ...keys: readonly (keyof LeverPosting)[]): LeverPosting {
-    const copy: Record<string, unknown> = { ...posting };
-    for (const key of keys) delete copy[key];
-    return copy as LeverPosting;
-  }
 
   it('drops a posting nobody could apply for', () => {
     // A job we cannot link to is a job somebody cannot act on, and listing it would waste the one

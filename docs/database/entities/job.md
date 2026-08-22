@@ -28,7 +28,8 @@ CREATE TABLE job_postings (
   url               text         NOT NULL,          -- where a person applies (migration 20260823000500)
   company_id        uuid,                              -- null until resolved
   company_name_raw  text,                              -- what the source said, kept
-  description       text,
+  description       text,                              -- the posting's own prose, stored not read
+  requirements_text text,                              -- the source's requirement lists, plain text
 
   location_raw      text,                              -- carried verbatim, never mined (ADR-0033)
   country_code      char(2),
@@ -129,6 +130,15 @@ an invented middle.
 
 **`stale_after`.** Derived at write time from the source's refresh window, so "is this posting still
 trustworthy?" is an indexed comparison rather than a computation.
+
+**`description` and `requirements_text`, stored and never read.** ADR-0033 forbids mining prose for a
+salary, a country or a remote scope, and that does not change. They exist because skill extraction has
+no other input: a posting ingested without them can never be extracted from without fetching it again,
+and the raw payload is archived only where a document store is configured — today, nowhere. They are
+**two columns** because merging them would lose which sentences were requirements and which were the
+company describing itself, which is the distinction extraction depends on. `description` existed from
+the table's creation and held nothing until the shared `JobPosting` type carried the field
+(`20260823010000`).
 
 **`url`, separate from `job_posting_sources.source_url`.** One is where a person applies; the other is
 the endpoint the payload was read from. Conflating them sends somebody to an API response. The column
