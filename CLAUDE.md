@@ -72,7 +72,7 @@ countries/`). One pathway sourced end to end; labour market, compensation, cost 
 culture all marked `unknown` and unsourced, because a plausible guess in those sections is the
 most harmful and least detectable thing this repository could contain.
 
-18 tables. **1 496 tests — 728 unit, 325 integration, 443 pytest** (measured 2026-08-22 by running
+20 tables. **1 518 tests — 732 unit, 343 integration, 443 pytest** (measured 2026-08-22 by running
 all three suites, integration included, against local PostgreSQL and MinIO — not estimated). The
 integration suite needs `ZENTAVIO_TEST_DATABASE_URL` pointing at a database whose name ends `_test`;
 it is dropped and rebuilt, so it never touches the dev database. It also needs the four

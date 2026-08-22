@@ -250,6 +250,66 @@ export interface ProfileSkillsTable {
   self_reported: Generated<boolean>;
   /** Set only by in-platform verification — never by the parser, never by the user saying so. */
   verified_at: Timestamp | null;
+  /**
+   * The attempt that promoted this skill (ADR-0030).
+   *
+   * `verified_at` says *when*; this says *what*, so a surface can show the basis and a reader can
+   * tell a résumé-derived `evidenced` from an assessed one. Null together with `verified_at` —
+   * `ck_profile_skills__attempt_verified`.
+   */
+  verified_attempt_id: string | null;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+}
+
+// ── assessments (ADR-0030) ───────────────────────────────────────────────────
+
+export type AssessmentStatusColumn = 'draft' | 'published' | 'retired';
+
+/**
+ * One **version** of an instrument.
+ *
+ * A version is not a column on a mutable row: items change, and a pass has to keep citing what it
+ * was actually earned against.
+ */
+export interface SkillAssessmentsTable {
+  id: string;
+  /** Stable across versions. `kubernetes-fundamentals` v1 and v2 are one instrument at two times. */
+  slug: string;
+  version: number;
+  /** What passing this evidences. One skill, so a pass can say which one it was about. */
+  skill_id: string;
+  title: string;
+  description: string | null;
+  item_count: number;
+  /** Stated on the instrument, never decided per attempt after seeing the scores. */
+  pass_threshold: number;
+  /** `draft` cannot be taken; `retired` keeps existing passes citable while accepting no new ones. */
+  status: Generated<AssessmentStatusColumn>;
+  published_at: Timestamp | null;
+  retired_at: Timestamp | null;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+}
+
+export type AttemptOutcomeColumn = 'in_progress' | 'passed' | 'failed' | 'abandoned';
+
+/**
+ * Every attempt, kept.
+ *
+ * Append-only history rather than a current-state row: a failed attempt is a fact about what
+ * happened, and keeping only the best result would make the record flatter than the truth.
+ */
+export interface AssessmentAttemptsTable {
+  id: string;
+  user_id: string;
+  /** The **version**, which is what makes "passed v1" survive v2 being written. */
+  assessment_id: string;
+  started_at: Generated<Timestamp>;
+  submitted_at: Timestamp | null;
+  /** Correct answers. Null while open and for an abandoned attempt — 0 would record a real failure. */
+  score: number | null;
+  outcome: Generated<AttemptOutcomeColumn>;
   created_at: Generated<Timestamp>;
   updated_at: Generated<Timestamp>;
 }
@@ -721,6 +781,8 @@ export interface Database {
   applications: ApplicationsTable;
   outcomes: OutcomesTable;
   connector_sources: ConnectorSourcesTable;
+  skill_assessments: SkillAssessmentsTable;
+  assessment_attempts: AssessmentAttemptsTable;
   learning_resources: LearningResourcesTable;
   learning_resource_skills: LearningResourceSkillsTable;
   learning_completions: LearningCompletionsTable;

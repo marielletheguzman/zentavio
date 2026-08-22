@@ -126,6 +126,17 @@ export {
 
 export { activePathways, pathwayById, type PathwayRow } from './repositories/pathways.ts';
 export {
+  AssessmentInvariantError,
+  attemptsForUser,
+  promoteFromAttempt,
+  publishedAssessmentsForSkill,
+  startAttempt,
+  submitAttempt,
+  type AssessmentAttemptRow,
+  type NewSkillAssessment,
+  type SkillAssessmentRow,
+} from './repositories/assessments.ts';
+export {
   CompletionInvariantError,
   completionsForUser,
   recordCompletion,
