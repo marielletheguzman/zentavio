@@ -161,8 +161,14 @@ because *"3 reports, we need 5"* is an invitation to contribute one and *"not en
 - The contribution flow the backlog already names as preceding M8, with its own anti-gaming posture —
   the same treatment `assessment-integrity.md` gave the assessment.
 - The below-threshold surface, showing the count and what is still needed.
-- Role-generic preparation built from the role's requirement facts, which is what the below-threshold
-  path returns and therefore the part that must be good.
+- ~~**Role-generic preparation built from the role's requirement facts, which is what the
+  below-threshold path returns and therefore the part that must be good.**~~ **Done** — 2026-08-22.
+  Themes from `career_skills`, heaviest first, capped at eight with the total shown so a capped list
+  never reads as the whole set. Each carries the stored weight and cluster, and where the person
+  stands — with `evidenced` and `claimed` kept apart rather than collapsed into "you have it".
+  **No questions**: generating them belongs to `ai/interview-prep`, which does not exist, and a
+  question invented beside a company's name is the fabrication this milestone is written against. A
+  test asserts the output is unchanged by six reports arriving about a company.
 - An officially published process, where one exists, as a tier-1 record that outranks reports.
 
 **Reversal cost.** Low for the numbers, higher for the unit. Changing five to four is an edit;
