@@ -157,7 +157,8 @@ describe('validation', () => {
   });
 
   it('refuses the same posting twice', () => {
-    // The posting id is the deduplication key; two rows under it would double-count one job.
+    // A posting id identifies one posting; two rows under it would double-count one job. It is the
+    // source identity, not a deduplication key — that is persistence’s (ADR-0034).
     const result = connector().validate([rows[0]!, rows[0]!]);
     expect(isIngestible(result)).toBe(false);
     expect(result.issues[0]?.code).toBe('duplicate-external-id');

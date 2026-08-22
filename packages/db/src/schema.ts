@@ -628,7 +628,11 @@ export type OutcomeSourceColumn = 'user-reported' | 'inferred' | 'platform-obser
 export interface ApplicationsTable {
   id: string;
   user_id: string;
-  /** No foreign key — `job_postings` is M4. The column exists so the data has somewhere to go. */
+  /**
+   * Still no foreign key, though `job_postings` now exists. Pointing a live table at a new one is a
+   * change with its own `ON DELETE` decision — recorded as follow-up in ADR-0034 rather than
+   * smuggled into the table's creation.
+   */
   job_posting_id: string | null;
   /** No foreign key — `matches` is M4. */
   match_id: string | null;
@@ -684,6 +688,97 @@ export interface OutcomesTable {
   confidence: string;
   /** Set exactly when `user_id` is nulled — `ck_outcomes__anonymized` enforces the pairing. */
   anonymized_at: Timestamp | null;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+}
+
+// ── job postings (entities/job.md, ADR-0034) ─────────────────────────────────
+
+/** Which derivation produced `dedup_key`, and therefore what a match across sources would mean. */
+export type DedupBasisColumn = 'employer-title-location' | 'source-identity';
+
+/** `source-delisted` is the source's statement; `source-not-fetched` is our failure. */
+export type ExpiryReasonColumn = 'source-delisted' | 'source-not-fetched';
+
+/**
+ * One opening, as reconciled from every source that described it.
+ *
+ * A **world fact**: provenance required, retained indefinitely, not personal data. Deduplication is
+ * persistence's, never a connector's (ADR-0034) — a connector sees one source and cannot make a
+ * claim about two.
+ */
+export interface JobPostingsTable {
+  id: string;
+  /** Derived at write time. Unique among live rows; that uniqueness is what makes a merge a merge. */
+  dedup_key: string;
+  dedup_basis: DedupBasisColumn;
+  title: string;
+  company_id: string | null;
+  /** What the source said, kept permanently as the evidence for a later resolution. */
+  company_name_raw: string | null;
+  description: string | null;
+  /** Carried verbatim for display and never mined for a country (ADR-0033). */
+  location_raw: string | null;
+  country_code: string | null;
+  region: string | null;
+  city: string | null;
+  /** Null means the source did not say — never false. A silent source is not an on-site job. */
+  is_remote: boolean | null;
+  /** Null unless a source states the scope. Nothing infers worldwide from `remote`. */
+  remote_scope: string | null;
+  employment_type: string | null;
+  seniority: string | null;
+  /** The source's own vocabulary, unmapped: Lever's "Regular Full Time (Salary)". */
+  commitment_raw: string | null;
+  department_raw: string | null;
+  team_raw: string | null;
+  salary_min: Numeric | null;
+  salary_max: Numeric | null;
+  currency: string | null;
+  salary_period: string | null;
+  /** "The source published none" is not "we failed to parse one". */
+  salary_is_stated: Generated<boolean>;
+  posted_at: Timestamp | null;
+  first_seen_at: Timestamp;
+  last_seen_at: Timestamp;
+  source_expires_at: Timestamp | null;
+  /** `retrieved_at` plus the writing source's refresh window. */
+  stale_after: Timestamp;
+  expired_at: Timestamp | null;
+  expiry_reason: ExpiryReasonColumn | null;
+  /** Tier of the source that last wrote these fields. A worse-tier update is refused. */
+  authority_tier: number;
+  confidence: string;
+  contested: Generated<boolean>;
+  /** `dedup-collision-unmerged` when a recomputed key would have collided and the merge was refused. */
+  flags: Generated<string[]>;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+  deleted_at: Timestamp | null;
+}
+
+/**
+ * One source's claim on one posting, under that source's own identifier.
+ *
+ * Identity is the triple `(source_id, source_scope, external_id)`. The scope is a namespace — a
+ * Lever board slug, an ATS tenant — and **is not an employer**: nothing may resolve it to a company.
+ */
+export interface JobPostingSourcesTable {
+  id: string;
+  job_posting_id: string;
+  source_id: string;
+  /** Empty string when the source has one global namespace. Never null, so uniqueness needs no coalescing. */
+  source_scope: Generated<string>;
+  external_id: string;
+  source_tier: number;
+  source_url: string;
+  retrieved_at: Timestamp;
+  connector_version: string;
+  run_id: string;
+  /** The archived board payload (ADR-0021) — many postings per document, never this posting's bytes. */
+  document_id: string | null;
+  /** Consecutive exhaustive runs of this scope that did not list `external_id`. */
+  missed_runs: Generated<number>;
   created_at: Generated<Timestamp>;
   updated_at: Generated<Timestamp>;
 }
@@ -873,6 +968,8 @@ export interface Database {
   applications: ApplicationsTable;
   outcomes: OutcomesTable;
   connector_sources: ConnectorSourcesTable;
+  job_postings: JobPostingsTable;
+  job_posting_sources: JobPostingSourcesTable;
   interview_reports: InterviewReportsTable;
   interview_report_stages: InterviewReportStagesTable;
   skill_assessments: SkillAssessmentsTable;

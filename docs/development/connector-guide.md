@@ -74,16 +74,33 @@ therefore no registry access.
 Then `validate` (accept / flag / reject **with reasons**), then `search` (cursor-paginated), then
 `fetch`, then `healthCheck` (cheap, no credentials burned).
 
-## Step 5 — Dedup key
+## Step 5 — Source identity, **not** a dedup key
 
-Derive it, document it in the README, and keep it stable:
+State where the record lives in your source's namespace, and stop there:
 
 ```text
-sha256(norm(company) + '|' + norm(title) + '|' + norm(location) + '|' + coarse(postedAt))
+(source_id, source_scope, external_id)
 ```
 
-`norm()` is casefold, strip punctuation, collapse whitespace. Alias mapping happens during
-reconciliation, not here.
+`source_scope` is the sub-namespace `external_id` belongs to — a Lever board slug, an ATS tenant, a
+country site — and is the empty string when the source has one global namespace. **It is a namespace,
+never an employer**: nothing may resolve a board slug to a company.
+
+**Do not derive a deduplication key.** ADR-0034 gives that to persistence, which computes it in
+`packages/db/src/repositories/jobs.ts` and records the basis it had:
+
+| Basis | When | What a match means |
+|---|---|---|
+| `employer-title-location` | an employer identity was available | the same job, possibly from two sources |
+| `source-identity` | no employer identity was available | nothing — the key matches by construction only itself |
+
+The reason is not tidiness. Deduplication is the claim that two postings from **two feeds** are the
+same job, and a connector sees one feed. The formula this step used to prescribe —
+`sha256(norm(company)|norm(title)|norm(location)|coarse(postedAt))` — needs a company name; a Lever
+board publishes none, and inventing one, or hashing the board slug as though it were one, is exactly
+what ADR-0033 forbids. `tests/unit/invariants/no-connector-dedup-key.test.ts` enforces the absence.
+
+Company and location resolution likewise happen later, in the knowledge engine.
 
 ## Step 6 — Use the shared helpers
 
@@ -96,8 +113,13 @@ bugs or auth problems, and retrying hides them.
 
 ## Step 7 — Register
 
-One line in the `connectors/core` registry. Config keys under `connectors.<id>.*` in
-`packages/config`; credentials from the secret store, never in the repository.
+One line in `connectors/core/src/default-registry.ts`, plus its dependency entry in that package's
+`package.json`. Config keys under `connectors.<id>.*` in `packages/config`; credentials from the
+secret store, never in the repository.
+
+**This step is enforced**: `tests/unit/invariants/connector-registration.test.ts` fails when a folder
+with a `package.json` is missing from `createRegistry`. Two connectors had already shipped without
+their line when that test was written.
 
 ## Step 8 — Prove it was additive
 
@@ -109,7 +131,8 @@ Expected, and nothing else:
 
 ```text
 connectors/<kind>/<id>/...
-connectors/core/registry.ts
+connectors/core/src/default-registry.ts
+connectors/core/package.json
 packages/config/...
 tests/fixtures/connectors/<id>/...
 ```

@@ -289,6 +289,9 @@ importers:
       '@zentavio/connector-git-scm':
         specifier: workspace:*
         version: link:../../connectors/learning-resources/git-scm
+      '@zentavio/connector-lever':
+        specifier: workspace:*
+        version: link:../../connectors/job-boards/lever
       '@zentavio/connector-lu-legilux':
         specifier: workspace:*
         version: link:../../connectors/immigration-data/lu-legilux

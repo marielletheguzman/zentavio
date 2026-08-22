@@ -67,26 +67,21 @@ feature is supposed to save them. One broken posting does not take the rest of t
 fault would make every quiet employer look like a broken integration. A board that is no longer
 served is `degraded`; so is having no boards configured at all.
 
-## What is not built yet
+## Where its postings go
 
-**There is no `job_postings` table.** `docs/database/entities/job.md` designs one and no migration
-creates it; `packages/db/src/schema.ts` still records the destination as future work. Persistence,
-retention and cross-source deduplication are a separate slice with their own decisions, and building
-a table before those are settled is how a connector quietly becomes a data-model project.
+`job_postings` and `job_posting_sources` exist as of ADR-0034, and this connector's records reach them
+through `packages/db/src/repositories/jobs.ts`. What the connector supplies is **source identity** —
+`(lever, <board slug>, <posting id>)` — and never a deduplication key: a Lever board publishes no
+employer, and a key derived from a board slug would be an employer identity we invented.
 
-**`JobPostingRecord` is therefore not that table's row shape yet**, and this is the honest list of
-the difference:
+A posting from here therefore stores `dedup_basis = 'source-identity'`, which matches nothing by
+construction. That is the honest state, and it is recorded rather than hidden: when a source does
+supply an employer, the same posting would carry `employer-title-location` instead.
 
-| Designed column | Here |
-|---|---|
-| `dedup_key` | not derived — the deduplication key is a cross-source decision, and this is the first source |
-| `company_name_raw`, `company_id` | only `companyBoard`, the configured Lever slug. A board slug is not a company name and must not be resolved as one |
-| `employment_type`, `seniority` | carried unmapped as `commitment`; `"Regular Full Time (Salary)"` is Lever's vocabulary, and mapping it into ours is a decision nobody has made |
-| `department`, `team` | kept, and have no column |
-| `confidence`, `stale_after`, `first_seen_at` / `last_seen_at` | write-time and reconciliation concerns, not the connector's |
-
-Until that slice happens this connector is tested and registrable but **not ingestible end to end**,
-and the gap is recorded here rather than implied by an empty table.
+Still not mapped here, by decision rather than omission: `commitment` stays Lever's own vocabulary in
+`commitment_raw`, and `department` / `team` are stored raw. `company_id` and `company_name_raw` stay
+null, because a board slug is a namespace and resolving it to a company would be the invention this
+connector exists to refuse.
 
 ## Related
 
