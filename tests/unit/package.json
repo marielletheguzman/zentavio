@@ -5,6 +5,7 @@
   "description": "Cross-package tests that belong to no single package \u2014 the parser contract and M1a's invariants.",
   "type": "module",
   "dependencies": {
+    "@zentavio/connectors-core": "workspace:*",
     "@zentavio/types": "workspace:*",
     "@zentavio/db": "workspace:*"
   }

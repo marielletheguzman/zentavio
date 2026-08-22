@@ -78,9 +78,15 @@ importers:
       '@zentavio/connector-de-aufenthg':
         specifier: workspace:*
         version: link:../immigration-data/de-aufenthg
+      '@zentavio/connector-de-bayingg':
+        specifier: workspace:*
+        version: link:../immigration-data/de-bayingg
       '@zentavio/connector-de-bundesanzeiger':
         specifier: workspace:*
         version: link:../immigration-data/de-bundesanzeiger
+      '@zentavio/connector-git-scm':
+        specifier: workspace:*
+        version: link:../learning-resources/git-scm
       '@zentavio/connector-lever':
         specifier: workspace:*
         version: link:../job-boards/lever
@@ -301,6 +307,9 @@ importers:
 
   tests/unit:
     dependencies:
+      '@zentavio/connectors-core':
+        specifier: workspace:*
+        version: link:../../connectors/core
       '@zentavio/db':
         specifier: workspace:*
         version: link:../../packages/db

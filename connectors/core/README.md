@@ -83,6 +83,16 @@ sufficient evidence on its own — fetch a real page and see what it serves. `ma
 publishes `Allow: /` and then answers with a bot-protection challenge; it is not integrated for that
 reason.
 
+**Registration is enforced, not remembered.** `tests/unit/invariants/connector-registration.test.ts`
+walks `connectors/*/*`, treats any folder with a `package.json` as a built source, and fails when one
+is missing from `createRegistry` — in both directions, so a registration whose id drifts from its
+directory fails too. It was written after `git-scm` (#129) and `de-bayingg` (M5) both shipped without
+their registry line and nothing noticed: the registry has no runtime consumer yet, so the omission
+has no symptom until a run is silently short a source.
+
+Note that **`registerConnectorSource` is a different operation** — it writes a `connector_sources`
+row in the database. Both are called registering, and doing one is not doing the other.
+
 ## Related
 
 - ADR-0002 (plugin model), ADR-0005 (the lint rule that enforces it)
