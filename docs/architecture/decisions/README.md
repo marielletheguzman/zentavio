@@ -43,6 +43,10 @@ already ruled out and how the rule is enforced.
 | [0027](0027-quota-semantics.md) | A quota is a property of the pathway, never a requirement a person can fail | Accepted | 2026-08-11 |
 | [0028](0028-remote-as-a-destination.md) | `REMOTE` compares on employability alone, and its eligibility is `not_applicable` rather than unknown | Accepted | 2026-08-11 |
 | [0029](0029-origin-scoped-requirements.md) | Origin scopes a requirement through `applies_to`, and an origin with no rule is `unknown`, never `not_applicable` | Accepted | 2026-08-20 |
+| [0030](0030-what-may-promote-a-skill-to-evidenced.md) | An in-platform assessment is the only thing that may promote a skill to `evidenced`, and what it evidences is the attempt | Accepted | 2026-08-22 |
+| [0031](0031-minimum-support-for-an-interview-process.md) | A company’s interview process is described per role family, above a stated support floor, and never from a single report | Accepted | 2026-08-22 |
+| [0032](0032-interview-report-contribution.md) | Anyone signed in may report a pairing once, corrections recompute, and withdrawal detaches rather than deletes | Accepted | 2026-08-22 |
+| [0033](0033-job-board-source-tier-and-what-a-posting-may-state.md) | A Lever board is a tier-2 source, and a posting states only what Lever states structurally | Proposed | 2026-08-22 |
 
 **0010 is Accepted, and the rename is done** — `immigration_rules` is now `requirements`, with `domain`,
 `imposed_by`, and `authority`. Regulated professions remain blocked on **data**, not schema: nursing,
