@@ -55,6 +55,22 @@ export class InterviewsService {
     this.#db = db;
   }
 
+  /**
+   * The companies somebody can report on.
+   *
+   * Active only, and merged rows are excluded rather than followed — a merged company points
+   * forward, and offering both would let two pairings accumulate reports about one employer.
+   */
+  companies(): Promise<readonly { readonly id: string; readonly name: string }[]> {
+    return this.#db
+      .selectFrom('companies')
+      .select(['id', 'canonical_name as name'])
+      .where('status', '=', 'active')
+      .where('deleted_at', 'is', null)
+      .orderBy('canonical_name')
+      .execute();
+  }
+
   /** What may be said about a pairing today: a described process, or the shortfall and its count. */
   process(companyId: string, roleFamily: string, asOf: string): Promise<ProcessSupport> {
     return processForPairing(this.#db, { companyId, roleFamily, asOf });

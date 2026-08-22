@@ -50,6 +50,13 @@ export class InterviewsController {
     return this.#service.process(companyId, roleFamily, asOf);
   }
 
+  /** Who can be reported on. Names only — nothing here says anything about anybody's interview. */
+  @Get('companies')
+  @HttpCode(HttpStatus.OK)
+  async companies() {
+    return { companies: await this.#service.companies() };
+  }
+
   @Get('interview-reports')
   @HttpCode(HttpStatus.OK)
   async mine(@CurrentSubject() subject: Subject) {
