@@ -32,6 +32,17 @@ export {
 export { runDueJobBoards, type ScheduledRunReport } from './scheduled-run.ts';
 
 export {
+  EXTRACTOR_VERSION,
+  extractSkills,
+  rowsFor,
+  weightFor,
+  type AliasEntry as ScanAliasEntry,
+  type ExtractedSkill,
+  type PostingSection,
+  type PostingText,
+} from './skill-extraction.ts';
+
+export {
   expiryLicenceFor,
   planPostingIngest,
   summarizePostings,

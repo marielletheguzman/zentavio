@@ -202,6 +202,16 @@ export {
 } from './repositories/connector-runs.ts';
 
 export {
+  aliasIndex,
+  postingsForSkill,
+  replacePostingSkills,
+  skillsForPosting,
+  type AliasEntry,
+  type JobPostingSkillRow,
+  type NewPostingSkill,
+} from './repositories/posting-skills.ts';
+
+export {
   DocumentConflictError,
   attachDocument,
   recordDocument,

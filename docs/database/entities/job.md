@@ -5,9 +5,9 @@
 `job_postings` is the reconciled result of one or more sources describing the same opening. It is a
 **world fact**: provenance required, never mutated in place, not personal data.
 
-**`job_postings` and `job_posting_sources` are built** — migration `20260822233000`, repository
-`packages/db/src/repositories/jobs.ts`, ADR-0034. `job_posting_skills`, `raw_payloads` and `matches`
-are designed below and **not created**: a table built for data nobody writes is false completeness.
+**`job_postings`, `job_posting_sources` and `job_posting_skills` are built** — migration `20260822233000`, repository
+`packages/db/src/repositories/jobs.ts`, ADR-0034. `raw_payloads` and `matches` are designed below and
+**not created**: a table built for data nobody writes is false completeness.
 
 ## Table
 
@@ -219,24 +219,60 @@ CREATE INDEX idx_jps__scope_sweep ON job_posting_sources (source_id, source_scop
 
 ```sql
 CREATE TABLE job_posting_skills (
-  id              uuid        PRIMARY KEY,
-  job_posting_id  uuid        NOT NULL,
-  skill_id        uuid        NOT NULL,
-  weight          numeric(4,3) NOT NULL,        -- importance for this posting
-  basis           text        NOT NULL,         -- 'stated-requirement' | 'description-extraction' | 'market-frequency'
-  is_required     boolean     NOT NULL DEFAULT true,
-  source_span     text,                         -- the sentence it came from, when extracted
-  created_at      timestamptz NOT NULL DEFAULT now(),
+  id                uuid         PRIMARY KEY,          -- UUIDv7, app-generated
+  job_posting_id    uuid         NOT NULL,
+  skill_id          uuid         NOT NULL,
+
+  -- Importance to this posting, computed by code from where the span sits and how often it recurs.
+  -- Never returned by a model: a weight nobody can recompute makes `matches` irreproducible.
+  weight            numeric(4,3) NOT NULL,
+  basis             text         NOT NULL,
+  is_required       boolean      NOT NULL DEFAULT false,
+  -- Which field the span was found in. `requirements` is the only section that may mark a row
+  -- required, and storing it means a later reader can check that rather than trust it.
+  section           text         NOT NULL,
+  -- The sentence as published, never paraphrased.
+  source_span       text,
+
+  extractor_version text         NOT NULL,
+  -- Null when no model was involved — the alias-scan path, and the shape a run with no model host
+  -- produces (ADR-0018's `ZENTAVIO_PARSER_ENRICHMENT=off` precedent).
+  prompt_version    text,
+
+  created_at        timestamptz  NOT NULL DEFAULT now(),
+  updated_at        timestamptz  NOT NULL DEFAULT now(),
+
   CONSTRAINT fk_jpsk__job_postings FOREIGN KEY (job_posting_id) REFERENCES job_postings(id) ON DELETE RESTRICT,
   CONSTRAINT fk_jpsk__skills       FOREIGN KEY (skill_id)       REFERENCES skills(id)       ON DELETE RESTRICT,
-  CONSTRAINT ck_jpsk__weight CHECK (weight >= 0 AND weight <= 1)
+
+  CONSTRAINT ck_jpsk__weight CHECK (weight >= 0 AND weight <= 1),
+  CONSTRAINT ck_jpsk__basis CHECK (basis IN ('stated-requirement','description-extraction','market-frequency')),
+  CONSTRAINT ck_jpsk__section CHECK (section IN ('requirements','description','structured')),
+  -- ADR-0035: anything read out of prose shows the sentence it came from.
+  CONSTRAINT ck_jpsk__extracted_has_span CHECK (basis <> 'description-extraction' OR source_span IS NOT NULL),
+  -- ADR-0035: a mention in the company's own prose is not a requirement.
+  CONSTRAINT ck_jpsk__required_from_list CHECK (is_required = false OR section IN ('requirements','structured'))
 );
 
+-- One row per skill per posting: re-extracting updates rather than accumulating duplicates.
 CREATE UNIQUE INDEX uq_jpsk__posting_skill ON job_posting_skills (job_posting_id, skill_id);
+CREATE INDEX idx_jpsk__skill ON job_posting_skills (skill_id);
+-- What matching reads: this posting's requirements, heaviest first.
+CREATE INDEX idx_jpsk__posting_weight ON job_posting_skills (job_posting_id, weight DESC);
 ```
 
 `basis` is what lets a match explain *why* a requirement counted, and at what strength. A weight
 without a basis cannot be defended to a user.
+
+**ADR-0035 is in these constraints, not only in the ADR.** A row read out of prose carries
+`description-extraction` and its verbatim span; `stated-requirement` is reserved for a source that
+states requirements in a structured field, and none does — an integration test asserts no such row
+exists, and it fails the day one legitimately should. `ck_jpsk__required_from_list` is what stops a
+mention in the company's own prose from becoming a requirement.
+
+**`job_posting_skills` is built** (migration `20260823020000`), written by the alias scan in
+`services/ingestion/src/skill-extraction.ts`. `raw_payloads` and `matches` remain designed and
+uncreated.
 
 ## Lifecycle
 
