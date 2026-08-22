@@ -762,6 +762,34 @@ export interface JobPostingsTable {
   deleted_at: Timestamp | null;
 }
 
+/** Which field a span was found in. Only a requirement list may mark a row required (ADR-0035). */
+export type PostingSectionColumn = 'requirements' | 'description' | 'structured';
+
+/**
+ * What a posting asks for, and how we came to think so (ADR-0035).
+ *
+ * A row read out of prose is `description-extraction` carrying the sentence it came from.
+ * `stated-requirement` is reserved for a source that states requirements structurally; nothing does
+ * yet, and writing it early would collapse the distinction the column exists for.
+ */
+export interface JobPostingSkillsTable {
+  id: string;
+  job_posting_id: string;
+  skill_id: string;
+  /** Computed by code from section and repetition. Never returned by a model. */
+  weight: Numeric;
+  basis: string;
+  is_required: Generated<boolean>;
+  section: PostingSectionColumn;
+  /** The sentence as published. Required for anything extracted. */
+  source_span: string | null;
+  extractor_version: string;
+  /** Null when no model was involved — the whole of the alias-scan path. */
+  prompt_version: string | null;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+}
+
 /**
  * One source's claim on one posting, under that source's own identifier.
  *
@@ -975,6 +1003,7 @@ export interface Database {
   connector_sources: ConnectorSourcesTable;
   job_postings: JobPostingsTable;
   job_posting_sources: JobPostingSourcesTable;
+  job_posting_skills: JobPostingSkillsTable;
   interview_reports: InterviewReportsTable;
   interview_report_stages: InterviewReportStagesTable;
   skill_assessments: SkillAssessmentsTable;
