@@ -126,6 +126,18 @@ export {
 
 export { activePathways, pathwayById, type PathwayRow } from './repositories/pathways.ts';
 export {
+  anonymizeInterviewReports,
+  InterviewReportInvariantError,
+  PAIRING_SUPPORT_FLOOR,
+  processForPairing,
+  recordInterviewReport,
+  STAGE_SUPPORT_FLOOR,
+  SUPPORT_WINDOW_MONTHS,
+  type InterviewReportRow,
+  type ProcessSupport,
+  type StagePattern,
+} from './repositories/interview-reports.ts';
+export {
   AssessmentInvariantError,
   attemptsForUser,
   gradeAttempt,

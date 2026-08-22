@@ -20,6 +20,11 @@ import type { Database } from '../schema.ts';
 
 export interface ErasureReport {
   readonly userId: string;
+  /**
+   * Interview reports **detached**, not deleted (ADR-0031). Their value is aggregate: deleting one
+   * would drop a pairing below its support floor and change what a stranger is told.
+   */
+  readonly interviewReportsAnonymized: number;
   /** Profile versions hard-deleted. `profile_skills` cascades from these. */
   readonly profilesDeleted: number;
   /** Target careers hard-deleted. What someone was trying to become is personal. */
@@ -103,6 +108,19 @@ export async function eraseUser(db: Kysely<Database>, userId: string): Promise<E
       .where('user_id', '=', userId)
       .executeTakeFirst();
 
+    // Detached, not deleted — the same reasoning as outcomes above, and ADR-0031 states it. A
+    // report's value is aggregate: deleting one would silently drop a pairing below its support
+    // floor and change what a stranger is told about a company. What goes is the link to the person.
+    //
+    // The cost, stated rather than hidden: once detached, "one report per person per pairing" can no
+    // longer be enforced for them, so they could contribute again. That is the price of not letting
+    // one erasure rewrite what everybody else sees.
+    const interviewReports = await trx
+      .updateTable('interview_reports')
+      .set({ user_id: null, anonymized_at: sql`now()`, updated_at: sql`now()` })
+      .where('user_id', '=', userId)
+      .executeTakeFirst();
+
     const tombstone = await trx
       .updateTable('users')
       .set({
@@ -122,6 +140,7 @@ export async function eraseUser(db: Kysely<Database>, userId: string): Promise<E
 
     return {
       userId,
+      interviewReportsAnonymized: Number(interviewReports.numUpdatedRows),
       profilesDeleted: Number(profiles.numDeletedRows),
       targetsDeleted: Number(targets.numDeletedRows),
       personFactsDeleted: Number(personFacts.numDeletedRows),
