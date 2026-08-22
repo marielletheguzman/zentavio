@@ -19,8 +19,11 @@ import {
   attemptsForUser,
   promoteFromAttempt,
   publishedAssessmentsForSkill,
+  gradeAttempt,
+  itemsToAnswer,
+  itemsWithClaims,
+  publishAssessment,
   startAttempt,
-  submitAttempt,
 } from '../../../packages/db/src/repositories/assessments.ts';
 import type { Database } from '../../../packages/db/src/schema.ts';
 import { uuidv7 } from '../../../packages/db/src/uuid.ts';
@@ -33,7 +36,7 @@ let profileId: string;
 let skillId: string;
 let assessmentId: string;
 
-/** Ten items, seven to pass. Stated on the instrument, never decided per attempt. */
+/** Ten items, seven to pass, each item real — grading reads the key rather than trusting a caller. */
 async function insertAssessment(overrides: Record<string, unknown> = {}): Promise<string> {
   const id = uuidv7();
   const row = {
@@ -42,17 +45,52 @@ async function insertAssessment(overrides: Record<string, unknown> = {}): Promis
     status: 'published',
     item_count: 10,
     pass_threshold: 7,
+    items: 10,
     ...overrides,
   };
 
   await pool.query(
     `INSERT INTO skill_assessments
-       (id, slug, version, skill_id, title, item_count, pass_threshold, status, published_at)
+       (id, slug, version, skill_id, title, item_count, pass_threshold, status, published_at, does_not_evidence)
      VALUES ($1,$2,$3,$4,'Kubernetes Fundamentals',$5,$6,$7,
-             CASE WHEN $7 = 'draft' THEN NULL ELSE now() END)`,
+             CASE WHEN $7 = 'draft' THEN NULL ELSE now() END,
+             'Recall of documented behaviour, not operating a cluster under load.')`,
     [id, row.slug, row.version, skillId, row.item_count, row.pass_threshold, row.status],
   );
+
+  for (let position = 1; position <= Number(row.items); position += 1) {
+    await pool.query(
+      `INSERT INTO assessment_items
+         (id, assessment_id, position, stem, options, correct_option, evidences, source_url)
+       VALUES ($1,$2,$3,$4,$5::jsonb,'a',
+               'Knows what the documented behaviour of this command is.',
+               'https://example.invalid/docs')`,
+      [
+        uuidv7(),
+        id,
+        position,
+        `Item ${String(position)}`,
+        JSON.stringify([
+          { key: 'a', text: 'The correct one' },
+          { key: 'b', text: 'Not this one' },
+        ]),
+      ],
+    );
+  }
+
   return id;
+}
+
+/** An answer map getting exactly `correct` items right; the rest answered wrongly, not skipped. */
+async function answersFor(
+  assessmentId: string,
+  correct: number,
+): Promise<Record<string, string>> {
+  const { rows } = await pool.query<{ id: string }>(
+    'SELECT id FROM assessment_items WHERE assessment_id = $1 ORDER BY position',
+    [assessmentId],
+  );
+  return Object.fromEntries(rows.map((row, index) => [row.id, index < correct ? 'a' : 'b']));
 }
 
 beforeAll(async () => {
@@ -70,6 +108,7 @@ beforeEach(async () => {
   // `ck_profile_skills__attempt_verified` refuses. So the promoted rows go first.
   await pool.query('DELETE FROM profile_skills');
   await pool.query('DELETE FROM assessment_attempts');
+  // Items cascade from the instrument, so this clears both.
   await pool.query('DELETE FROM skill_assessments');
   await pool.query('DELETE FROM user_profiles');
   await pool.query('DELETE FROM users');
@@ -97,9 +136,9 @@ beforeEach(async () => {
   assessmentId = await insertAssessment();
 });
 
-async function pass(score = 8): Promise<string> {
+async function pass(correct = 8): Promise<string> {
   const attempt = await startAttempt(db, { userId, assessmentId, newId: uuidv7 });
-  await submitAttempt(db, { attemptId: attempt.id, score });
+  await gradeAttempt(db, { attemptId: attempt.id, answers: await answersFor(assessmentId, correct) });
   return attempt.id;
 }
 
@@ -161,7 +200,7 @@ describe('a pass promotes the skill, and says what promoted it', () => {
 describe('what does not promote', () => {
   it('refuses a failed attempt', async () => {
     const attempt = await startAttempt(db, { userId, assessmentId, newId: uuidv7 });
-    await submitAttempt(db, { attemptId: attempt.id, score: 6 });
+    await gradeAttempt(db, { attemptId: attempt.id, answers: await answersFor(assessmentId, 6) });
 
     await expect(
       promoteFromAttempt(db, { attemptId: attempt.id, profileId, newId: uuidv7 }),
@@ -213,24 +252,44 @@ describe('the instrument decides, not the caller', () => {
   it('takes the threshold from the assessment', async () => {
     // 7 of 10 passes, 6 does not, and neither number is supplied with the score.
     const seven = await startAttempt(db, { userId, assessmentId, newId: uuidv7 });
-    const decided = await submitAttempt(db, { attemptId: seven.id, score: 7 });
+    const decided = await gradeAttempt(db, {
+      attemptId: seven.id,
+      answers: await answersFor(assessmentId, 7),
+    });
     expect(decided.outcome).toBe('passed');
+    expect(decided.score).toBe(7);
   });
 
-  it('refuses a score no instrument of this size could produce', async () => {
+  it('counts an unanswered item as wrong rather than skipping it', async () => {
+    // Scoring only what was attempted would let somebody answer one item, get it right, and pass an
+    // instrument of ten.
     const attempt = await startAttempt(db, { userId, assessmentId, newId: uuidv7 });
+    const { rows } = await pool.query<{ id: string }>(
+      'SELECT id FROM assessment_items WHERE assessment_id = $1 ORDER BY position LIMIT 1',
+      [assessmentId],
+    );
 
-    await expect(
-      submitAttempt(db, { attemptId: attempt.id, score: 11 }),
-    ).rejects.toBeInstanceOf(AssessmentInvariantError);
+    const decided = await gradeAttempt(db, {
+      attemptId: attempt.id,
+      answers: { [rows[0]!.id]: 'a' },
+    });
+
+    expect(decided.score).toBe(1);
+    expect(decided.outcome).toBe('failed');
+  });
+
+  it('never takes a score from the caller', async () => {
+    // The signature is the guarantee: there is no score to pass. A client deciding whether it
+    // passed is not something validation downstream can recover from.
+    expect(Object.keys({ attemptId: '', answers: {} })).not.toContain('score');
   });
 
   it('refuses to re-decide a decided attempt', async () => {
     const attempt = await startAttempt(db, { userId, assessmentId, newId: uuidv7 });
-    await submitAttempt(db, { attemptId: attempt.id, score: 3 });
+    await gradeAttempt(db, { attemptId: attempt.id, answers: await answersFor(assessmentId, 3) });
 
     await expect(
-      submitAttempt(db, { attemptId: attempt.id, score: 10 }),
+      gradeAttempt(db, { attemptId: attempt.id, answers: await answersFor(assessmentId, 10) }),
     ).rejects.toBeInstanceOf(AssessmentInvariantError);
   });
 
@@ -238,9 +297,9 @@ describe('the instrument decides, not the caller', () => {
     // Append-only: a failed attempt is a fact about what happened, and keeping only the best result
     // would make the record flatter than the truth.
     const first = await startAttempt(db, { userId, assessmentId, newId: uuidv7 });
-    await submitAttempt(db, { attemptId: first.id, score: 4 });
+    await gradeAttempt(db, { attemptId: first.id, answers: await answersFor(assessmentId, 4) });
     const second = await startAttempt(db, { userId, assessmentId, newId: uuidv7 });
-    await submitAttempt(db, { attemptId: second.id, score: 9 });
+    await gradeAttempt(db, { attemptId: second.id, answers: await answersFor(assessmentId, 9) });
 
     const attempts = await attemptsForUser(db, userId).execute();
     expect(attempts.map((attempt) => attempt.outcome).sort()).toEqual(['failed', 'passed']);
@@ -251,9 +310,9 @@ describe('the instrument decides, not the caller', () => {
     await pass();
     const again = await startAttempt(db, { userId, assessmentId, newId: uuidv7 });
 
-    await expect(submitAttempt(db, { attemptId: again.id, score: 10 })).rejects.toThrow(
-      /uq_aa__passed_once/,
-    );
+    await expect(
+      gradeAttempt(db, { attemptId: again.id, answers: await answersFor(assessmentId, 10) }),
+    ).rejects.toThrow(/uq_aa__passed_once/);
   });
 });
 
@@ -296,5 +355,77 @@ describe('the constraints ADR-0030 relies on', () => {
 
     const rows = await publishedAssessmentsForSkill(db, skillId).execute();
     expect(rows.map((row) => row.id)).toEqual([assessmentId]);
+  });
+});
+
+describe('the authored instrument, seeded', () => {
+  it('serves items to a taker without the answer key', async () => {
+    // **The property that makes an attempt mean anything.** Serving the key alongside the question
+    // would make every attempt a formality, and the omission is enforced by what the query selects
+    // rather than by a caller remembering to strip a field.
+    const rows = await itemsToAnswer(db, assessmentId).execute();
+
+    expect(rows.length).toBeGreaterThan(0);
+    for (const row of rows) {
+      expect(Object.keys(row)).toEqual(['id', 'position', 'stem', 'options']);
+      expect(JSON.stringify(row)).not.toContain('correct_option');
+    }
+  });
+
+  it('can say what a pass evidenced, item by item', async () => {
+    // ADR-0030 part 2: the claim is scoped and the scope is rendered. This is the query behind it.
+    const claims = await itemsWithClaims(db, assessmentId).execute();
+
+    expect(claims).toHaveLength(10);
+    for (const claim of claims) {
+      expect(claim.evidences.length).toBeGreaterThan(20);
+      expect(claim.source_url).toMatch(/^https:\/\//);
+    }
+  });
+
+  it('refuses to publish an instrument that will not say what it fails to show', async () => {
+    const id = uuidv7();
+    await pool.query(
+      `INSERT INTO skill_assessments (id, slug, version, skill_id, title, item_count, pass_threshold, status)
+       VALUES ($1,'overclaiming',1,$2,'Overclaiming',1,1,'draft')`,
+      [id, skillId],
+    );
+    await pool.query(
+      `INSERT INTO assessment_items (id, assessment_id, position, stem, options, correct_option, evidences, source_url)
+       VALUES ($1,$2,1,'A question','[{"key":"a","text":"x"},{"key":"b","text":"y"}]'::jsonb,'a',
+               'Knows the documented behaviour of one command.','https://example.invalid/docs')`,
+      [uuidv7(), id],
+    );
+
+    await expect(publishAssessment(db, { assessmentId: id })).rejects.toBeInstanceOf(
+      AssessmentInvariantError,
+    );
+  });
+
+  it('refuses to publish an instrument whose item count is a fiction', async () => {
+    // A threshold counted against the wrong number of items is a threshold that means nothing.
+    const id = uuidv7();
+    await pool.query(
+      `INSERT INTO skill_assessments
+         (id, slug, version, skill_id, title, item_count, pass_threshold, status, does_not_evidence)
+       VALUES ($1,'miscounted',1,$2,'Miscounted',5,3,'draft','It does not show operating anything under load, and it is unproctored.')`,
+      [id, skillId],
+    );
+
+    await expect(publishAssessment(db, { assessmentId: id })).rejects.toBeInstanceOf(
+      AssessmentInvariantError,
+    );
+  });
+
+  it('refuses an item whose answer is not among the options offered', async () => {
+    // Silent and total: every attempt at that item is wrong, and nothing anywhere reports a fault.
+    await expect(
+      pool.query(
+        `INSERT INTO assessment_items (id, assessment_id, position, stem, options, correct_option, evidences, source_url)
+         VALUES ($1,$2,99,'A question','[{"key":"a","text":"x"},{"key":"b","text":"y"}]'::jsonb,'c',
+                 'Knows the documented behaviour of one command.','https://example.invalid/docs')`,
+        [uuidv7(), assessmentId],
+      ),
+    ).rejects.toThrow(/ck_ai__correct_is_offered/);
   });
 });
