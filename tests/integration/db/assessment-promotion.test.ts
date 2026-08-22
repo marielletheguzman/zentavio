@@ -298,6 +298,14 @@ describe('the instrument decides, not the caller', () => {
     // would make the record flatter than the truth.
     const first = await startAttempt(db, { userId, assessmentId, newId: uuidv7 });
     await gradeAttempt(db, { attemptId: first.id, answers: await answersFor(assessmentId, 4) });
+
+    // Aged past the retry interval, because attempt spacing now stands between the two. Setting the
+    // clock back is the honest way to test the second attempt rather than removing the guard.
+    await pool.query(
+      `UPDATE assessment_attempts SET started_at = now() - interval '48 hours' WHERE id = $1`,
+      [first.id],
+    );
+
     const second = await startAttempt(db, { userId, assessmentId, newId: uuidv7 });
     await gradeAttempt(db, { attemptId: second.id, answers: await answersFor(assessmentId, 9) });
 
@@ -305,14 +313,23 @@ describe('the instrument decides, not the caller', () => {
     expect(attempts.map((attempt) => attempt.outcome).sort()).toEqual(['failed', 'passed']);
   });
 
-  it('refuses a second pass against the same version', async () => {
+  it('refuses a second pass against the same version, at the database', async () => {
     // The same evidence recorded twice would let one demonstration count as two.
-    await pass();
-    const again = await startAttempt(db, { userId, assessmentId, newId: uuidv7 });
+    //
+    // **`startAttempt` now refuses first**, so reaching this constraint through the repository is no
+    // longer possible — which is the improvement. The index is still what makes it true rather than
+    // merely usual, so the attempt is written directly to prove it still holds.
+    const attemptId = await pass();
 
     await expect(
-      gradeAttempt(db, { attemptId: again.id, answers: await answersFor(assessmentId, 10) }),
+      pool.query(
+        `INSERT INTO assessment_attempts (id, user_id, assessment_id, submitted_at, score, outcome)
+         VALUES ($1,$2,$3, now(), 10, 'passed')`,
+        [uuidv7(), userId, assessmentId],
+      ),
     ).rejects.toThrow(/uq_aa__passed_once/);
+
+    expect(attemptId).toBeTruthy();
   });
 });
 
@@ -427,5 +444,56 @@ describe('the authored instrument, seeded', () => {
         [uuidv7(), assessmentId],
       ),
     ).rejects.toThrow(/ck_ai__correct_is_offered/);
+  });
+});
+
+describe('attempt spacing, and what it does not fix', () => {
+  it('refuses a second attempt inside the retry interval', async () => {
+    // **The hole this narrows.** The key never leaves the server, but repeated attempts give it up:
+    // ten items of four options, taken without limit, is a few sittings of work. Spacing makes that
+    // cost time rather than effort.
+    const attempt = await startAttempt(db, { userId, assessmentId, newId: uuidv7 });
+    await gradeAttempt(db, { attemptId: attempt.id, answers: await answersFor(assessmentId, 2) });
+
+    await expect(
+      startAttempt(db, { userId, assessmentId, newId: uuidv7 }),
+    ).rejects.toBeInstanceOf(AssessmentInvariantError);
+  });
+
+  it('allows the attempt once the interval has passed', async () => {
+    // Re-attempts stay allowed (ADR-0030 part 3). Forbidding them would make a single bad day
+    // permanent, which spacing is not meant to do.
+    const attempt = await startAttempt(db, { userId, assessmentId, newId: uuidv7 });
+    await gradeAttempt(db, { attemptId: attempt.id, answers: await answersFor(assessmentId, 2) });
+
+    await pool.query(
+      `UPDATE assessment_attempts SET started_at = now() - interval '48 hours' WHERE id = $1`,
+      [attempt.id],
+    );
+
+    await expect(startAttempt(db, { userId, assessmentId, newId: uuidv7 })).resolves.toBeTruthy();
+  });
+
+  it('reads the interval from the instrument rather than a constant', async () => {
+    // How long is a judgement about the material: a ten-item recall test and a two-hour practical
+    // do not deserve the same cooldown.
+    await pool.query(`UPDATE skill_assessments SET retry_interval = '0 seconds' WHERE id = $1`, [
+      assessmentId,
+    ]);
+
+    const attempt = await startAttempt(db, { userId, assessmentId, newId: uuidv7 });
+    await gradeAttempt(db, { attemptId: attempt.id, answers: await answersFor(assessmentId, 2) });
+
+    await expect(startAttempt(db, { userId, assessmentId, newId: uuidv7 })).resolves.toBeTruthy();
+  });
+
+  it('refuses another attempt at a version already passed, before any questions are asked', async () => {
+    // `uq_aa__passed_once` refused the second pass at grading time, which meant answering ten
+    // questions and then meeting a constraint violation. This says the same thing first.
+    await pass();
+
+    await expect(
+      startAttempt(db, { userId, assessmentId, newId: uuidv7 }),
+    ).rejects.toBeInstanceOf(AssessmentInvariantError);
   });
 });

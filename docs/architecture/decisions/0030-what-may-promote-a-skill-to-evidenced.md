@@ -149,12 +149,21 @@ assessment. That is a stated limit, not a footnote, and it is the reason part 2 
 - Schema and entity documentation for assessments and attempts: the instrument, its version, and one
   recorded attempt per person per version.
 - The single promotion writer, with a test that no other code path sets `verified_at`.
-- Items for **one** skill first, drawn from the seeded track and the product's own priority — IT,
+- ~~**Items for one skill first**, drawn from the seeded track and the product's own priority — IT,
   software and computer engineering — as the vertical slice that proves the model before it is
-  repeated.
-- The surface: take it, see the result, and see what it did and did not claim.
-- A stated anti-gaming posture — item pooling, attempt spacing — recorded honestly as mitigation
-  rather than as a solution.
+  repeated.~~ **Done** — `git-fundamentals` v1, ten items, threshold seven, each item naming what it
+  evidences and citing the git-scm.com page its answer follows from.
+- ~~**The surface: take it, see the result, and see what it did and did not claim.**~~ **Done** —
+  `/assess`, browser-verified end to end. `does_not_evidence` renders three times: before starting,
+  on a pass, and on a failure. A result lists only the claims of items actually answered correctly.
+- ~~**A stated anti-gaming posture — item pooling, attempt spacing — recorded honestly as mitigation
+  rather than as a solution.**~~ **Done** — 2026-08-22, in
+  `docs/architecture/assessment-integrity.md`. Five attacks named; two closed (the key is never
+  served, there is no score to send), one narrowed (attempt spacing, a per-instrument
+  `retry_interval`), and **two not mitigated**: sharing items between people, and somebody else
+  sitting it. Pooling is what would close the first properly and is not implemented, because the
+  Git instrument has exactly the ten items it asks. The document says the honest defence is not
+  technical — it is that a pass claims only the attempt.
 - Revisit Option C when a major issuer's verification endpoint is integrated, which is the only thing
   that would make a certification evidence rather than self-report.
 

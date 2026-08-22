@@ -190,6 +190,17 @@ which would have started failing the moment somebody with an assessed skill corr
 one. It now carries both, because a version holding verification with no citable instrument is a
 promotion whose basis was lost in the copy.
 
+## Attempt spacing
+
+`retry_interval` — 24 hours by default — is enforced in `startAttempt`, and `startAttempt` also
+refuses a version the person has already passed. Both are guards against a repetition attack: the
+key never leaves the server, but attempting without limit gives it up, because score feedback isolates
+which answers changed the total.
+
+**It is a mitigation, not a fix.** Somebody determined still extracts the key; it costs them days.
+What would actually close it is item pooling, which is not implemented —
+`docs/architecture/assessment-integrity.md` is the honest account of what is defended and what is not.
+
 ## Invariants
 
 - Only a **passed** attempt promotes. A failed one, and an unfinished one, promote nothing.
