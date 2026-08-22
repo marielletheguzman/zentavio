@@ -1,6 +1,7 @@
 # ADR 0030: An in-platform assessment is the only thing that may promote a skill to `evidenced`, and what it evidences is the attempt
 
-- **Status:** Proposed
+- **Status:** Accepted
+- **Accepted:** 2026-08-22
 - **Date:** 2026-08-22
 - **Deciders:** project lead
 - **Affects:** `packages/db` (`profile_skills`, the unbuilt assessment tables), `ai/skill-gap`, `services/api-gateway`, `apps/web`, `docs/features/learning-paths.md`, `docs/database/entities/user.md`
