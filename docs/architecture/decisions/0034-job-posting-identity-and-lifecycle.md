@@ -1,6 +1,7 @@
 # ADR-0034: A posting's identity is the source's, deduplication belongs to persistence, and absence expires nothing unless the source lists exhaustively
 
-- **Status:** Proposed
+- **Status:** Accepted
+- **Accepted:** 2026-08-22
 - **Date:** 2026-08-22
 - **Deciders:** project lead
 - **Affects:** `packages/db` (`job_postings`, `job_posting_sources`), `services/ingestion`, `connectors/core`, `docs/database/entities/job.md`, `docs/development/connector-guide.md`, `docs/architecture/connectors.md`
@@ -13,7 +14,8 @@ no migration creates it. This decision settles what persistence *promises* befor
 written, because the promises are what the columns encode.
 
 **This ADR designs; it does not build.** No schema, no migration, no repository API is authorised by
-it beyond the shapes needed to state the decisions.
+it beyond the shapes needed to state the decisions. Accepting it makes the contract binding on the
+migration slice, not a licence to start one.
 
 ### What Lever exposed, and why it is not a Lever problem
 
