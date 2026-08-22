@@ -12,6 +12,7 @@
     "@zentavio/connector-de-bayingg": "workspace:*",
     "@zentavio/connector-git-scm": "workspace:*",
     "@zentavio/connector-de-bundesanzeiger": "workspace:*",
+    "@zentavio/connector-lever": "workspace:*",
     "@zentavio/connector-lu-legilux": "workspace:*",
     "@zentavio/db": "workspace:*",
     "@zentavio/ingestion": "workspace:*",

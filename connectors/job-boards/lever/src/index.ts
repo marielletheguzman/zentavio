@@ -176,7 +176,7 @@ export class LeverConnector implements Connector<BoardRaw, readonly JobPostingRe
         issues.push({
           severity: 'error',
           code: 'duplicate-external-id',
-          message: `${row.externalId} appears twice; posting ids are the deduplication key.`,
+          message: `${row.externalId} appears twice; a posting id identifies one posting in this board.`,
         });
       }
       seen.add(row.externalId);

@@ -108,17 +108,27 @@ Shared helpers in `connectors/core`, never hand-rolled per connector:
 - **Reliability** is observed from validation pass rate, uptime, freshness accuracy, and outcome
   feedback. The tier bounds the ceiling; observation sets the value.
 
-## Deduplication
+## Identity and deduplication
 
-The connector produces a comparable key; the knowledge engine decides what is one fact.
+**The connector states identity; persistence deduplicates** (ADR-0034).
 
 ```text
-dedupKey = sha256(norm(company) + '|' + norm(title) + '|' + norm(location) + '|' + coarse(postedAt))
+connector  →  (source_id, source_scope, external_id)      one source's own coordinates
+persistence →  dedup_key + dedup_basis                     the claim that two postings are one job
 ```
 
-`norm()` here is casefold, strip punctuation, collapse whitespace. Alias mapping (`Google LLC` →
-`google`) happens during reconciliation, not in the connector — `normalize` has no I/O and therefore
-no registry access.
+`source_scope` is the sub-namespace an `external_id` belongs to — a Lever board slug, an ATS tenant —
+and the empty string when a source has one namespace. It is a namespace and **never an employer**.
+
+A connector sees one feed, so it cannot make a cross-source claim, and the key the previous version of
+this document prescribed —
+`sha256(norm(company)|norm(title)|norm(location)|coarse(postedAt))` — needed a company name that an
+ATS feed does not publish. That derivation still exists, in
+`packages/db/src/repositories/jobs.ts`, alongside a `source-identity` derivation used when no employer
+identity is available; the stored `dedup_basis` says which one produced a key.
+
+Alias mapping (`Google LLC` → `google`) happens during reconciliation, not in the connector —
+`normalize` has no I/O and therefore no registry access.
 
 ## Provenance
 
@@ -151,8 +161,9 @@ Re-ingesting is idempotent on (`sourceId`, `externalId`).
 3. Capture real raw payloads into `tests/fixtures/connectors/<id>/` — `normalize` is tested against
    fixtures, never the live API.
 4. Implement `normalize` pure, then `validate`, then `search`/`fetch`.
-5. Define and document the dedup key.
-6. Register in `connectors/core`. Confirm `services/ingestion` needed **zero** edits.
+5. Document the source identity triple in the README. **Do not derive a dedup key** — ADR-0034.
+6. Register in `connectors/core/src/default-registry.ts`. Confirm `services/ingestion` needed
+   **zero** edits.
 7. Add config under `connectors.<id>.*` in `packages/config`.
 
 ## Related
