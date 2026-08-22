@@ -72,8 +72,9 @@ A process model with no `reportCount` per stage is not usable — the count *is*
   modes" beats "good but could be better".
 - Practice outcomes are recorded: which theme, which skill, evaluated strength. They feed
   Interview Readiness and, with enough volume, the outcome model.
-- A strong practice answer promotes a skill toward `evidenced` — a weak one never demotes an
-  evidenced skill on its own.
+- **A practice answer promotes nothing to `evidenced`** (ADR-0030): only a passed in-platform
+  assessment may, and a rubric we wrote is coaching rather than an instrument. Practice moves
+  Interview Readiness, and never `profile_skills`.
 
 ## Interview Readiness
 
