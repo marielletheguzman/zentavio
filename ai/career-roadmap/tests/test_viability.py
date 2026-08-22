@@ -8,6 +8,7 @@ two different things.
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import date
 
 import pytest
@@ -86,9 +87,29 @@ class TestUndeterminedIsNeverANo:
         assert result.binding == "eligibility"
         assert "Nothing here says no" in result.binding_reason
 
-    def test_it_names_the_input_that_would_resolve_it(self):
+    def test_it_says_how_many_questions_would_resolve_it_without_naming_keys(self):
+        # **Changed on 2026-08-22, after a browser found the old behaviour.** The sentence used to
+        # interpolate the catalogue keys, so a person read "until you supply degree_ects_credits"
+        # beside a control already asking the same thing in words. The structured list is what a
+        # surface renders prompts from; the prose says how many, and the questions themselves are
+        # rendered from `person_fact_kinds.prompt`.
         result = compose(verdict(), READY, employability_as_of=AS_OF_STR)
-        assert "expected_gross_annual_salary_eur" in result.binding_reason
+
+        assert "expected_gross_annual_salary_eur" not in result.binding_reason
+        assert "1 question" in result.binding_reason
+        # The key is still there structurally, which is what the surface actually uses.
+        assert "expected_gross_annual_salary_eur" in result.eligibility.needs_from_user
+
+    def test_undetermined_with_nothing_to_supply_does_not_ask_for_input(self):
+        # The second half of the same finding: once the answerable question was answered, the page
+        # still said "supply one more input" while what remained was a rule an authority decides.
+        # Promising an action that does not exist is worse than saying it is not theirs to move.
+        undecidable = replace(verdict(), needs_from_user=(), status="undetermined")
+
+        result = compose(undecidable, READY, employability_as_of=AS_OF_STR)
+
+        assert "supply" not in result.binding_reason
+        assert "no answer from you would settle it" in result.binding_reason
 
     def test_readiness_does_not_override_an_unanswered_question(self):
         # Being ready does not make an unchecked rule checked. The pair must still say what is
