@@ -18,6 +18,7 @@
     "@zentavio/connector-de-bundesanzeiger": "workspace:*",
     "@zentavio/connector-git-scm": "workspace:*",
     "@zentavio/connector-lever": "workspace:*",
+    "@zentavio/connector-lever": "workspace:*",
     "@zentavio/connector-lu-legilux": "workspace:*",
     "@zentavio/connector-nz-inz": "workspace:*"
   }

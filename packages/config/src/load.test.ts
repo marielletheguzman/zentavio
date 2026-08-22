@@ -236,6 +236,10 @@ describe('the Zentavio schema', () => {
       // reason as the database url — a plausible-but-wrong default fails silently against the
       // wrong host.
       'ZENTAVIO_INSECURE_DEV_AUTH',
+      // ADR-0034: boards are configured, never discovered. Empty reads none, which is a valid
+      // deployment rather than a broken one.
+      'ZENTAVIO_LEVER_API_BASE',
+      'ZENTAVIO_LEVER_BOARDS',
       'ZENTAVIO_OIDC_AUDIENCE',
       'ZENTAVIO_OIDC_ISSUER',
       // ADR-0018: the parser's model-backed steps. Both have defaults, because a deployment with

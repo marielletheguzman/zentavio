@@ -5,7 +5,8 @@
   "description": "Published job postings from configured Lever employer boards.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./http": "./src/http.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

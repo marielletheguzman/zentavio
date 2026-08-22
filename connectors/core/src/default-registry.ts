@@ -58,3 +58,11 @@ export function createRegistry(deps: ConnectorDeps): ConnectorRegistry {
     .register(new LeverConnector(deps.lever))
     .register(new GitScmConnector(deps.gitScm));
 }
+
+export {
+  boardsFrom,
+  composeRegistry,
+  realConnectorDeps,
+  type SourceConfig,
+  type SourceRuntime,
+} from './default-deps.ts';

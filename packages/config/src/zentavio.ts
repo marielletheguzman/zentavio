@@ -213,6 +213,34 @@ export const storageSchema = {
 } as const satisfies Schema;
 
 /**
+ * Job boards (ADR-0034, `docs/development/connector-guide.md` Step 7).
+ *
+ * **Boards are configured, never discovered.** Nothing enumerates Lever's customers or guesses
+ * organisation slugs; a board is read because somebody put it here. Empty is a valid configuration
+ * and means no board is read — the connector reports `degraded` rather than pretending otherwise.
+ *
+ * No credentials: Lever's Postings API is public for `published` postings, which is the whole legal
+ * basis the connector records (ADR-0033).
+ */
+export const jobBoardSchema = {
+  leverBoards: {
+    env: 'ZENTAVIO_LEVER_BOARDS',
+    type: 'string',
+    default: '',
+    description: "Comma-separated Lever board slugs to read, e.g. 'leverdemo,acme'. Empty reads none",
+  },
+  leverApiBase: {
+    env: 'ZENTAVIO_LEVER_API_BASE',
+    type: 'url',
+    protocols: ['http', 'https'],
+    // Overridable so a local run can point at a recorded stub instead of the live API. The default
+    // is the only host the connector's legal basis was checked against.
+    default: 'https://api.lever.co',
+    description: "Base URL for Lever's Postings API",
+  },
+} as const satisfies Schema;
+
+/**
  * The identity provider (ADR-0017).
  *
  * **Deliberately not naming a vendor.** OIDC is a standard, so Clerk, WorkOS, Auth0, or a
@@ -269,6 +297,7 @@ export const zentavioSchema = {
   ...devAuthSchema,
   ...oidcSchema,
   ...storageSchema,
+  ...jobBoardSchema,
 } as const satisfies Schema;
 
 export type ZentavioConfig = {
