@@ -1,6 +1,7 @@
 # ADR 0031: A company's interview process is described per role family, above a stated support floor, and never from a single report
 
-- **Status:** Proposed
+- **Status:** Accepted
+- **Accepted:** 2026-08-22
 - **Date:** 2026-08-22
 - **Deciders:** project lead
 - **Affects:** `knowledge-engine/interview-reports`, `ai/interview-prep`, `services/api-gateway`, `apps/web`, `docs/features/interview-prep.md`, `.claude/skills/interviews/SKILL.md`
