@@ -17,6 +17,7 @@
     "@zentavio/connector-lu-legilux": "workspace:*",
     "@zentavio/db": "workspace:*",
     "@zentavio/ingestion": "workspace:*",
+    "@zentavio/matching": "workspace:*",
     "@zentavio/storage": "workspace:*",
     "@zentavio/types": "workspace:*",
     "kysely": "^0.29.4"

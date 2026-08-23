@@ -25,7 +25,8 @@ delivery of suggestions (`recommendations`).
 
 | Score | Question | Subject |
 |---|---|---|
-| **Job Match Score** | fit for **this posting** | person × posting |
+| **Skill Fit** | how much of what **this posting asks for** does the person hold | person × posting |
+| **Job Match Score** | fit for **this posting**, every signal included | person × posting |
 | **Career Score** | employability for a **career track** | person × career |
 | **Career Readiness Score** | closeness to a **target**, forward-looking | person × target |
 | **Opportunity Score** | attractiveness of a market/career | career × market |
@@ -34,6 +35,12 @@ delivery of suggestions (`recommendations`).
 
 Never compute one and label it another. `docs/GLOSSARY.md` is binding here — this is the most
 common source of confusion in the product.
+
+**Skill Fit is the only one of these that is built** (ADR-0037), and it is deliberately not the Job
+Match Score: work authorization is a hard constraint and is unevaluatable while
+`job_postings.country_code` is null (ADR-0033). **Renaming Skill Fit into "Job Match Score v1" would
+undo that decision**, so a `scorer_version` starting `job-match` may not be written until the
+constraint is evaluated. A test asserts the absence.
 
 ## Output contract
 

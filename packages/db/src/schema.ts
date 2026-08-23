@@ -799,6 +799,50 @@ export interface JobPostingSkillsTable {
   updated_at: Generated<Timestamp>;
 }
 
+export type MatchStatusColumn = 'scored' | 'unknown';
+
+/**
+ * One person against one posting, with the evidence and versions that produced it.
+ *
+ * **Read `scorer_version` before `score`.** This table holds more than one kind of score and today
+ * holds exactly one — `skill-fit-v1`, weighted coverage of what a posting asks for. No Job Match
+ * Score exists: work authorization is a hard constraint and is unevaluatable while
+ * `job_postings.country_code` is null (ADR-0037, ADR-0033).
+ *
+ * `status = 'unknown'` never means a bad fit. It means no number exists, and `missing` says which
+ * absence it was — ours (not extracted yet) or the posting's (asks for nothing curated).
+ */
+export interface MatchesTable {
+  id: string;
+  user_id: string;
+  job_posting_id: string;
+  /** Null unless `status` is `scored` — `ck_matches__score_iff_scored`. Never 0.0 for "unknown". */
+  score: Numeric | null;
+  status: MatchStatusColumn;
+  confidence: ConfidenceColumn;
+  /**
+   * Contributing factors with their actual weights, negatives included.
+   *
+   * **Not `Generated`, and the column has no DEFAULT.** Every other jsonb here defaults to `[]`;
+   * this one may not, because a writer that forgets it should fail rather than store an empty
+   * explanation. `ck_matches__evidence_present` refuses `[]` anyway — the missing default is what
+   * makes the omission a type error before it is a constraint violation.
+   */
+  evidence: unknown;
+  /** What would be needed to do better. A product surface, not an apology. */
+  missing: Generated<unknown>;
+  /** Hard constraints, named rather than silently multiplied. Empty until eligibility is evaluated. */
+  constraints: Generated<unknown>;
+  scorer_version: string;
+  /** Null when no model was involved — the whole of the `skill-fit-v1` path. */
+  prompt_version: string | null;
+  knowledge_as_of: Timestamp;
+  computed_at: Timestamp;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+  deleted_at: Timestamp | null;
+}
+
 /**
  * One source's claim on one posting, under that source's own identifier.
  *
@@ -1013,6 +1057,7 @@ export interface Database {
   job_postings: JobPostingsTable;
   job_posting_sources: JobPostingSourcesTable;
   job_posting_skills: JobPostingSkillsTable;
+  matches: MatchesTable;
   interview_reports: InterviewReportsTable;
   interview_report_stages: InterviewReportStagesTable;
   skill_assessments: SkillAssessmentsTable;

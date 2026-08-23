@@ -8,6 +8,21 @@ reachable, which is the difference between career intelligence and a filtered fe
 
 **User question:** *which of these jobs is worth my time?*
 
+## What is built today: Skill Fit, not the Job Match Score
+
+**No Job Match Score is computed, stored or rendered** (ADR-0037). Of the thirteen signals below,
+five have no input at all — and one of the five, **work authorization**, is a hard constraint that
+is *unevaluatable*: `job_postings.country_code` is null for every stored posting, because ADR-0033
+forbids mining a country out of location text and Lever states none.
+
+A number computed today would omit a constraint nobody consulted. So `services/matching` computes
+**Skill Fit** — one axis, named for itself, `scorer_version = 'skill-fit-v1'` — and the Job Match
+Score waits until its hard constraint can actually be evaluated. The precedent is ADR-0022: a single
+number cannot carry a refusal.
+
+Everything below this section specifies the Job Match Score as it is intended to work. It is the
+target, not the current state.
+
 ## Job Match Score, and what it is not
 
 Fit for **one posting**. It is not Career Score (employability for a track), not Career Readiness

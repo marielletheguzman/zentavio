@@ -81,8 +81,24 @@ of role, independent of any single posting.
 **Not:** Job Match Score. **Not:** a resume score. **Not:** a percentage of skills matched.
 
 ### Job Match Score
-Fit between one person and one **specific job posting**.
-**Not:** Career Score.
+Fit between one person and one **specific job posting**, across every signal
+`docs/features/job-matching.md` defines — including work authorization, which is a hard constraint.
+**Not:** Career Score. **Not:** Skill Fit.
+
+**Nothing computes this yet** (ADR-0037). Work authorization is unevaluatable while
+`job_postings.country_code` is null, and a number that omits a hard constraint nobody consulted is
+not this score under a shorter name. What exists today is Skill Fit.
+
+### Skill Fit
+How much of what **one posting asks for** a person holds, or holds something that transfers.
+One axis, named for itself. Stored in `matches` with `scorer_version = 'skill-fit-v1'`.
+
+**Not:** Job Match Score — that is thirteen signals, this is one, and the difference includes whether
+the person may legally take the job. **Not:** Career Score, which is not tied to a posting at all.
+**Not:** a Skill Gap, which is the ordered work to close a target's requirements.
+
+`unknown` here never means a bad fit: it means no number exists, because the posting has not been
+read yet or because it asks for nothing curated. Those two are distinct and `missing` says which.
 
 ### Opportunity Score
 Attractiveness of a career or market for a person — demand, salary, competition, relocation
