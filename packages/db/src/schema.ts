@@ -204,6 +204,18 @@ export interface SkillAliasesTable {
    */
   normalized: string;
   source_tier: number;
+  /**
+   * The alias is also an ordinary English word, so a bare match is not evidence.
+   *
+   * `go` matched *"when we go to raise our next round"* and *"go-to-market messaging"* on real
+   * postings — 14 of 17 hits were wrong. Whole-token matching cannot help, because normalization
+   * strips punctuation and `go-to-market` becomes the tokens `go to market`.
+   *
+   * A flagged alias produces a skill row only with corroboration in the same sentence
+   * (`services/ingestion/src/skill-extraction.ts`). Set from `packages/db/seeds/`, which is where
+   * curation belongs.
+   */
+  requires_context: Generated<boolean>;
   created_at: Generated<Timestamp>;
 }
 

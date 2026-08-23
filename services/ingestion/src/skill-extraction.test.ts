@@ -160,3 +160,93 @@ describe('the rows it writes', () => {
     expect(rowsFor('posting', extract({ description: 'A lovely place to work.' }), () => 'row-id')).toEqual([]);
   });
 });
+
+/**
+ * Corroboration for ambiguous aliases (`alias-scan@1.1.0`).
+ *
+ * **Every span below is real.** They were produced by running this scanner over 383 live Lever
+ * postings on 2026-08-23 — the first fetch this repository ever made. `Go` fired 17 times and 14 were
+ * ordinary English, which is what motivated the rule. Keeping the actual sentences means a future
+ * change that reintroduces the bug fails on the evidence rather than on a paraphrase of it.
+ */
+describe('an ambiguous alias needs a neighbour', () => {
+  const GO_ID = 'skill-go';
+  const PYTHON_ID = 'skill-python';
+  const BASH_ID = 'skill-bash';
+
+  const vocabulary: readonly AliasEntry[] = [
+    { normalized: 'go', skillId: GO_ID, requiresContext: true },
+    { normalized: 'golang', skillId: GO_ID },
+    { normalized: 'python', skillId: PYTHON_ID },
+    { normalized: 'bash', skillId: BASH_ID, requiresContext: true },
+  ];
+
+  function skillsIn(sentence: string): readonly string[] {
+    return extractSkills({ description: sentence, requirementsText: null }, vocabulary).map(
+      (skill) => skill.skillId,
+    );
+  }
+
+  it.each([
+    'Ultimately, when we go to raise our next round, your work in growing our revenue will be key',
+    "Learn Lever's go-to-market messaging, key differentiators, and segment-specific value propositions",
+    'Design features and see them go live',
+    'Go getter',
+    'Go to our website or open up our mobile app.',
+    'Partner cross-functionally with Lever’s go-to-market executives to establish frameworks',
+    'Creativity: You can drive towards independent/creative solutions that go above and beyond',
+  ])('drops bare "go" in ordinary English: %s', (sentence) => {
+    expect(skillsIn(sentence)).toEqual([]);
+  });
+
+  it.each([
+    'Experience building server side APIs in Python, Ruby or Go',
+    'Bonus points if you have previous experience with Ruby, Python, Go, C++, PHP frameworks',
+  ])('keeps "go" when another skill corroborates it: %s', (sentence) => {
+    expect(skillsIn(sentence)).toContain(GO_ID);
+  });
+
+  it('keeps an unambiguous alias for the same skill with no corroboration at all', () => {
+    // `golang` is not ambiguous, so it stands alone — the flag is per alias, not per skill.
+    expect(skillsIn('Bonus: experience developing or extending Node.js or Golang backend services')).toEqual([GO_ID]);
+  });
+
+  it('does not let two ambiguous aliases corroborate each other', () => {
+    // "we go to bash the competition" is not two technologies. Corroboration must come from a match
+    // that was believable on its own.
+    expect(skillsIn('We go to bash the competition every quarter')).toEqual([]);
+  });
+
+  it('corroborates backwards as well as forwards', () => {
+    // The unambiguous match appears after the ambiguous one; order within the sentence is irrelevant.
+    expect(skillsIn('Go and Python are both used here')).toEqual(
+      expect.arrayContaining([GO_ID, PYTHON_ID]),
+    );
+  });
+
+  it('scopes corroboration to the sentence, not the posting', () => {
+    // Python two sentences away is not evidence that "go live" means the language.
+    const found = extractSkills(
+      {
+        description: 'We use Python across the platform. Design features and see them go live.',
+        requirementsText: null,
+      },
+      vocabulary,
+    ).map((skill) => skill.skillId);
+
+    expect(found).toEqual([PYTHON_ID]);
+  });
+
+  it('treats a missing requiresContext as unambiguous', () => {
+    // An older vocabulary, or a caller that has not adopted the column, must not silently lose recall.
+    expect(
+      extractSkills({ description: 'We write Go here', requirementsText: null }, [
+        { normalized: 'go', skillId: GO_ID },
+      ]).map((skill) => skill.skillId),
+    ).toEqual([GO_ID]);
+  });
+
+  it('stamps the version that introduced the rule', () => {
+    expect(EXTRACTOR_VERSION).toBe('alias-scan@1.1.0');
+  });
+});

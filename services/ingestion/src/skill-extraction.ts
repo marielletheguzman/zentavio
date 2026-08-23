@@ -17,14 +17,26 @@
  * Every row carries the sentence it came from. A requirement whose span cannot be shown is not
  * storable.
  *
- * ## Known limitation, recorded rather than patched
+ * ## The precision problem the fixture could not show
  *
  * A hyphenated compound resolves to its parts: *"Kubernetes-like orchestration"* matches Kubernetes,
  * because normalization strips punctuation. That is **the same normalization
  * `skill_aliases.normalized` is keyed on**, and `packages/db/src/seed.ts` warns that if the two ever
- * disagree, resolution misses silently and a phrase lands unmatched. Fixing precision here at the
- * cost of that agreement would trade a visible overclaim for an invisible miss. The model path
- * (ADR-0035) is where both recall and precision improve together.
+ * disagree, resolution misses silently and a phrase lands unmatched.
+ *
+ * That was recorded as an acceptable overclaim. **The first live fetch showed it was not.** Over 383
+ * real Lever postings the scan produced 55 rows, and 17 were `Go` — 14 of them ordinary English:
+ * *"when we go to raise our next round"*, *"go-to-market messaging"* (stored as a **required** skill),
+ * *"Go getter"*, *"see them go live"*. One skill, 82% wrong, a third of all output.
+ *
+ * **The fix is corroboration, and the ambiguity lives in the vocabulary.** `skill_aliases.requires_context`
+ * marks an alias that is also an ordinary word; such an alias produces a row only when another,
+ * unambiguous skill matched **in the same sentence**. Measured against the same 383 postings that
+ * keeps every correct `Go` — *"APIs in Python, Ruby or Go"*, *"Node.js or Golang backend services"*,
+ * *"Ruby, Python, Go, C++"* — and drops all fourteen wrong ones.
+ *
+ * A phrase blocklist in this module would have been curation wearing code's clothing, and would never
+ * have been finished. The model path (ADR-0035) is still where recall and precision improve together.
  *
  * ## Pure
  *
@@ -38,6 +50,12 @@ import type { JobPostingSkillRow } from '@zentavio/db';
 export interface AliasEntry {
   readonly normalized: string;
   readonly skillId: string;
+  /**
+   * The alias is also an ordinary English word, so a bare match is not evidence. Optional so a caller
+   * with an older vocabulary still type-checks; absent means unambiguous, which is the safe default
+   * for recall and the one the column defaults to.
+   */
+  readonly requiresContext?: boolean;
 }
 
 export type PostingSection = 'requirements' | 'description';
@@ -60,8 +78,14 @@ export interface ExtractedSkill {
   readonly mentions: number;
 }
 
-/** Bumped when the arithmetic below changes, so a stored row says which version produced it. */
-export const EXTRACTOR_VERSION = 'alias-scan@1.0.0';
+/**
+ * Bumped when the arithmetic below changes, so a stored row says which version produced it.
+ *
+ * `1.1.0` added the corroboration rule for ambiguous aliases. Bumping it re-selects every stored
+ * posting through ADR-0036's marker, which is exactly what a precision fix should do — the previous
+ * rows were wrong and must not survive.
+ */
+export const EXTRACTOR_VERSION = 'alias-scan@1.1.0';
 
 /**
  * Sentence-ish segmentation.
@@ -105,6 +129,17 @@ interface Hit {
   readonly sentence: string;
 }
 
+function record(
+  hits: Map<string, Hit[]>,
+  skillId: string,
+  section: PostingSection,
+  sentence: string,
+): void {
+  const existing = hits.get(skillId);
+  if (existing === undefined) hits.set(skillId, [{ section, sentence }]);
+  else existing.push({ section, sentence });
+}
+
 /**
  * Weight, from where a skill is asked for and how often.
  *
@@ -141,15 +176,33 @@ export function extractSkills(text: PostingText, aliases: readonly AliasEntry[])
       const normalized = normalizeForScan(sentence);
       let remaining = ` ${normalized} `;
 
+      // Collected per sentence, then applied, because corroboration is symmetric: an ambiguous alias
+      // is admitted by an unambiguous match anywhere in the same sentence, before it or after it.
+      const confident: { alias: AliasEntry; sentence: string }[] = [];
+      const tentative: { alias: AliasEntry; sentence: string }[] = [];
+
       for (const alias of ordered) {
         if (!mentions(remaining.trim(), alias.normalized)) continue;
 
         // Consume the matched text so a shorter alias nested in a longer one does not also fire.
         remaining = remaining.replace(` ${alias.normalized} `, ' ');
 
-        const existing = hits.get(alias.skillId);
-        if (existing === undefined) hits.set(alias.skillId, [{ section, sentence }]);
-        else existing.push({ section, sentence });
+        if (alias.requiresContext === true) tentative.push({ alias, sentence });
+        else confident.push({ alias, sentence });
+      }
+
+      for (const { alias } of confident) {
+        record(hits, alias.skillId, section, sentence);
+      }
+
+      // An ambiguous alias needs a neighbour. `"APIs in Python, Ruby or Go"` has one and counts;
+      // `"when we go to raise our next round"` has none and does not. Corroboration is by *another*
+      // skill, so two ambiguous aliases in one sentence still admit neither — "we go to bash the
+      // competition" is not two technologies.
+      const corroborators = new Set(confident.map((entry) => entry.alias.skillId));
+      for (const { alias } of tentative) {
+        const corroborated = [...corroborators].some((skillId) => skillId !== alias.skillId);
+        if (corroborated) record(hits, alias.skillId, section, sentence);
       }
     }
   }
