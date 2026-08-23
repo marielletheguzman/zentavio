@@ -22,6 +22,12 @@ Eight sources have one: `ch-sem`, `de-aufenthg`, `de-bayingg`, `de-bundesanzeige
 `lever`, `lu-legilux`, `nz-inz`. `de-bundesanzeiger` keeps the served PDF beside its JSON, because
 the figures are only in the PDF.
 
+**A golden file is not a sample of its source.** `lever/leverdemo.json` holds three postings; the
+live board serves 383, and 343 of those declare themselves fictional. The fixture answers *"does
+`normalize` still handle what we captured"* and no question about the world — a distinction that has
+already produced one wrong premise in an accepted ADR (ADR-0037's Correction). A claim about what a
+source states needs a fetch.
+
 Each connector's README names its own fixture and what was captured. `.claude/skills/connectors/
 SKILL.md` step 4 and `docs/development/connector-guide.md` are where the capture step is specified.
 
