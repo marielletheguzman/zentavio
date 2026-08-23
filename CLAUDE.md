@@ -93,10 +93,10 @@ that looks like a code failure and is not. CI blocking on `main`.
 | Built | Still a placeholder |
 |---|---|
 | `packages/db`, `config`, `types`, `auth`, `storage`; `ui` — design tokens only | `logger`, `events`, `i18n`; `ui`'s component primitives, unblocked by ADR-0023 (Accepted) but not yet installed |
-| `services/api-gateway`, `services/ingestion` — requirement ingest only | `matching`, `notifications`, `billing`; ingestion's job-listing and scheduling half |
+| `services/api-gateway`, `services/ingestion` — requirement ingest, posting ingest, the due-source scheduler, and the alias skill scan | `matching`, `notifications`, `billing`; nothing calls `runDueJobBoards`, and no posting has come from the network |
 | `ai/resume-parser`, `ai/skill-gap`, `ai/shared`, `ai/career-roadmap` — eligibility, routes, viability | `embeddings`, `interview-prep`, `learning-paths` |
 | `apps/web` — upload, gap, eligibility with its routes, applications, the comparison | `apps/admin`, `apps/mobile` |
-| `connectors/core`, `connectors/immigration-data/` — `de-bundesanzeiger`, `de-aufenthg`, `de-bayingg`, `lu-legilux`; `connectors/learning-resources/git-scm` | every other connector, all of `knowledge-engine/` |
+| `connectors/core`, `connectors/immigration-data/` — `de-bundesanzeiger`, `de-aufenthg`, `de-bayingg`, `lu-legilux`, `nz-inz`, `ch-sem`; `connectors/learning-resources/git-scm`; `connectors/job-boards/lever` | every other connector, all of `knowledge-engine/` |
 | the seeded skill graph — in `packages/db/seeds/` and four tables, **not** `knowledge-engine/` (ADR-0020) | |
 
 Not built at all: any deployed environment. ADR-0015's Supabase project is
