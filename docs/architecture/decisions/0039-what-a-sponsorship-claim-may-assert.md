@@ -1,6 +1,7 @@
 # ADR-0039: Sponsorship is a four-value status carried by an explicit statement, extracted only from a statement of availability and never from the topic being mentioned
 
-- **Status:** Proposed
+- **Status:** Accepted
+- **Accepted:** 2026-08-23
 - **Date:** 2026-08-23
 - **Deciders:** project lead
 - **Affects:** `packages/db` (`job_postings`, `employer_sponsorship_facts`), `services/ingestion`, `services/matching`, `docs/features/migration-friendly-jobs.md`, `docs/database/entities/job.md`, `connectors/`
@@ -135,7 +136,7 @@ have.
 
 ## Decision
 
-**Option C, proposed.** Sponsorship, relocation support and immigration assistance are each stored as
+**Option C.** Sponsorship, relocation support and immigration assistance are each stored as
 a **four-value status** — `stated_available`, `stated_unavailable`, `inferred_likely`, `unknown` — on
 the posting, and **any value other than `unknown` requires a verbatim span in which the employer
 states its own position on providing that benefit.**
@@ -200,7 +201,12 @@ would mean the rule is mis-specified rather than the market quiet.
 
 ---
 
-**Indexing debt.** This ADR is deliberately **not** added to `docs/architecture/decisions/README.md`
-or `.claude/context/decisions.md`. Both files currently carry uncommitted rows for ADR-0038, and
-editing them here would either drop that work or sweep it into an unrelated commit. Both index rows
-are owed once 0038 is committed.
+**Indexing debt — an Accepted ADR that is not in either index.** This ADR is deliberately **not**
+added to `docs/architecture/decisions/README.md` or `.claude/context/decisions.md`. Both files carry
+uncommitted rows for ADR-0038, and editing them here would either drop that work or sweep it into an
+unrelated commit.
+
+**Two index rows are therefore owed, not one** — 0038's and this one's — and until they land, the
+index tables understate what has been decided. `.claude/context/decisions.md` says an Accepted ADR is
+binding whether or not a table lists it, so this is a discoverability debt rather than a status
+question. Clear it when the ADR-0038 work is packaged.
