@@ -105,6 +105,7 @@ An ADR is numbered sequentially and never renumbered.
 | [0033](../../docs/architecture/decisions/0033-job-board-source-tier-and-what-a-posting-may-state.md) | A Lever board is a tier-2 source, and a posting states only what Lever states structurally | Accepted |
 | [0034](../../docs/architecture/decisions/0034-job-posting-identity-and-lifecycle.md) | A posting’s identity is the source’s, deduplication belongs to persistence, and absence expires nothing unless the source lists exhaustively | Accepted |
 | [0035](../../docs/architecture/decisions/0035-what-an-extracted-job-requirement-may-claim.md) | A skill read out of a posting’s prose is a mention with a span, never a stated requirement | Accepted |
+| [0036](../../docs/architecture/decisions/0036-when-skill-extraction-runs.md) | Extraction is its own pass over postings that record whether they were extracted, never a step inside the ingest transaction | Accepted |
 
 0001–0004 define the boundaries every skill and context file assumes: one repository, sources as
 plugins, a polyglot contract at the `ai/` boundary, and a vector store that is an index rather
