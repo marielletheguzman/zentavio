@@ -106,6 +106,7 @@ An ADR is numbered sequentially and never renumbered.
 | [0034](../../docs/architecture/decisions/0034-job-posting-identity-and-lifecycle.md) | A posting’s identity is the source’s, deduplication belongs to persistence, and absence expires nothing unless the source lists exhaustively | Accepted |
 | [0035](../../docs/architecture/decisions/0035-what-an-extracted-job-requirement-may-claim.md) | A skill read out of a posting’s prose is a mention with a span, never a stated requirement | Accepted |
 | [0036](../../docs/architecture/decisions/0036-when-skill-extraction-runs.md) | Extraction is its own pass over postings that record whether they were extracted, never a step inside the ingest transaction | Accepted |
+| [0037](../../docs/architecture/decisions/0037-what-the-first-match-may-claim.md) | The first thing matching computes is Skill Fit, named for the one axis it measures, and no Job Match Score is stored until its hard constraint can be evaluated | Accepted |
 
 0001–0004 define the boundaries every skill and context file assumes: one repository, sources as
 plugins, a polyglot contract at the `ai/` boundary, and a vector store that is an index rather
