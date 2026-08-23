@@ -93,7 +93,7 @@ that looks like a code failure and is not. CI blocking on `main`.
 | Built | Still a placeholder |
 |---|---|
 | `packages/db`, `config`, `types`, `auth`, `storage`; `ui` — design tokens only | `logger`, `events`, `i18n`; `ui`'s component primitives, unblocked by ADR-0023 (Accepted) but not yet installed |
-| `services/api-gateway`, `services/ingestion` — requirement ingest, posting ingest, the due-source scheduler, and the extraction pass | `matching`, `notifications`, `billing`; nothing calls `runDueJobBoards` or `extractDuePostings`, and no posting has come from the network |
+| `services/api-gateway`, `services/ingestion` — requirement ingest, posting ingest, the due-source scheduler, and the extraction pass; `services/matching` — Skill Fit only, **no Job Match Score** (ADR-0037) | `notifications`, `billing`; nothing calls `runDueJobBoards`, `extractDuePostings` or `scorePostingForUser`, and no posting has come from the network |
 | `ai/resume-parser`, `ai/skill-gap`, `ai/shared`, `ai/career-roadmap` — eligibility, routes, viability | `embeddings`, `interview-prep`, `learning-paths` |
 | `apps/web` — upload, gap, eligibility with its routes, applications, the comparison | `apps/admin`, `apps/mobile` |
 | `connectors/core`, `connectors/immigration-data/` — `de-bundesanzeiger`, `de-aufenthg`, `de-bayingg`, `lu-legilux`, `nz-inz`, `ch-sem`; `connectors/learning-resources/git-scm`; `connectors/job-boards/lever` | every other connector, all of `knowledge-engine/` |

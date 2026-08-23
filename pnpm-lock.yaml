@@ -266,6 +266,15 @@ importers:
         specifier: workspace:*
         version: link:../../packages/types
 
+  services/matching:
+    dependencies:
+      '@zentavio/db':
+        specifier: workspace:^
+        version: link:../../packages/db
+      '@zentavio/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+
   tests/integration:
     dependencies:
       '@aws-sdk/client-s3':
@@ -304,6 +313,9 @@ importers:
       '@zentavio/ingestion':
         specifier: workspace:*
         version: link:../../services/ingestion
+      '@zentavio/matching':
+        specifier: workspace:*
+        version: link:../../services/matching
       '@zentavio/storage':
         specifier: workspace:*
         version: link:../../packages/storage

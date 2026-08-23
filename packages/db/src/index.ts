@@ -202,6 +202,21 @@ export {
 } from './repositories/connector-runs.ts';
 
 export {
+  heldSkillsForUser,
+  matchesForUser,
+  postingScoringState,
+  recordMatch,
+  requirementsForPosting,
+  transferEdgesInto,
+  type HeldSkill,
+  type MatchRow,
+  type NewMatch,
+  type PostingRequirement,
+  type PostingScoringState,
+  type TransferEdge,
+} from './repositories/matches.ts';
+
+export {
   aliasIndex,
   postingsDueForExtraction,
   postingsForSkill,

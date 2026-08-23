@@ -7,6 +7,13 @@ authoritative, and it is worthless without the evidence and versions that produc
 
 This table is where "a number with no provenance is a bug" becomes a schema constraint.
 
+**`matches` holds more than one kind of score, and `scorer_version` is what says which** (ADR-0037).
+Today it holds exactly one: `skill-fit-v1`. **No Job Match Score is computed, stored or rendered** —
+work authorization is a declared hard constraint and is unevaluatable for every stored posting,
+because `job_postings.country_code` is null by ADR-0033's design. A number omitting a constraint
+nobody consulted is not the Job Match Score under a different name, so it does not get that name.
+Read `scorer_version` before reading `score`.
+
 ## `matches`
 
 ```sql
@@ -98,6 +105,40 @@ Hard constraints are **named**, never applied as a silent multiplier:
 A posting the person cannot legally take is not silently down-ranked — the constraint is stated and
 `binding` identifies which one decides the outcome (`docs/architecture/immigration.md`).
 
+## `skill-fit-v1`, the only scorer that exists
+
+**Skill Fit answers one question:** how much of what this posting asks for does this person hold, or
+hold something that transfers. Weighted coverage — for each requirement, its `job_posting_skills.weight`
+times how well it is covered, over the total weight asked for.
+
+| Cover | From |
+|---|---|
+| full | `profile_skills.status = 'evidenced'` |
+| reduced | `status = 'claimed'` — a claim is not a demonstration (ADR-0030) |
+| edge weight × the above | best `skill_edges` `transfers_to` edge into the requirement |
+| none | nothing holds it — a **named negative** in `evidence`, never a silent omission |
+
+The positives sum to `score`; positives plus the missing entries sum to 1. That is what makes
+"weights reconcile" checkable rather than asserted.
+
+### Two rows can be `unknown`, for opposite reasons
+
+`status = 'unknown'` never means "bad fit". It means no number exists, and **which** absence it was is
+the difference between our gap and the posting's silence:
+
+| `job_postings.extracted_version` | Requirement rows | Why unknown | `missing` says |
+|---|---|---|---|
+| null | none | we have not read this posting yet (ADR-0036) | extraction has not run |
+| set | none | we read it, and it asks for nothing we curate | the posting states no curated requirement |
+
+Collapsing these re-queues work already done, or scores somebody against a posting nobody has read.
+The second is the common case today: the whole corpus is three Lever demo postings whose
+qualifications read *"be smart"*.
+
+**A posting asking for nothing is not a perfect fit.** Weighted coverage over an empty requirement
+set has no denominator, and inventing `1.0` there would make the least informative posting in the
+database the best match in it.
+
 ## Reproducibility
 
 The four version columns exist so a past match can be re-derived exactly:
@@ -153,6 +194,9 @@ what feeds the learning loop is `outcomes`, not `matches`.
 - One live match per (`user_id`, `job_posting_id`).
 - Never displayed as a Career Score — different subject, different question
   (`docs/GLOSSARY.md`).
+- **No row carries a `job-match-*` scorer version** until work authorization is evaluatable
+  (ADR-0037). A test asserts the absence, the way ADR-0035's `stated-requirement` is asserted absent.
+- A `skill-fit-*` row is never rendered or described as a Job Match Score. The name is the limitation.
 
 ## Related
 

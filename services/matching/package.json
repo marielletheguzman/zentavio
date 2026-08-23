@@ -1,0 +1,17 @@
+{
+  "name": "@zentavio/matching",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Scores a person against a posting. The number is arithmetic; no model produces it.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zentavio/db": "workspace:^",
+    "@zentavio/types": "workspace:*"
+  }
+}

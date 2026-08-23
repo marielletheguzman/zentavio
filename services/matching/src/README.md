@@ -2,15 +2,35 @@
 
 > **Purpose:** Matching source: scoring arithmetic, feature builders, the scoring API.
 
-_Structure placeholder — no implementation yet._
+| Module | Holds |
+|---|---|
+| `skill-fit.ts` | `scoreSkillFit` — pure; requirements, held skills and edges in, a score and its evidence out |
+| `scoring-run.ts` | `scorePostingForUser` — retrieve, score, record |
+| `index.ts` | the public surface |
 
-The parent README says what is blocking this and why the purpose line no longer mentions ranking
-models: **the number is arithmetic, not a model output** (`.claude/skills/ai-matching/SKILL.md`). A
-model that produces the score is not reproducible, not calibratable and not defensible, which is the
-whole product.
+Design rationale is in [`../README.md`](../README.md). The split is `services/ingestion`'s: the
+interesting behaviour is testable without PostgreSQL, and here that behaviour is **what a match may
+claim when a signal was never consulted**.
 
-Planning is separated from execution here for the same reason it is in `services/ingestion`: the
-interesting behaviour — what a match may claim when a signal was never consulted — must be testable
-without PostgreSQL.
+## The three numbers, and why they are these
 
-**ADR-0037 decides what the first score is allowed to be.** Read it first.
+| Constant | Value | Why |
+|---|---|---|
+| evidenced cover | `1` | the skill is demonstrated |
+| claimed cover | `0.6` | a résumé sentence is a claim nobody checked (ADR-0030) |
+| transfer cover | edge weight × the above | `skill_edges.transfers_to` only — never `requires` or `adjacent_to` |
+
+**The best transfer wins, never the sum.** Holding three things that each partly carry into
+Kubernetes does not add up to knowing Kubernetes.
+
+**Only `transfers_to`.** `requires` is a prerequisite relation and `adjacent_to` is a neighbourhood;
+neither means competence carries, and crediting them would hand somebody a skill they do not have.
+
+## Reconciliation is by construction
+
+Each requirement's contribution is rounded to four decimals — matching `matches.score numeric(5,4)` —
+and the score accumulates from the **rounded** values. Summing at full precision and rounding once at
+the end would leave the evidence weights adding up to something the score is not, and `match.md`
+requires that weights reconcile rather than approximately reconcile.
+
+Positives sum to `score`. Positives plus the `skill_missing` entries sum to 1.
