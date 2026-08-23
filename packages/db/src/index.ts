@@ -203,12 +203,14 @@ export {
 
 export {
   aliasIndex,
+  postingsDueForExtraction,
   postingsForSkill,
-  replacePostingSkills,
+  recordExtraction,
   skillsForPosting,
   type AliasEntry,
   type JobPostingSkillRow,
   type NewPostingSkill,
+  type PostingDueForExtraction,
 } from './repositories/posting-skills.ts';
 
 export {

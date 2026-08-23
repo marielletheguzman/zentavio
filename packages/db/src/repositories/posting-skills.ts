@@ -44,28 +44,89 @@ export async function aliasIndex(db: Kysely<Database>): Promise<readonly AliasEn
 /** A row as extraction produces it, before the database adds its timestamps. */
 export type NewPostingSkill = Omit<JobPostingSkillRow, 'created_at' | 'updated_at'>;
 
+/** A posting the extraction pass has selected, with the only two fields extraction reads. */
+export interface PostingDueForExtraction {
+  readonly id: string;
+  readonly description: string | null;
+  readonly requirementsText: string | null;
+}
+
 /**
- * Replace what a posting asks for.
+ * Live postings whose recorded extractor version is not the current one (ADR-0036).
+ *
+ * `IS DISTINCT FROM` rather than `<>` is the whole query: a never-extracted posting has
+ * `extracted_version IS NULL`, and `null <> 'alias-scan@1.0.0'` is null, which selects nothing. The
+ * never-extracted rows are exactly the ones a first run must find.
+ *
+ * Expired and soft-deleted postings are skipped. Extracting a posting nobody can apply for spends
+ * the run on rows matching will never read.
+ */
+export async function postingsDueForExtraction(
+  db: Kysely<Database>,
+  extractorVersion: string,
+  limit: number,
+): Promise<readonly PostingDueForExtraction[]> {
+  const rows = await db
+    .selectFrom('job_postings')
+    .select(['id', 'description', 'requirements_text'])
+    .where('extracted_version', 'is distinct from', extractorVersion)
+    .where('deleted_at', 'is', null)
+    .where('expired_at', 'is', null)
+    // Oldest first, so a large backlog drains in a stable order rather than re-shuffling per run.
+    .orderBy('first_seen_at')
+    .limit(limit)
+    .execute();
+
+  return rows.map((row) => ({
+    id: row.id,
+    description: row.description,
+    requirementsText: row.requirements_text,
+  }));
+}
+
+/**
+ * Record one extraction: replace what the posting asks for, and stamp that it was read.
  *
  * **Replace, not append.** Re-extraction after a posting is edited, or after the extractor changes,
  * must not leave the previous run's skills behind: a skill the posting no longer mentions would
  * otherwise persist as a requirement nobody stated, and it would look exactly like a current one.
  *
- * One transaction, so a posting is never briefly skill-less while a reader is scoring it.
+ * **The stamp is not optional, which is why there is no function that writes rows without it.**
+ * Writing skills and recording that extraction ran are the same event. Splitting them offers a
+ * caller the state ADR-0036 exists to prevent — rows written, marker stale, posting re-selected
+ * forever — and an API that can express a forbidden state eventually reaches it.
+ *
+ * **Stamped even when `rows` is empty.** A posting that mentions nothing the graph curates has been
+ * extracted; it is finished, not pending. That is the difference between "never read" and "read,
+ * found nothing", and it is the only reason the pass converges.
+ *
+ * One transaction, so a posting is never briefly skill-less while a reader is scoring it, and never
+ * marked extracted with the previous run's rows still attached.
  */
-export async function replacePostingSkills(
+export async function recordExtraction(
   db: Kysely<Database>,
   jobPostingId: string,
   rows: readonly NewPostingSkill[],
+  extraction: { readonly version: string; readonly at: Date },
 ): Promise<number> {
   return db.transaction().execute(async (trx) => {
     await trx.deleteFrom('job_posting_skills').where('job_posting_id', '=', jobPostingId).execute();
 
-    if (rows.length === 0) return 0;
+    if (rows.length > 0) {
+      await trx
+        .insertInto('job_posting_skills')
+        .values(rows.map((row) => ({ ...row, updated_at: sql`now()` })))
+        .execute();
+    }
 
     await trx
-      .insertInto('job_posting_skills')
-      .values(rows.map((row) => ({ ...row, updated_at: sql`now()` })))
+      .updateTable('job_postings')
+      .set({
+        extracted_at: extraction.at,
+        extracted_version: extraction.version,
+        updated_at: sql`now()`,
+      })
+      .where('id', '=', jobPostingId)
       .execute();
 
     return rows.length;

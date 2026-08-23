@@ -83,6 +83,19 @@ Missing market facts produce `status: "unknown"` with `missing` populated and **
 The explanation still runs over whatever was determined, because "we can't check the visa threshold
 until you add your expected salary" is the most actionable thing we have.
 
+**A posting with no `job_posting_skills` rows is two different situations, and matching must not
+collapse them** (ADR-0036). `job_postings.extracted_version` is what separates them:
+
+| Marker | Rows | What it means | What matching does |
+|---|---|---|---|
+| null | none | never read — extraction has not reached this posting | `status: "unknown"`, `missing` names the extraction |
+| set | none | read, and this posting asks for nothing the graph curates | a real skill comparison over an empty requirement set |
+
+Reading the second as the first re-queues work that is already done; reading the first as the second
+scores somebody against a posting nobody has read yet, and shows a confident result built on nothing.
+The whole current corpus is in the second state — three Lever demo postings whose qualifications read
+*"be smart"* — so this is the common case today, not an edge one.
+
 ## Recomputation
 
 Matches are records of a judgment at a point in time, not a cache. A match whose `knowledgeAsOf`

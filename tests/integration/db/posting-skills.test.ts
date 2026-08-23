@@ -6,9 +6,9 @@
  * inserting directly.
  */
 
-import { aliasIndex, replacePostingSkills, skillsForPosting, postingsForSkill } from '@zentavio/db';
+import { aliasIndex, recordExtraction, skillsForPosting, postingsForSkill } from '@zentavio/db';
 import type { Database } from '@zentavio/db';
-import { extractSkills, rowsFor } from '@zentavio/ingestion';
+import { EXTRACTOR_VERSION, extractSkills, rowsFor } from '@zentavio/ingestion';
 import { Kysely, PostgresDialect } from 'kysely';
 import type { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -85,7 +85,10 @@ async function extractAndStore() {
     await aliasIndex(db),
   );
 
-  return replacePostingSkills(db, postingId, rowsFor(posting.id, found, uuidv7));
+  return recordExtraction(db, postingId, rowsFor(posting.id, found, uuidv7), {
+    version: EXTRACTOR_VERSION,
+    at: new Date(),
+  });
 }
 
 describe('extraction, end to end', () => {

@@ -253,7 +253,16 @@ export async function upsertPostingFromSource(
 
   const posting = await db
     .selectFrom('job_postings')
-    .select(['id', 'dedup_key', 'dedup_basis', 'authority_tier', 'flags'])
+    .select([
+      'id',
+      'dedup_key',
+      'dedup_basis',
+      'authority_tier',
+      'flags',
+      // Read only to decide whether this write invalidates the extraction marker (ADR-0036).
+      'description',
+      'requirements_text',
+    ])
     .where('id', '=', existingSource.job_posting_id)
     .executeTakeFirstOrThrow();
 
@@ -315,12 +324,23 @@ export async function upsertPostingFromSource(
     }
   }
 
+  // The prose extraction reads. Cleared only when it actually changes value: a sighting that
+  // rewrites the same text has not invalidated anything, and re-extracting it would reproduce
+  // byte-identical rows because the scan is deterministic (ADR-0036). `updated_at` cannot carry this
+  // signal — it moves on every sighting, including the lower-tier refusal above.
+  const proseChanged =
+    posting.description !== (fields.description ?? null) ||
+    posting.requirements_text !== (fields.requirementsText ?? null);
+
   await db
     .updateTable('job_postings')
     .set({
       ...columnsFrom(fields),
       dedup_key: key,
       dedup_basis: basis,
+      // `undefined` leaves the column alone; null is a real write that says "read me again".
+      extracted_at: proseChanged ? null : undefined,
+      extracted_version: proseChanged ? null : undefined,
       last_seen_at: observation.retrievedAt,
       stale_after: staleAfter(identity.sourceId, observation.retrievedAt),
       authority_tier: observation.sourceTier,

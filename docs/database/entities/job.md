@@ -31,6 +31,14 @@ CREATE TABLE job_postings (
   description       text,                              -- the posting's own prose, stored not read
   requirements_text text,                              -- the source's requirement lists, plain text
 
+  -- Whether extraction has run over the two columns above, and at which version (ADR-0036).
+  -- Both null means never extracted. Both set with **no** `job_posting_skills` rows means extracted
+  -- and this posting asks for nothing the graph curates — a real answer, and the one the whole
+  -- current corpus gives. Without them those two states are the same row shape and no sweep
+  -- converges.
+  extracted_at      timestamptz,
+  extracted_version text,
+
   location_raw      text,                              -- carried verbatim, never mined (ADR-0033)
   country_code      char(2),
   region            text,
@@ -97,7 +105,10 @@ CREATE TABLE job_postings (
     (expired_at IS NULL AND expiry_reason IS NULL)
     OR (expired_at IS NOT NULL AND expiry_reason IN ('source-delisted','source-not-fetched'))
   ),
-  CONSTRAINT ck_job_postings__seen_order CHECK (last_seen_at >= first_seen_at)
+  CONSTRAINT ck_job_postings__seen_order CHECK (last_seen_at >= first_seen_at),
+  -- A half-set marker is a bug: a timestamp with no version cannot be compared against the current
+  -- extractor, and a version with no timestamp cannot say when it ran.
+  CONSTRAINT ck_job_postings__extraction_marker_paired CHECK ((extracted_at IS NULL) = (extracted_version IS NULL))
 );
 
 CREATE UNIQUE INDEX uq_job_postings__dedup ON job_postings (dedup_key) WHERE deleted_at IS NULL;
@@ -105,6 +116,8 @@ CREATE INDEX idx_job_postings__country_posted_at ON job_postings (country_code, 
 CREATE INDEX idx_job_postings__company ON job_postings (company_id) WHERE deleted_at IS NULL;
 CREATE INDEX idx_job_postings__live_remote ON job_postings (is_remote, posted_at DESC) WHERE deleted_at IS NULL AND expired_at IS NULL;
 CREATE INDEX idx_job_postings__stale ON job_postings (stale_after) WHERE expired_at IS NULL;
+-- What the extraction pass selects on: live postings whose recorded version is not the current one.
+CREATE INDEX idx_job_postings__extraction ON job_postings (extracted_version) WHERE deleted_at IS NULL AND expired_at IS NULL;
 ```
 
 ## Why these columns exist
@@ -139,6 +152,20 @@ and the raw payload is archived only where a document store is configured — to
 company describing itself, which is the distinction extraction depends on. `description` existed from
 the table's creation and held nothing until the shared `JobPosting` type carried the field
 (`20260823010000`).
+
+**`extracted_at` and `extracted_version`, on the posting rather than only on its skills.** The
+version of the extractor is already stamped on every `job_posting_skills` row, which is enough to
+know how an existing row was produced and not enough to know whether a posting was ever read. A
+posting that extracts zero skills writes zero rows, so *never extracted* and *extracted, matched
+nothing* are otherwise the same row shape — and a pass keyed on the child rows re-extracts every
+skill-less posting forever without converging. On the corpus that exists today, whose postings match
+no curated skill, that is every posting on every run, looking healthy throughout.
+
+This is the same shape as `salary_is_stated` and nullable `is_remote`: the schema records that we
+looked, separately from what we found. `updated_at` cannot substitute — `upsertPostingFromSource`
+bumps it on every sighting including the `refused-lower-tier` branch that writes no fields, so on
+this table it means *seen again*, not *the text changed*. The marker is cleared only where the prose
+is actually rewritten, which is the signal `updated_at` cannot give (ADR-0036).
 
 **`url`, separate from `job_posting_sources.source_url`.** One is where a person applies; the other is
 the endpoint the payload was read from. Conflating them sends somebody to an API response. The column
@@ -299,6 +326,20 @@ applications and outcomes already point at both rows, and an automatic merge is 
 An expired posting is retained: it is evidence about the market, and about the user's own application
 history.
 
+**Extraction is a separate pass, not a stage of ingest** (ADR-0036):
+
+```text
+stored → extracted_version IS DISTINCT FROM current → extract → replace job_posting_skills
+                                                              → stamp extracted_at + extracted_version
+                                                                (stamped even when zero rows were written)
+
+prose rewritten by a later ingest → marker cleared → selected again
+```
+
+The stamp is what makes the pass converge, and it happens **whether or not any skill was found**. A
+sighting that rewrites nothing, and a `refused-lower-tier` write that is refused before the fields,
+both leave the marker alone.
+
 ## Retention
 
 Indefinite. Not personal data. An application linking a person to a posting is person data and lives
@@ -319,11 +360,18 @@ in its own table with its own retention (`../data-retention.md`).
 - `source_tier` is 1–4, never 5.
 - Never `UPDATE` a field to a value from a lower-tier source than the one that wrote it —
   `authority_tier` is what makes this checkable.
+- `extracted_at` and `extracted_version` are both set or both null —
+  `ck_job_postings__extraction_marker_paired`.
+- Extraction stamps the marker **even when it writes no skills**. A posting matching nothing is
+  finished, not pending; re-selecting it is the non-convergent bug ADR-0036 exists to prevent.
+- The marker is cleared only where `description` or `requirements_text` actually changes value. Not
+  on a sighting, not on a refused lower-tier write.
 
 ## Related
 
 - ADR-0034 — identity, deduplication, expiry; the contract this table implements
 - ADR-0033 — what a job-board source may claim in the first place
+- ADR-0035, ADR-0036 — what an extracted skill may claim, and when extraction runs
 - `packages/db/src/repositories/jobs.ts` — the upsert, the key derivation and the expiry sweep
 - `docs/architecture/connectors.md` — where `normalize` is specified
 - `docs/architecture/data-flow.md` — the eight-stage lifecycle
