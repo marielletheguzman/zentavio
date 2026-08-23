@@ -32,6 +32,13 @@ export {
 export { runDueJobBoards, type ScheduledRunReport } from './scheduled-run.ts';
 
 export {
+  DEFAULT_EXTRACTION_BATCH,
+  extractDuePostings,
+  type ExtractionRunDeps,
+  type ExtractionRunReport,
+} from './extraction-run.ts';
+
+export {
   EXTRACTOR_VERSION,
   extractSkills,
   rowsFor,

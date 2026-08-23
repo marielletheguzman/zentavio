@@ -170,8 +170,10 @@ no prose rewrites — the marker is carrying no information and the pass is cere
 
 ## Compliance
 
-- `ck_jp__extraction_marker_paired CHECK ((extracted_at IS NULL) = (extracted_version IS NULL))` — a
-  half-set marker is a bug, and the schema refuses it rather than trusting review.
+- `ck_job_postings__extraction_marker_paired CHECK ((extracted_at IS NULL) = (extracted_version IS
+  NULL))` — a half-set marker is a bug, and the schema refuses it rather than trusting review. *(This
+  ADR first named it `ck_jp__…`; `job_postings` spells its constraints out in full — `ck_jpsk__` is the
+  child table's prefix, not this one's. Corrected when the migration was written.)*
 - An integration test asserting a second `extractDuePostings` run does not re-select a posting that
   matched nothing. This is the one that fails if Option C is reintroduced by accident.
 - An integration test asserting a sighting and a `refused-lower-tier` write both leave `extracted_at`

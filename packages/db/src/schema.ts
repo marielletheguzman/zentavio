@@ -722,6 +722,15 @@ export interface JobPostingsTable {
   description: string | null;
   /** The source's requirement lists as plain text — where a posting states what it wants. */
   requirements_text: string | null;
+  /**
+   * When extraction last completed for this posting. Null means never (ADR-0036).
+   *
+   * Set with **no** `job_posting_skills` rows means extracted and this posting asks for nothing the
+   * graph curates — a real answer. Without this, that state and "never read" are the same row.
+   */
+  extracted_at: Timestamp | null;
+  /** The `EXTRACTOR_VERSION` that completed it. Paired with `extracted_at` by CHECK. */
+  extracted_version: string | null;
   /** Carried verbatim for display and never mined for a country (ADR-0033). */
   location_raw: string | null;
   country_code: string | null;
