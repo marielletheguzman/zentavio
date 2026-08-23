@@ -1,6 +1,7 @@
 # ADR-0036: Extraction is its own pass over postings that record whether they were extracted, never a step inside the ingest transaction
 
-- **Status:** Proposed
+- **Status:** Accepted
+- **Accepted:** 2026-08-23
 - **Date:** 2026-08-23
 - **Deciders:** project lead
 - **Affects:** `packages/db` (`job_postings`, `packages/db/src/repositories/posting-skills.ts`), `services/ingestion` (`skill-extraction.ts`, `posting-executor.ts`, `scheduled-run.ts`), `docs/database/entities/job.md`
