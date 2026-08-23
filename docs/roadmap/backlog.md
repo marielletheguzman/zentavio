@@ -38,6 +38,65 @@ as a blocker here.
 | Resource coverage for the seeded track | What should I learn? | Phase 1 learning paths |
 | Rule-change notifications | What changed? | Phase 1, small |
 
+## Near — the pipeline built in #141–#162 has no consumer
+
+| Item | Question | Chain position |
+|---|---|---|
+| **Jobs discovery surface — cross-country IT & software opportunities** | Which of these jobs is worth my time, *and could I actually take it?* | see below — the only surface that consumes `job_postings`, `job_posting_skills` and `matches` |
+
+**Why this is written down.** #141–#162 built board ingestion, posting persistence, skill extraction
+and Skill Fit. **Nothing renders any of it.** `apps/web` has seven pages and none shows a posting;
+the gateway has ten modules and none serves one. 239 real postings and 6 matches sit in the dev
+database reachable by no route. A built pipeline with an unstated consumer is how a codebase grows
+things nobody asked for, so the consumer is stated here.
+
+**What it is.** Not a job board. A **cross-country discovery surface for IT, software, computer
+science and engineering roles**, filtered toward opportunities with immigration or relocation value —
+browsable by country, role and skill area.
+
+**The distinction it rests on is already specified**, in
+[`docs/features/migration-friendly-jobs.md`](../features/migration-friendly-jobs.md), and this item
+does not restate it:
+
+> **Employers sponsor. Governments grant.**
+
+Sponsorship, relocation support, migration costs, and a pathway toward permanent residence are
+**separate signals and are never merged into one "immigration-friendly" label**. That matters more as
+eligibility evaluation completes: a vague label cannot be checked against a rule, and five merged
+signals cannot be un-merged later.
+
+**Rules this surface inherits, none of them new:**
+
+- **Skill Fit where computable, never called a Job Match Score** (ADR-0037).
+- **`score = 0` is not `unknown`.** Evaluated-with-no-overlap and not-evaluatable are different
+  answers; all six matches in the dev database today are the former, which is exactly the case a
+  naive UI renders as "0% match" and gets wrong.
+- **`unknown` sponsorship is not `no`** (`migration-friendly-jobs.md`, design decision 1). Most
+  postings state nothing, so `unknown` will dominate at launch.
+- **No claim of sponsorship or a residence pathway without evidence that states it.** ADR-0033
+  forbids mining prose for facts the source did not state, and that does not bend for a field users
+  want.
+- **Source, employer and country shown on every listing.** `company_id` is null on every stored
+  posting today, and `company_name_raw` is what a Lever board supplies — which is nothing.
+- **It connects to the existing eligibility evaluation rather than inventing a second immigration
+  score.** ADR-0022 already refused a composite for exactly this reason.
+
+**What is missing, measured rather than guessed (2026-08-23):**
+
+| Needed | State |
+|---|---|
+| `employer_sponsorship_facts` | designed in `data-retention.md`, **table does not exist** |
+| `employer_migration_scores` | designed, **table does not exist** |
+| sponsorship / relocation fields on `job_postings` | **none** — no column matches sponsor, visa or relocation |
+| a connector for sponsor registries | none; `migration-friendly-jobs.md` tier 1 is an official register |
+| a jobs module in the gateway | none of its ten modules serves a posting |
+| a page in `apps/web` | none of its seven pages shows one |
+| employer resolution | `company_id` null on all 239 stored postings |
+
+**Not blocked on a decision** — blocked on build, and on a sponsorship source that states rather than
+implies. The Skill Fit half is done and proven against 239 real postings; the immigration half is
+specified and unbuilt, and this item must not pretend the first answers the second.
+
 ## Middle
 
 | Item | Question | Notes |
