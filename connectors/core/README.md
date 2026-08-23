@@ -93,6 +93,18 @@ has no symptom until a run is silently short a source.
 Note that **`registerConnectorSource` is a different operation** — it writes a `connector_sources`
 row in the database. Both are called registering, and doing one is not doing the other.
 
+**And nothing in production calls it.** `registerConnectorSource` is invoked only from integration
+tests; `git-scm` and `lever` exist in the dev database because a session put them there by hand. A
+source absent from `connector_sources` is not a soft failure — `staleAfter` resolves its
+`refresh_window` through a subquery, so the row comes back null and every posting insert fails on
+`stale_after NOT NULL`. The symptom is a NOT NULL violation that names neither the source nor the
+cause.
+
+A generic registration pass cannot be written yet: **only 2 of 8 connectors export a `REGISTRATION`
+constant**, and `Connector` does not require one. Putting registration on the contract is a change to
+a published contract and therefore needs an ADR (`.claude/context/decisions.md`). Recorded here so the
+next person finds the gap before a first real run does.
+
 ## Related
 
 - ADR-0002 (plugin model), ADR-0005 (the lint rule that enforces it)

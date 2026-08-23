@@ -105,6 +105,20 @@ Two reasons beyond storage being cheap:
    year. Deleting it makes past answers unexplainable.
 2. Expired postings are market evidence, and part of a user's own application history.
 
+**Development databases are a separate question, and answered deliberately rather than by default.**
+Since 2026-08-23 the dev database holds 239 real postings from a third-party employer board, fetched
+once to verify the pipeline end to end. The rule:
+
+> Real third-party job-board data may remain in the development database when it is useful for
+> verification, but retention is deliberate and bounded; it is **not** treated as a permanent curated
+> corpus or fixture.
+
+The distinction matters because dev state is easy to start depending on. A fixture is committed,
+reviewed and reproducible; this is none of those, and treating it as one would make a verification
+convenience into an undocumented data store. **No cleanup job, retention window or ADR exists for
+this**, deliberately: introducing machinery would answer a policy question before its operational
+requirements are known. What exists is the statement above and the date it started.
+
 ## Anonymization techniques
 
 | Technique | Applied to |
