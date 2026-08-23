@@ -46,10 +46,16 @@ Zero changes to `services/` or `ai/` should be required.
 | Track | File | Status |
 |---|---|---|
 | Cloud / platform engineer | [`cloud-platform-engineer.md`](cloud-platform-engineer.md) | **the MVP track** — model written, values unmeasured |
+| Computer engineer | [`computer-engineer.md`](computer-engineer.md) | model written, values unmeasured — the embedded/systems track |
 
-`_TEMPLATE.md` defines the shape. The MVP track's skill list is **curated and pending derivation**: written
-from the shape of the work, not from measured posting frequency, because no postings are ingested. Every
-entry is a hypothesis to be replaced by `posting-cooccurrence` with real support counts.
+`_TEMPLATE.md` defines the shape. Both skill lists are **curated and pending derivation**: written from
+the shape of the work, not from measured posting frequency. Every entry is a hypothesis to be replaced by
+`posting-cooccurrence` with real support counts.
+
+**A board has now been fetched, and it did not change that.** Lever's demo board is the only one ever
+read, and **343 of its 383 postings declare themselves fictional** in their own text. A skill set derived
+from it would be derived from fiction, so neither model uses it. What the fetch did establish is that a
+fixture is not a sample of a source — see ADR-0037's Correction.
 
 ## Related
 

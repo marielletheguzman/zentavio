@@ -94,6 +94,30 @@ Still not mapped here, by decision rather than omission: `commitment` stays Leve
 null, because a board slug is a namespace and resolving it to a company would be the invention this
 connector exists to refuse.
 
+## The demo board is fictional, and that bounds what it can test
+
+`leverdemo` is the only board ever fetched (2026-08-23, 383 postings). **343 of them declare
+themselves fictional in their own text** — *"a fictional job created solely for demonstration
+purposes and is not an actual open position"* — and most of the remaining 40 are test artefacts
+(`DUDLY`, `CSB Formatting Test`, `Custom Job #1`) with empty requirement lists.
+
+**Two questions this repository keeps confusing, and must not:**
+
+| Question | What answers it | State |
+|---|---|---|
+| **Does the pipeline work?** — fetch, normalize, store, extract, score | this board is fine, and answered it | **answered** |
+| **Is the graph sufficient, and what is recall?** | a production-like corpus of real postings | **unanswered** |
+
+An extraction count over `leverdemo` measures the first and says nothing about the second. That
+mistake has already been made once: a *23 of 383* figure was read as a recall gap and used to
+justify widening the skill graph, when the corpus was the bottleneck all along. Widening the graph
+by eleven skills then moved that board from 39 extracted rows to 40.
+
+**Do not tune the graph against this board.** A skill added to make `leverdemo` score well is a
+skill added to make fiction score well. The acceptance test for graph sufficiency is whether the
+*existing* graph extracts and scores genuine postings — never whether a chosen board's numbers
+improve.
+
 ## Related
 
 - `docs/database/entities/job.md` — the shape `normalize` targets
