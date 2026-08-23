@@ -1,6 +1,7 @@
 # ADR-0037: The first thing matching computes is Skill Fit, named for the one axis it measures, and no Job Match Score is stored until its hard constraint can be evaluated
 
-- **Status:** Proposed
+- **Status:** Accepted
+- **Accepted:** 2026-08-23
 - **Date:** 2026-08-23
 - **Deciders:** project lead
 - **Affects:** `services/matching`, `packages/db` (`matches`), `docs/features/job-matching.md`, `docs/database/entities/match.md`, `docs/GLOSSARY.md`, `.claude/skills/ai-matching/SKILL.md`
@@ -112,7 +113,7 @@ scratch — which is the definition of a lost decision.
 
 ## Decision
 
-**Option C, proposed.** Matching's first output is **Skill Fit** — one axis, named for itself, stored
+**Option C.** Matching's first output is **Skill Fit** — one axis, named for itself, stored
 with `scorer_version = 'skill-fit-v1'`. **No Job Match Score is computed, stored or rendered** until
 work authorization can be evaluated for the posting in question.
 

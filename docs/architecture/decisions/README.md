@@ -50,7 +50,7 @@ already ruled out and how the rule is enforced.
 | [0034](0034-job-posting-identity-and-lifecycle.md) | A posting’s identity is the source’s, deduplication belongs to persistence, and absence expires nothing unless the source lists exhaustively | Accepted | 2026-08-22 |
 | [0035](0035-what-an-extracted-job-requirement-may-claim.md) | A skill read out of a posting’s prose is a mention with a span, never a stated requirement | Accepted | 2026-08-23 |
 | [0036](0036-when-skill-extraction-runs.md) | Extraction is its own pass over postings that record whether they were extracted, never a step inside the ingest transaction | Accepted | 2026-08-23 |
-| [0037](0037-what-the-first-match-may-claim.md) | The first thing matching computes is Skill Fit, named for the one axis it measures, and no Job Match Score is stored until its hard constraint can be evaluated | Proposed | 2026-08-23 |
+| [0037](0037-what-the-first-match-may-claim.md) | The first thing matching computes is Skill Fit, named for the one axis it measures, and no Job Match Score is stored until its hard constraint can be evaluated | Accepted | 2026-08-23 |
 
 **0010 is Accepted, and the rename is done** — `immigration_rules` is now `requirements`, with `domain`,
 `imposed_by`, and `authority`. Regulated professions remain blocked on **data**, not schema: nursing,
