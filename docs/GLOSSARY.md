@@ -85,9 +85,10 @@ Fit between one person and one **specific job posting**, across every signal
 `docs/features/job-matching.md` defines — including work authorization, which is a hard constraint.
 **Not:** Career Score. **Not:** Skill Fit.
 
-**Nothing computes this yet** (ADR-0037). Work authorization is unevaluatable while
-`job_postings.country_code` is null, and a number that omits a hard constraint nobody consulted is
-not this score under a shorter name. What exists today is Skill Fit.
+**Nothing computes this yet** (ADR-0037). Work authorization is not evaluated — the eligibility
+evaluator is not wired to postings — and four other signals have no input at all. A number that omits
+a hard constraint nobody consulted is not this score under a shorter name. What exists today is
+Skill Fit.
 
 ### Skill Fit
 How much of what **one posting asks for** a person holds, or holds something that transfers.

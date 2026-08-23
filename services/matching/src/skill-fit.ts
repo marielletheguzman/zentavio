@@ -3,11 +3,15 @@
  * transfers (ADR-0037).
  *
  * **This is not the Job Match Score and must never be renamed into one.** The feature defines
- * thirteen signals; this computes one. Work authorization is a declared *hard constraint* and is
- * unevaluatable for every stored posting — `job_postings.country_code` is null by ADR-0033's design,
- * because mining a country out of `"Arlington, TX"` is exactly the confident wrong answer that rule
- * exists to prevent. A number that omits a constraint nobody consulted is not the Job Match Score
- * under a shorter name, and the name here is the limitation.
+ * thirteen signals; this computes one. Work authorization is a declared *hard constraint* and is not
+ * evaluated: the eligibility evaluator is not wired to postings, and four other signals — seniority,
+ * location preference, sponsorship registries, settlement pathways — have no input at all. A number
+ * that omits a constraint nobody consulted is not the Job Match Score under a shorter name, and the
+ * name here is the limitation.
+ *
+ * (ADR-0037 originally said `country_code` made authorization *unevaluatable*. Its Correction of
+ * 2026-08-23 records that this was generalised from a three-row fixture: the live board states a
+ * country on 81% of postings. The decision stands; the reason is smaller than stated.)
  *
  * ## Pure
  *

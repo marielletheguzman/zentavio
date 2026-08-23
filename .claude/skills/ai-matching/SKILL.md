@@ -37,8 +37,8 @@ Never compute one and label it another. `docs/GLOSSARY.md` is binding here — t
 common source of confusion in the product.
 
 **Skill Fit is the only one of these that is built** (ADR-0037), and it is deliberately not the Job
-Match Score: work authorization is a hard constraint and is unevaluatable while
-`job_postings.country_code` is null (ADR-0033). **Renaming Skill Fit into "Job Match Score v1" would
+Match Score: work authorization is a hard constraint and is not evaluated, because the eligibility
+evaluator is not wired to postings. **Renaming Skill Fit into "Job Match Score v1" would
 undo that decision**, so a `scorer_version` starting `job-match` may not be written until the
 constraint is evaluated. A test asserts the absence.
 

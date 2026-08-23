@@ -162,10 +162,73 @@ added beside Skill Fit and the two coexist.
 - No `ai/` call in the scoring path: the number is arithmetic. A model may later write prose from
   computed evidence (`.claude/skills/ai-matching/SKILL.md`), and that is a separate change.
 
+## Correction — 2026-08-23: the constraint is evaluatable for most real postings
+
+**The decision above is unchanged. Its central factual claim was wrong**, and is corrected here
+rather than in place, so that what was believed and what turned out to be true both stay readable.
+
+### What was claimed
+
+> `job_postings.country_code` is null for every posting in the corpus. Not by accident: ADR-0033
+> forbids mining a country out of location text, and Lever's `categories.country` is null on all
+> three fixture postings […] So work authorization cannot be evaluated for **100% of stored
+> postings**.
+
+The first sentence is true of the corpus. **The generalisation to the source is false.**
+
+### What is actually true
+
+The first live fetch this repository has ever performed — `api.lever.co/v0/postings/leverdemo`,
+2026-08-23, through the real connector — returned **383 postings, not three**, and Lever states
+`categories.country` on most of them:
+
+| | Committed fixture | Live board |
+|---|---|---|
+| postings | 3 | **383** |
+| `country_code` stated | 0 | **311 (81.2%)** |
+
+`US` 226 · `GB` 40 · `NL` 18 · `CA` 18 · `FR` 3 · `IN` 2 · `BE` 2 · `BR` 1 · `PL` 1.
+
+The three fixture postings are among the 19% that state no country. **The claim was generalised from
+a three-row sample to the behaviour of the source**, and the ADR presented it as a property of Lever.
+ADR-0033 is unaffected and remains correct: nothing may *infer* a country from `"Arlington, TX"`. It
+was never the reason the field was empty — the sample was.
+
+Two other claims in the same section held up against the live data: `remote_scope` is stated on **0**
+of 383, and `salary_is_stated` on **0** of 383, both exactly as ADR-0033 predicted.
+
+### What this changes, and what it does not
+
+**Does not change:** the decision. Skill Fit is built, correctly named, and answering its own question
+honestly. Nothing about it depends on the corrected claim.
+
+**Does change:** the *reason* no Job Match Score exists. The Consequences section named the signal
+that would say to revisit — *"work authorization becoming evaluatable for most postings"* — and that
+signal has now fired, at 81%. So the honest statement is no longer "it cannot be evaluated" but:
+
+> No Job Match Score exists because **the eligibility evaluation is not wired to postings**, and four
+> other signals still have no input at all — seniority, location/remote preference, sponsorship
+> registries and settlement pathways. `country_code` is no longer among the blockers.
+
+That is a smaller and more actionable gap than the one this ADR described, and it belongs to a future
+decision rather than to this one. **Nothing here authorises building a Job Match Score**; it records
+that the road to one is shorter than stated.
+
+### The methodological finding, which outlives both
+
+**A three-row fixture was treated as evidence about a source.** The corpus limit was recorded
+honestly in ADR-0035 and repeated in every PR since — and it still produced a wrong premise, because
+a limit that is stated is not the same as a limit that is respected in the next inference. The fixture
+is a golden file for `normalize`; it was never a sample of what Lever publishes, and nothing in it
+claimed to be.
+
+The rule this sets: **a claim about what a source states requires a fetch, not a fixture.** A fixture
+answers "does our parser still handle what we captured", and no question about the world.
+
 ## Related
 
 - ADR-0022 — the precedent: a composite that cannot carry a refusal is not computed
 - ADR-0036 — never-extracted versus extracted-and-empty, which matching must not collapse
-- ADR-0035, ADR-0033 — what a posting may claim, and why `country_code` stays null
+- ADR-0035, ADR-0033 — what a posting may claim, and what may never be inferred from prose
 - ADR-0003 — the language this service is written in
 - `docs/GLOSSARY.md` — the six scores, and why a seventh needs an entry rather than a nickname

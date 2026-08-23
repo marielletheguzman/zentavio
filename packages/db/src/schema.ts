@@ -806,8 +806,8 @@ export type MatchStatusColumn = 'scored' | 'unknown';
  *
  * **Read `scorer_version` before `score`.** This table holds more than one kind of score and today
  * holds exactly one — `skill-fit-v1`, weighted coverage of what a posting asks for. No Job Match
- * Score exists: work authorization is a hard constraint and is unevaluatable while
- * `job_postings.country_code` is null (ADR-0037, ADR-0033).
+ * Score exists: work authorization is a hard constraint and is not evaluated, because the
+ * eligibility evaluator is not wired to postings (ADR-0037 and its 2026-08-23 Correction).
  *
  * `status = 'unknown'` never means a bad fit. It means no number exists, and `missing` says which
  * absence it was — ours (not extracted yet) or the posting's (asks for nothing curated).
