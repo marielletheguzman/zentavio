@@ -9,10 +9,18 @@ This table is where "a number with no provenance is a bug" becomes a schema cons
 
 **`matches` holds more than one kind of score, and `scorer_version` is what says which** (ADR-0037).
 Today it holds exactly one: `skill-fit-v1`. **No Job Match Score is computed, stored or rendered** —
-work authorization is a declared hard constraint and is unevaluatable for every stored posting,
-because `job_postings.country_code` is null by ADR-0033's design. A number omitting a constraint
-nobody consulted is not the Job Match Score under a different name, so it does not get that name.
-Read `scorer_version` before reading `score`.
+work authorization is a declared hard constraint and is not evaluated, because the eligibility
+evaluator is not wired to postings. A number omitting a constraint nobody consulted is not the Job
+Match Score under a different name, so it does not get that name. Read `scorer_version` before
+reading `score`.
+
+**One superseded claim survives where it cannot be edited.** `migrations/20260823080000-create-matches.sql`
+says authorization is *unevaluatable* because `country_code` is null. ADR-0037's 2026-08-23 Correction
+records why that is wrong — the claim was generalised from a three-row fixture, and the live board
+states a country on 81% of postings. The migration's comment is left as written: applied migrations
+are checksum-verified (`schema_migrations.checksum`), so editing one makes every existing database
+refuse to migrate. **This entity doc is the current specification; the migration is a historical
+record of what was believed when the table was created.**
 
 ## `matches`
 

@@ -11,15 +11,19 @@ Score**, and adding one is a decision rather than a feature (ADR-0037).
 five — **work authorization** — is declared a *hard constraint*: a posting somebody cannot legally
 take must carry a named constraint that leads the UI, never a quiet down-rank.
 
-That constraint is not merely unevaluated. It is **unevaluatable**: `job_postings.country_code` is
-null for every stored posting, because ADR-0033 forbids mining a country out of location text and
-Lever states none. `"Arlington, TX"` is obvious to a person and off-limits to the connector, and that
-refusal is correct — a confident wrong country is the most consequential thing to get wrong for
-somebody choosing where to live.
+That constraint is **not evaluated**: the eligibility evaluator exists (`ai/career-roadmap`) and is
+not wired to postings, and four other signals — seniority, location preference, sponsorship
+registries, settlement pathways — have no input at all.
 
-So a number computed today omits a constraint nobody consulted. That number is not the Job Match
-Score under a shorter name, and calling it one would encode the omission permanently into
-`matches.score`. Skill Fit answers a narrower question honestly instead:
+*Corrected 2026-08-23.* This README originally said the constraint was **unevaluatable**, because
+`job_postings.country_code` is null. The first live fetch showed that claim was generalised from the
+three-posting fixture: Lever states a country on **311 of 383** live postings (81%), and the fixture's
+three are among the 19% that do not. ADR-0033 still forbids *inferring* a country from
+`"Arlington, TX"` — that was never why the field was empty. See ADR-0037's Correction.
+
+The decision stands and the gap is smaller than it was described. A number computed today still omits
+a constraint nobody consulted, and that number is not the Job Match Score under a shorter name. Skill
+Fit answers a narrower question honestly instead:
 
 > how much of what this posting asks for does this person hold, or hold something that transfers?
 
@@ -27,8 +31,8 @@ The precedent is ADR-0022, which refused a composite viability score because **a
 carry a refusal**. The difference here is that one axis genuinely is computable, so it is named
 rather than skipped.
 
-**Do not rename this into "Job Match Score v1."** That undoes the decision. When authorization
-becomes evaluatable, a Job Match Score is added *beside* Skill Fit rather than redefining a number
+**Do not rename this into "Job Match Score v1."** That undoes the decision. When authorization is
+actually evaluated, a Job Match Score is added *beside* Skill Fit rather than redefining a number
 people have already seen.
 
 ## The number is arithmetic

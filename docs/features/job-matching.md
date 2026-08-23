@@ -11,9 +11,15 @@ reachable, which is the difference between career intelligence and a filtered fe
 ## What is built today: Skill Fit, not the Job Match Score
 
 **No Job Match Score is computed, stored or rendered** (ADR-0037). Of the thirteen signals below,
-five have no input at all — and one of the five, **work authorization**, is a hard constraint that
-is *unevaluatable*: `job_postings.country_code` is null for every stored posting, because ADR-0033
-forbids mining a country out of location text and Lever states none.
+five have no input, and one of the five — **work authorization** — is a hard constraint that is not
+evaluated: the eligibility evaluator is not wired to postings.
+
+*Corrected 2026-08-23.* This section originally said `country_code` made authorization
+**unevaluatable**. The first live fetch showed Lever states a country on **311 of 383** postings
+(81%); the three-posting fixture happened to be among the 19% that do not. ADR-0033 still forbids
+*inferring* a country from location text — that was never why the field was empty. The remaining
+blockers are the unwired evaluator, seniority, location preference, sponsorship registries and
+settlement pathways.
 
 A number computed today would omit a constraint nobody consulted. So `services/matching` computes
 **Skill Fit** — one axis, named for itself, `scorer_version = 'skill-fit-v1'` — and the Job Match
