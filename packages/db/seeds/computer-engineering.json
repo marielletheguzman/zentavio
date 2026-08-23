@@ -170,6 +170,129 @@
       "aliases": [
         "english language"
       ]
+    },
+    {
+      "slug": "c-programming",
+      "name": "C",
+      "kind": "technology",
+      "sourceUrl": "https://en.cppreference.com/w/c",
+      "aliases": [
+        "c programming",
+        "c language",
+        "ansi c",
+        "embedded c"
+      ],
+      "ambiguousAliases": [
+        "c"
+      ]
+    },
+    {
+      "slug": "cpp",
+      "name": "C++",
+      "kind": "technology",
+      "sourceUrl": "https://isocpp.org/",
+      "aliases": [
+        "c++",
+        "cpp",
+        "c plus plus",
+        "modern c++"
+      ]
+    },
+    {
+      "slug": "rust",
+      "name": "Rust",
+      "kind": "technology",
+      "sourceUrl": "https://doc.rust-lang.org/book/",
+      "aliases": [
+        "rustlang",
+        "rust lang"
+      ]
+    },
+    {
+      "slug": "embedded-linux",
+      "name": "Embedded Linux",
+      "kind": "practice",
+      "sourceUrl": "https://docs.yoctoproject.org/",
+      "aliases": [
+        "yocto",
+        "buildroot",
+        "embedded linux",
+        "board support package"
+      ]
+    },
+    {
+      "slug": "rtos",
+      "name": "Real-Time Operating Systems",
+      "kind": "practice",
+      "sourceUrl": "https://www.freertos.org/Documentation/00-Overview",
+      "aliases": [
+        "rtos",
+        "freertos",
+        "zephyr",
+        "real time operating system"
+      ]
+    },
+    {
+      "slug": "device-drivers",
+      "name": "Device Drivers",
+      "kind": "practice",
+      "sourceUrl": "https://www.kernel.org/doc/html/latest/driver-api/index.html",
+      "aliases": [
+        "device driver",
+        "kernel module",
+        "driver development"
+      ]
+    },
+    {
+      "slug": "firmware-development",
+      "name": "Firmware Development",
+      "kind": "practice",
+      "sourceUrl": null,
+      "aliases": [
+        "firmware",
+        "bare metal",
+        "bootloader"
+      ]
+    },
+    {
+      "slug": "computer-architecture",
+      "name": "Computer Architecture",
+      "kind": "domain",
+      "sourceUrl": null,
+      "aliases": [
+        "cpu architecture",
+        "instruction set",
+        "memory hierarchy"
+      ]
+    },
+    {
+      "slug": "cmake",
+      "name": "CMake",
+      "kind": "tool",
+      "sourceUrl": "https://cmake.org/documentation/",
+      "aliases": [
+        "cmake"
+      ]
+    },
+    {
+      "slug": "gdb",
+      "name": "GDB",
+      "kind": "tool",
+      "sourceUrl": "https://sourceware.org/gdb/documentation/",
+      "aliases": [
+        "gdb",
+        "gnu debugger"
+      ]
+    },
+    {
+      "slug": "misra-c",
+      "name": "MISRA C",
+      "kind": "practice",
+      "sourceUrl": "https://misra.org.uk/",
+      "aliases": [
+        "misra",
+        "misra c"
+      ]
     }
   ],
   "careerSkills": [
@@ -256,7 +379,188 @@
       "weight": 0.9,
       "cluster": "core",
       "marketScope": null
+    },
+    {
+      "skill": "c-programming",
+      "weight": 0.9,
+      "cluster": "core",
+      "marketScope": null
+    },
+    {
+      "skill": "firmware-development",
+      "weight": 0.85,
+      "cluster": "core",
+      "marketScope": null
+    },
+    {
+      "skill": "embedded-linux",
+      "weight": 0.8,
+      "cluster": "core",
+      "marketScope": null
+    },
+    {
+      "skill": "device-drivers",
+      "weight": 0.78,
+      "cluster": "core",
+      "marketScope": null
+    },
+    {
+      "skill": "computer-architecture",
+      "weight": 0.75,
+      "cluster": "core",
+      "marketScope": null
+    },
+    {
+      "skill": "rtos",
+      "weight": 0.72,
+      "cluster": "core",
+      "marketScope": null
+    },
+    {
+      "skill": "cpp",
+      "weight": 0.7,
+      "cluster": "differentiating",
+      "marketScope": null
+    },
+    {
+      "skill": "gdb",
+      "weight": 0.65,
+      "cluster": "supporting",
+      "marketScope": null
+    },
+    {
+      "skill": "cmake",
+      "weight": 0.6,
+      "cluster": "supporting",
+      "marketScope": null
+    },
+    {
+      "skill": "misra-c",
+      "weight": 0.5,
+      "cluster": "differentiating",
+      "marketScope": null
+    },
+    {
+      "skill": "rust",
+      "weight": 0.45,
+      "cluster": "peripheral",
+      "marketScope": null
     }
   ],
-  "edges": []
+  "edges": [
+    {
+      "from": "device-drivers",
+      "to": "c-programming",
+      "type": "requires",
+      "weight": 0.9
+    },
+    {
+      "from": "device-drivers",
+      "to": "linux-fundamentals",
+      "type": "requires",
+      "weight": 0.85
+    },
+    {
+      "from": "device-drivers",
+      "to": "computer-architecture",
+      "type": "requires",
+      "weight": 0.7
+    },
+    {
+      "from": "firmware-development",
+      "to": "c-programming",
+      "type": "requires",
+      "weight": 0.9
+    },
+    {
+      "from": "firmware-development",
+      "to": "computer-architecture",
+      "type": "requires",
+      "weight": 0.75
+    },
+    {
+      "from": "embedded-linux",
+      "to": "linux-fundamentals",
+      "type": "requires",
+      "weight": 0.9
+    },
+    {
+      "from": "embedded-linux",
+      "to": "c-programming",
+      "type": "requires",
+      "weight": 0.7
+    },
+    {
+      "from": "rtos",
+      "to": "c-programming",
+      "type": "requires",
+      "weight": 0.8
+    },
+    {
+      "from": "rtos",
+      "to": "computer-architecture",
+      "type": "requires",
+      "weight": 0.6
+    },
+    {
+      "from": "misra-c",
+      "to": "c-programming",
+      "type": "requires",
+      "weight": 0.95
+    },
+    {
+      "from": "cpp",
+      "to": "c-programming",
+      "type": "requires",
+      "weight": 0.6
+    },
+    {
+      "from": "gdb",
+      "to": "c-programming",
+      "type": "requires",
+      "weight": 0.5
+    },
+    {
+      "from": "c-programming",
+      "to": "cpp",
+      "type": "transfers_to",
+      "weight": 0.7
+    },
+    {
+      "from": "cpp",
+      "to": "c-programming",
+      "type": "transfers_to",
+      "weight": 0.6
+    },
+    {
+      "from": "c-programming",
+      "to": "rust",
+      "type": "transfers_to",
+      "weight": 0.45
+    },
+    {
+      "from": "firmware-development",
+      "to": "device-drivers",
+      "type": "transfers_to",
+      "weight": 0.7
+    },
+    {
+      "from": "rtos",
+      "to": "firmware-development",
+      "type": "transfers_to",
+      "weight": 0.65
+    },
+    {
+      "from": "embedded-linux",
+      "to": "device-drivers",
+      "type": "transfers_to",
+      "weight": 0.6
+    },
+    {
+      "from": "cmake",
+      "to": "bash-scripting",
+      "type": "adjacent_to",
+      "weight": 0.4
+    }
+  ]
 }
