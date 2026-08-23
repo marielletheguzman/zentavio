@@ -59,6 +59,53 @@ different requests:
 Treating `unknown` as `no` would silently hide most viable opportunities. Treating it as `yes` would
 waste applications. It is shown, labelled, and ranked below stated sponsorship.
 
+## What "the posting says so" actually means (ADR-0039)
+
+`stated_available` above says the value comes from *"the posting or employer says so"*. That is not
+self-defining, and getting it wrong is the most expensive error this feature can make — a false
+`stated_available` tells somebody a job solves their immigration problem when it does not, and they
+apply, plan a timeline, and possibly move. **The evidence contract, as implemented:**
+
+**1. The benefit must be named in qualified form.** `visa sponsorship`, `work permit sponsorship`,
+`relocation assistance`, `relocation package`, `immigration assistance` — never the bare noun.
+`sponsorship` alone is stakeholder buy-in; `relocation` alone is a topic. Both appear in real postings
+in exactly those senses:
+
+> "…partnering with stakeholders across engineering and earning **executive sponsorship**."
+> "…often involving complex compensation, negotiation, and **relocation strategies**."
+
+Both are `unknown`, and both are permanent regression cases.
+
+**2. The predicate must be about the benefit, not near it.** A qualified benefit must sit adjacent to
+an availability or refusal predicate — `is available`, `is provided`, `we offer`, `we do not sponsor`
+— with only a tiny closed set of bridging tokens permitted between them (`is`, `are`, `will`, `be`,
+`also`, `may`, `can`, `not`). Conjunctions and intervening nouns break the link, which is what
+disqualifies the one genuine span the corpus contains:
+
+> "Company **visa sponsorship and relocation assistance details will be provided** during the
+> interview process."
+
+`and` is not a bridge, and `details` is a noun *about* the benefit rather than the benefit. Details
+being provided is not the benefit being provided.
+
+**3. A requirement placed on the candidate is not an employer offer.** *"contingent upon obtaining
+valid US work authorization"* is an obligation, and obligations never produce `stated_available`.
+
+**4. `inferred_likely` is never produced from prose at all.** It is reserved for sponsor registries
+and aggregated outcomes — employer-level sources that have no table and, with `company_id` null on
+every stored posting, no join key. A CHECK refuses the value outright until one exists.
+
+### What this costs, measured
+
+Run over 239 real postings from an employer board on 2026-08-23: **239 considered, 239 said nothing,
+0 stated** — including the three postings whose text mentions the topic. The filter this feature
+describes cannot yet be demonstrated on that corpus.
+
+That is the designed outcome, not a defect. Demonstrating the filter needs a board where employers
+state sponsorship plainly — an argument for choosing the next board deliberately, never for loosening
+rule 1. Every posting is nonetheless **processed** rather than pending: `unknown` here means *we read
+it and it says nothing*, which is a different row from *we have not read it*.
+
 ## Design decision 2 — how employer sponsorship is sourced
 
 **Never by profiling the nationality of an employer's staff.** Inferring "has hired Filipinos" from

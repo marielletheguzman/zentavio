@@ -713,6 +713,19 @@ export type DedupBasisColumn = 'employer-title-location' | 'source-identity';
 export type ExpiryReasonColumn = 'source-delisted' | 'source-not-fetched';
 
 /**
+ * What an employer states about a migration benefit (ADR-0039).
+ *
+ * `unknown` is the default and the dominant value; it is never evidence of absence. `inferred_likely`
+ * is reserved for registry membership and aggregated outcomes, and is refused by CHECK until such a
+ * source exists — nothing in this repository may write it from prose.
+ */
+export type SponsorshipStatusColumn =
+  | 'stated_available'
+  | 'stated_unavailable'
+  | 'inferred_likely'
+  | 'unknown';
+
+/**
  * One opening, as reconciled from every source that described it.
  *
  * A **world fact**: provenance required, retained indefinitely, not personal data. Deduplication is
@@ -741,8 +754,35 @@ export interface JobPostingsTable {
    * graph curates — a real answer. Without this, that state and "never read" are the same row.
    */
   extracted_at: Timestamp | null;
-  /** The `EXTRACTOR_VERSION` that completed it. Paired with `extracted_at` by CHECK. */
+  /** The skill `EXTRACTOR_VERSION` that completed it. Paired with `extracted_at` by CHECK. */
   extracted_version: string | null;
+
+  /**
+   * What the employer states about helping somebody take this job from abroad (ADR-0039).
+   *
+   * `unknown` is the default and **not** evidence of absence — on the first real board stored, 3 of
+   * 239 postings mentioned the topic at all and two of those were the wrong sense of the word. A
+   * status other than `unknown` requires its span: a mention is not a statement of availability, and
+   * a requirement on the candidate is not an employer offer.
+   *
+   * `inferred_likely` is refused by CHECK until an employer-level source exists.
+   */
+  visa_sponsorship: Generated<SponsorshipStatusColumn>;
+  visa_sponsorship_span: string | null;
+  relocation_support: Generated<SponsorshipStatusColumn>;
+  relocation_support_span: string | null;
+  immigration_assistance: Generated<SponsorshipStatusColumn>;
+  immigration_assistance_span: string | null;
+
+  /**
+   * Sponsorship extraction's own marker, **deliberately not shared with skill extraction's**.
+   *
+   * Two independent deterministic transformations over the same text. One marker cannot say which
+   * version of which algorithm ran, and sharing would make an alias-scan bump re-run sponsorship and
+   * a sponsorship-rule change re-run the whole skill corpus.
+   */
+  sponsorship_extracted_at: Timestamp | null;
+  sponsorship_extracted_version: string | null;
   /** Carried verbatim for display and never mined for a country (ADR-0033). */
   location_raw: string | null;
   country_code: string | null;

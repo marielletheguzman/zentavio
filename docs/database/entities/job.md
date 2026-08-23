@@ -31,13 +31,33 @@ CREATE TABLE job_postings (
   description       text,                              -- the posting's own prose, stored not read
   requirements_text text,                              -- the source's requirement lists, plain text
 
-  -- Whether extraction has run over the two columns above, and at which version (ADR-0036).
+  -- Whether **skill** extraction has run over the two columns above, and at which version (ADR-0036).
   -- Both null means never extracted. Both set with **no** `job_posting_skills` rows means extracted
   -- and this posting asks for nothing the graph curates — a real answer, and the one the whole
   -- current corpus gives. Without them those two states are the same row shape and no sweep
   -- converges.
+  --
+  -- **This pair is skill extraction's alone.** Sponsorship has its own below (ADR-0039): they are two
+  -- independent deterministic transformations over the same text, and one marker cannot say which
+  -- version of which algorithm ran. Sharing would also make an alias-scan bump re-run sponsorship,
+  -- and a sponsorship-rule change re-run the whole skill corpus.
   extracted_at      timestamptz,
   extracted_version text,
+
+  -- What the employer states about helping somebody take this job from abroad (ADR-0039).
+  -- Four values, and `unknown` is the default and **not** evidence of absence. A value other than
+  -- `unknown` requires the sentence that carries it: a mention of the topic is not a statement of
+  -- availability, and a requirement placed on the candidate is not an offer.
+  visa_sponsorship        text        NOT NULL DEFAULT 'unknown',
+  visa_sponsorship_span   text,
+  relocation_support      text        NOT NULL DEFAULT 'unknown',
+  relocation_support_span text,
+  immigration_assistance      text    NOT NULL DEFAULT 'unknown',
+  immigration_assistance_span text,
+
+  -- Sponsorship extraction's own marker, deliberately separate from the skill pair above.
+  sponsorship_extracted_at      timestamptz,
+  sponsorship_extracted_version text,
 
   location_raw      text,                              -- carried verbatim, never mined (ADR-0033)
   country_code      char(2),
@@ -108,7 +128,28 @@ CREATE TABLE job_postings (
   CONSTRAINT ck_job_postings__seen_order CHECK (last_seen_at >= first_seen_at),
   -- A half-set marker is a bug: a timestamp with no version cannot be compared against the current
   -- extractor, and a version with no timestamp cannot say when it ran.
-  CONSTRAINT ck_job_postings__extraction_marker_paired CHECK ((extracted_at IS NULL) = (extracted_version IS NULL))
+  CONSTRAINT ck_job_postings__extraction_marker_paired CHECK ((extracted_at IS NULL) = (extracted_version IS NULL)),
+  CONSTRAINT ck_job_postings__sponsorship_marker_paired CHECK ((sponsorship_extracted_at IS NULL) = (sponsorship_extracted_version IS NULL)),
+
+  -- ADR-0039's four values, on each of the three benefits.
+  CONSTRAINT ck_job_postings__visa_sponsorship CHECK (visa_sponsorship IN ('stated_available','stated_unavailable','inferred_likely','unknown')),
+  CONSTRAINT ck_job_postings__relocation_support CHECK (relocation_support IN ('stated_available','stated_unavailable','inferred_likely','unknown')),
+  CONSTRAINT ck_job_postings__immigration_assistance CHECK (immigration_assistance IN ('stated_available','stated_unavailable','inferred_likely','unknown')),
+
+  -- ADR-0039: anything other than `unknown` shows the sentence it came from. The `ck_jpsk__extracted_has_span`
+  -- pattern, applied to the field where a false claim costs an application and possibly a move.
+  CONSTRAINT ck_job_postings__visa_sponsorship_span CHECK (visa_sponsorship = 'unknown' OR visa_sponsorship_span IS NOT NULL),
+  CONSTRAINT ck_job_postings__relocation_support_span CHECK (relocation_support = 'unknown' OR relocation_support_span IS NOT NULL),
+  CONSTRAINT ck_job_postings__immigration_assistance_span CHECK (immigration_assistance = 'unknown' OR immigration_assistance_span IS NOT NULL),
+
+  -- ADR-0039 rule 3: `inferred_likely` comes from a registry or aggregated outcomes — employer-level
+  -- sources that do not exist. Nothing may produce it from prose, and the schema refuses it rather
+  -- than trusting review, the way `stated-requirement` is reserved on `job_posting_skills`.
+  CONSTRAINT ck_job_postings__no_inferred_sponsorship CHECK (
+    visa_sponsorship <> 'inferred_likely'
+    AND relocation_support <> 'inferred_likely'
+    AND immigration_assistance <> 'inferred_likely'
+  )
 );
 
 CREATE UNIQUE INDEX uq_job_postings__dedup ON job_postings (dedup_key) WHERE deleted_at IS NULL;
@@ -118,6 +159,7 @@ CREATE INDEX idx_job_postings__live_remote ON job_postings (is_remote, posted_at
 CREATE INDEX idx_job_postings__stale ON job_postings (stale_after) WHERE expired_at IS NULL;
 -- What the extraction pass selects on: live postings whose recorded version is not the current one.
 CREATE INDEX idx_job_postings__extraction ON job_postings (extracted_version) WHERE deleted_at IS NULL AND expired_at IS NULL;
+CREATE INDEX idx_job_postings__sponsorship_extraction ON job_postings (sponsorship_extracted_version) WHERE deleted_at IS NULL AND expired_at IS NULL;
 ```
 
 ## Why these columns exist
@@ -166,6 +208,31 @@ looked, separately from what we found. `updated_at` cannot substitute — `upser
 bumps it on every sighting including the `refused-lower-tier` branch that writes no fields, so on
 this table it means *seen again*, not *the text changed*. The marker is cleared only where the prose
 is actually rewritten, which is the signal `updated_at` cannot give (ADR-0036).
+
+**Three sponsorship statuses, each with its own span, and their own marker** (ADR-0039). What an
+employer says about helping somebody take the job from abroad is the second question the product
+exists to answer, and it is the field where a false positive is most expensive — it tells somebody a
+job solves their immigration problem when it does not.
+
+`unknown` is the default and is **not** evidence of absence. Anything else requires the sentence that
+carries it, because two rules decide the value and neither can be checked without the span:
+
+- **A mention of the topic is not a statement of availability.** *"earning executive sponsorship"* is
+  stakeholder buy-in; *"relocation strategies"* describes a recruiter's job. Both are real spans from
+  the Zoox board, and both are `unknown`.
+- **A requirement placed on the candidate is not an employer offer.** *"contingent upon obtaining
+  valid US work authorization"* is an obligation, and *"details will be provided during the interview
+  process"* is not a statement that the benefit exists.
+
+`inferred_likely` is refused by CHECK. It belongs to registry membership and aggregated outcomes —
+employer-level sources that have no table and, with `company_id` null on every posting, no join key
+either. Reserved the way `stated-requirement` is reserved on `job_posting_skills`.
+
+**The marker pair is separate from skill extraction's, deliberately.** Two independent deterministic
+transformations over the same text: one marker cannot say which version of which algorithm ran, and
+sharing would make an alias-scan bump re-run sponsorship and a sponsorship-rule change re-run the
+whole skill corpus. Two nullable columns is the honest cost of keeping *"processed by this version of
+this pipeline"* answerable per pipeline.
 
 **`url`, separate from `job_posting_sources.source_url`.** One is where a person applies; the other is
 the endpoint the payload was read from. Conflating them sends somebody to an API response. The column
@@ -366,6 +433,12 @@ in its own table with its own retention (`../data-retention.md`).
   finished, not pending; re-selecting it is the non-convergent bug ADR-0036 exists to prevent.
 - The marker is cleared only where `description` or `requirements_text` actually changes value. Not
   on a sighting, not on a refused lower-tier write.
+- Both markers are cleared on a prose rewrite, and both are stamped even when their pass finds
+  nothing. A posting whose text says nothing about sponsorship is `unknown` and **processed**, never
+  left looking unprocessed.
+- No row carries `inferred_likely` on any of the three statuses — `ck_job_postings__no_inferred_sponsorship`.
+- A status other than `unknown` has its span. A span may exist without a status, which is the
+  harmless direction.
 
 ## Related
 
