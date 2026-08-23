@@ -97,6 +97,7 @@ export type {
   RequirementSourcesTable,
   RequirementsTable,
   SchemaMigrationsTable,
+  SponsorshipStatusColumn,
   UserStatusColumn,
   UsersTable,
 } from './schema.ts';
@@ -215,6 +216,15 @@ export {
   type PostingScoringState,
   type TransferEdge,
 } from './repositories/matches.ts';
+
+export {
+  postingsDueForSponsorship,
+  recordSponsorship,
+  sponsorshipForPosting,
+  type BenefitOutcome,
+  type PostingDueForSponsorship,
+  type SponsorshipOutcome,
+} from './repositories/posting-sponsorship.ts';
 
 export {
   aliasIndex,

@@ -32,6 +32,22 @@ export {
 export { runDueJobBoards, type ScheduledRunReport } from './scheduled-run.ts';
 
 export {
+  SPONSORSHIP_EXTRACTOR_VERSION,
+  extractSponsorship,
+  type BenefitFinding,
+  type BenefitKind,
+  type SponsorshipFindings,
+  type SponsorshipStatus,
+} from './sponsorship-extraction.ts';
+
+export {
+  DEFAULT_SPONSORSHIP_BATCH,
+  extractSponsorshipForDuePostings,
+  type SponsorshipRunDeps,
+  type SponsorshipRunReport,
+} from './sponsorship-run.ts';
+
+export {
   DEFAULT_EXTRACTION_BATCH,
   extractDuePostings,
   type ExtractionRunDeps,
