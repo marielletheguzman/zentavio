@@ -60,6 +60,18 @@ export interface SeedSkill {
   readonly kind: string;
   readonly sourceUrl: string | null;
   readonly aliases: readonly string[];
+  /**
+   * Aliases that are also ordinary English words, and may not be matched bare.
+   *
+   * The skill's own `name` is auto-aliased, so `Go` needs `"go"` listed here even though it never
+   * appears in `aliases`. Membership is compared on the normalized form, for the same reason
+   * everything else in this file is.
+   *
+   * Curation, not code: whether a string is safe to match bare is a property of that string, and the
+   * scanner's corroboration rule (`services/ingestion/src/skill-extraction.ts`) reads the flag rather
+   * than carrying a list of phrases it would never finish.
+   */
+  readonly ambiguousAliases?: readonly string[];
 }
 
 export interface SeedCareer {
@@ -601,14 +613,24 @@ export async function applySeed(
 
       // The display name is itself an alias — a résumé saying "Kubernetes" must resolve without the
       // name having to be repeated in the alias list.
+      const ambiguous = new Set((skill.ambiguousAliases ?? []).map(normalizeAlias));
+
       for (const alias of [skill.name, ...skill.aliases]) {
-        const aliasResult = await client.query(
-          `INSERT INTO skill_aliases (id, skill_id, alias, normalized, source_tier)
-           VALUES ($1, $2, $3, $4, $5)
-           ON CONFLICT (normalized) DO NOTHING`,
-          [uuidv7(), skillId, alias, normalizeAlias(alias), SEED_TIER],
+        const normalized = normalizeAlias(alias);
+        const aliasResult = await client.query<{ inserted: boolean }>(
+          `INSERT INTO skill_aliases (id, skill_id, alias, normalized, source_tier, requires_context)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           -- Updates rather than ignoring: the seed is the source of truth for curation, and an
+           -- alias reclassified as ambiguous must take effect on a rerun. Before this, DO NOTHING
+           -- meant reseeding could never change anything about an alias that already existed.
+           ON CONFLICT (normalized) DO UPDATE SET requires_context = EXCLUDED.requires_context
+           -- xmax is zero only on a genuine insert. rowCount cannot tell the two apart under
+           -- DO UPDATE, and counting an update as an insert breaks the idempotence guarantee this
+           -- report exists to make checkable -- which is how this line came to be written.
+           RETURNING (xmax = 0) AS inserted`,
+          [uuidv7(), skillId, alias, normalized, SEED_TIER, ambiguous.has(normalized)],
         );
-        aliasesInserted += aliasResult.rowCount ?? 0;
+        if (aliasResult.rows[0]?.inserted === true) aliasesInserted += 1;
       }
     }
 

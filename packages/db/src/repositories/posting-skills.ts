@@ -22,6 +22,8 @@ export type JobPostingSkillRow = Selectable<JobPostingSkillsTable>;
 export interface AliasEntry {
   readonly normalized: string;
   readonly skillId: string;
+  /** The alias is also an ordinary English word, so the scan needs corroboration before believing it. */
+  readonly requiresContext: boolean;
 }
 
 /**
@@ -34,11 +36,15 @@ export async function aliasIndex(db: Kysely<Database>): Promise<readonly AliasEn
   const rows = await db
     .selectFrom('skill_aliases')
     .innerJoin('skills', 'skills.id', 'skill_aliases.skill_id')
-    .select(['skill_aliases.normalized', 'skill_aliases.skill_id'])
+    .select(['skill_aliases.normalized', 'skill_aliases.skill_id', 'skill_aliases.requires_context'])
     .where('skills.deleted_at', 'is', null)
     .execute();
 
-  return rows.map((row) => ({ normalized: row.normalized, skillId: row.skill_id }));
+  return rows.map((row) => ({
+    normalized: row.normalized,
+    skillId: row.skill_id,
+    requiresContext: row.requires_context,
+  }));
 }
 
 /** A row as extraction produces it, before the database adds its timestamps. */
