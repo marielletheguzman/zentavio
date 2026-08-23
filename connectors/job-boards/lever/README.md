@@ -118,6 +118,44 @@ skill added to make fiction score well. The acceptance test for graph sufficienc
 *existing* graph extracts and scores genuine postings — never whether a chosen board's numbers
 improve.
 
+## The acceptance test, and what it settled
+
+Run 2026-08-23 against **Zoox's board** (`zoox`, 239 postings, **none fictional**), with the skill
+graph **unchanged** — 41 skills, 145 aliases, nothing added or tuned for this board.
+
+| Slice | Postings yielding a skill | Rows |
+|---|---|---|
+| all 239 | 126 (52.7%) | 322 |
+| software/engineering titles (130) | 95 (73.1%) | 284 |
+| **embedded-titled (9)** | **9 (100%)** | 46 |
+
+The spans are semantically right, not lucky: `C++` from *"Strong embedded C/C++ programming
+experience"*, `MISRA C` from *"(Polarion, ISO-26262, MISRA…)"*, `Embedded Linux` from *"embedded
+Linux build systems (e.g., Yocto)"*, `Rust` from *"using C, C++, or Rust"*.
+
+**What it settled:**
+
+- **Graph sufficiency** — demonstrated for the embedded slice.
+- **Corpus validity** — demonstrated on Zoox; the earlier `leverdemo` recall figure is **retired**.
+- **No board-specific tuning** — the graph that scored 100% on embedded titles was merged *before*
+  this board was ever read.
+- **The `c` alias is safe in practice.** A one-character alias resolved correctly on every real
+  posting, because corroboration held. That validates the rule, not just the unit tests.
+
+**Known minor imprecision, not release-blocking:** three rows on *"Manager, Software Core Firmware
+Validation"* (Networking, RTOS, Device Drivers) cite one truncated span. All are `is_required = false`
+at weight `0.25`, so they are mentions rather than requirements. A precision investigation, **not**
+evidence that the skill model is insufficient — and explicitly not a reason to add skills.
+
+## Ownership is established from the API, never from a guessed slug
+
+The `zoox` slug came from Lever's own canonical `jobs.lever.co/zoox/<id>` URLs and was confirmed
+against the payload: every `hostedUrl` under `/zoox`, 5 530 mentions of "Zoox", 318 of "zoox.com".
+
+**`jobs.lever.co` answers `403` to automated requests.** That is the rendering site, and it is not
+what this connector reads — `api.lever.co` is, with `Allow: /` and its documented permission. The 403
+is recorded rather than worked around (`docs/architecture/connectors.md`).
+
 ## Related
 
 - `docs/database/entities/job.md` — the shape `normalize` targets
