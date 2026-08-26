@@ -18,6 +18,7 @@ export {
   applySeed,
   loadSeedFile,
   normalizeAlias,
+  curatedDirectory,
   seedsDirectory,
   validateSeed,
   type SeedCareer,
