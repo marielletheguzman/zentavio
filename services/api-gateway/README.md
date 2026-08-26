@@ -15,6 +15,15 @@ symptom is a change that appears to do nothing.**
 | `POST /v1/resume/corrections` | a disagreement, recorded as a new profile version |
 | `POST /v1/targets` | the career track being pursued |
 | `GET /v1/gap` | requirements + graph + profile → `ai/skill-gap` |
+| `GET /v1/jobs` | live postings for the subject, each with its Skill Fit and three sponsorship signals |
+
+**`GET /v1/jobs` returns shapes, not numbers.** Skill Fit is an object a caller must read
+`status` from before it can reach a score, because `0` (checked, nothing overlapped) and *not
+evaluatable* are different answers and a `number | null` invites both to render as `0%` (ADR-0037).
+The three sponsorship signals stay separate and each carries the sentence that stated it — merged
+once, they cannot be un-merged. It **computes nothing**: Skill Fit is read from `matches` where
+`services/matching` wrote it with its own version, and a gateway that recomputed would produce a
+second, unversioned number that disagrees the first time the scorer changes.
 
 **The guard is global**, not per-route: opting a route *in* to protection is a list someone forgets,
 and the route they forget is the one that leaks. The subject comes from `@CurrentSubject()`, never
