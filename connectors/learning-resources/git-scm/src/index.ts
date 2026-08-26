@@ -81,27 +81,6 @@ export interface LearningResourceRecord {
 export const SOURCE_ID = 'git-scm';
 
 /**
- * The registration row this connector needs in `connector_sources`.
- *
- * Exposed as data rather than written here: a connector returns what it is, and persistence belongs
- * to `services/ingestion`. `legal_basis` is a sentence rather than a URL because "we checked" is not
- * a record.
- */
-export const REGISTRATION = {
-  id: SOURCE_ID,
-  kind: 'learning' as const,
-  displayName: 'Git reference documentation (git-scm.com)',
-  sourceTier: 1,
-  termsUrl: 'https://git-scm.com/about',
-  legalBasis:
-    'No robots.txt is served (404, checked 2026-08-22), so nothing is disallowed; the reference ' +
-    'pages are the Git project documentation distributed under GPLv2, and only titles, URLs and ' +
-    'metadata are stored — never the prose.',
-  refreshWindow: '90 days',
-  schedule: '0 4 1 * *',
-} as const;
-
-/**
  * The ten pages the Git assessment cites.
  *
  * A closed list rather than a crawl. Crawling a documentation site produces a catalogue nobody chose
@@ -154,7 +133,16 @@ export class GitScmConnector implements Connector<DocPageRaw, readonly LearningR
     // volunteer-run project site deserves the same courtesy as any other.
     rateLimit: { requests: 20, windowMs: 60_000, minIntervalMs: 3000 },
     reliability: 0,
-    termsUrl: REGISTRATION.termsUrl,
+    termsUrl: 'https://git-scm.com/about',
+    displayName: 'Git reference documentation (git-scm.com)',
+    sourceTier: 1,
+    legalBasis:
+      'No robots.txt is served (404, checked 2026-08-22), so nothing is disallowed; the reference ' +
+      'pages are the Git project documentation distributed under GPLv2, and only titles, URLs and ' +
+      'metadata are stored — never the prose.',
+    // Documentation follows Git's release cadence, so a quarter is generous and still honest.
+    refreshWindow: '90 days',
+    schedule: '0 4 1 * *',
   };
 
   readonly #deps: GitScmDeps;

@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { isIngestible } from '@zentavio/connectors-core';
 import { describe, expect, it } from 'vitest';
 
-import { LeverConnector, REGISTRATION, type BoardRaw, type JobPostingRecord } from './index.ts';
+import { LeverConnector, type BoardRaw, type JobPostingRecord } from './index.ts';
 import { toPosting, type LeverPosting } from './parse.ts';
 
 /** `api.lever.co/v0/postings/leverdemo?mode=json` as served on 2026-08-22, first three postings. */
@@ -221,9 +221,10 @@ describe('what it will read', () => {
 
   it('records why we are permitted to read the source', () => {
     // "We checked" is not a record.
-    expect(REGISTRATION.legalBasis).toContain('robots.txt');
-    expect(REGISTRATION.legalBasis).toContain('published');
-    expect(REGISTRATION.sourceTier).toBe(2);
+    const meta = connector(null).meta;
+    expect(meta.legalBasis).toContain('robots.txt');
+    expect(meta.legalBasis).toContain('published');
+    expect(meta.sourceTier).toBe(2);
   });
 });
 

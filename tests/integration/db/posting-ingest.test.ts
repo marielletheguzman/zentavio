@@ -10,7 +10,8 @@
  * retire jobs somebody is tracking because our fetch broke.
  */
 
-import { LeverConnector, REGISTRATION, type BoardRaw } from '@zentavio/connector-lever';
+import { toRegistration } from '@zentavio/connectors-core';
+import { LeverConnector, type BoardRaw } from '@zentavio/connector-lever';
 import type { JobPosting } from '@zentavio/types';
 import { registerConnectorSource, livePostings } from '@zentavio/db';
 import type { Database } from '@zentavio/db';
@@ -23,6 +24,9 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { uuidv7 } from '../../../packages/db/src/uuid.ts';
 import { migratedTestPool } from './database.ts';
+
+/** The connector's own declared metadata — the single source the registration row is projected from (ADR-0041). */
+const CONNECTOR_META = new LeverConnector({ fetchBoard: async () => null, configuredBoards: [] }).meta;
 
 const FIXTURE = JSON.parse(
   readFileSync(fileURLToPath(new URL('../../fixtures/connectors/lever/leverdemo.json', import.meta.url)), 'utf8'),
@@ -39,7 +43,7 @@ function connector(board: BoardRaw = FIXTURE) {
 
 function observation() {
   return {
-    sourceTier: REGISTRATION.sourceTier,
+    sourceTier: CONNECTOR_META.sourceTier,
     sourceUrl: `https://api.lever.co/v0/postings/${BOARD}?mode=json`,
     retrievedAt: new Date('2026-08-22T00:00:00Z'),
     connectorVersion: '1.0.0',
@@ -98,18 +102,7 @@ beforeEach(async () => {
   await pool.query('DELETE FROM job_postings');
   await pool.query('DELETE FROM connector_sources');
 
-  await registerConnectorSource(db, {
-    id: REGISTRATION.id,
-    kind: REGISTRATION.kind,
-    displayName: REGISTRATION.displayName,
-    connectorVersion: '1.0.0',
-    sourceTier: REGISTRATION.sourceTier,
-    termsUrl: REGISTRATION.termsUrl,
-    legalBasis: REGISTRATION.legalBasis,
-    rateLimit: { requests: 60, windowMs: 60_000 },
-    refreshWindow: REGISTRATION.refreshWindow,
-    schedule: REGISTRATION.schedule,
-  }).execute();
+  await registerConnectorSource(db, toRegistration(CONNECTOR_META)).execute();
 });
 
 describe('a board arriving for the first time', () => {

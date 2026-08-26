@@ -77,6 +77,16 @@ export class AufenthgConnector implements Connector<StatuteRaw, readonly Sourced
     rateLimit: { requests: 30, windowMs: 60_000, minIntervalMs: 2000 },
     reliability: 0,
     termsUrl: 'https://www.gesetze-im-internet.de/impressum.html',
+    displayName: 'Gesetze im Internet — AufenthG § 18g',
+    sourceTier: 1,
+    legalBasis:
+      '`gesetze-im-internet.de/robots.txt` is `Disallow:` — empty, permitting everything. The site is ' +
+      'operated by the Bundesamt für Justiz, and German statutes are amtliche Werke, uncopyrighted ' +
+      'under § 5 UrhG.',
+    // A statute changes rarely and without notice, so the window is long and the poll is frequent:
+    // the cost of checking is one request, the cost of missing an amendment is a wrong verdict.
+    refreshWindow: '180 days',
+    schedule: '0 3 * * 1',
   };
 
   readonly #deps: AufenthgDeps;

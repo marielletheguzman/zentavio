@@ -74,27 +74,6 @@ export type JobPostingRecord = JobPosting;
 
 export const SOURCE_ID = 'lever';
 
-/**
- * The registration row this connector needs in `connector_sources`.
- *
- * Tier 2, not tier 1: the employer wrote the posting, but Lever hosts and renders it, so this is the
- * platform's rendering of the employer's words rather than the employer's own page.
- */
-export const REGISTRATION = {
-  id: SOURCE_ID,
-  kind: 'job-board' as const,
-  displayName: 'Lever (configured employer boards)',
-  sourceTier: 2,
-  termsUrl: 'https://github.com/lever/postings-api',
-  legalBasis:
-    'Lever documents that postings in the `published` state "are publicly viewable" and "may be ' +
-    'scraped by third parties", and that unpublished jobs are hidden from the API entirely (read ' +
-    '2026-08-22). robots.txt is `Allow: /` with `Crawl-delay: 1`. Only boards configured by ' +
-    'Zentavio are read; nothing discovers or enumerates boards.',
-  refreshWindow: '1 day',
-  schedule: '0 */6 * * *',
-} as const;
-
 export interface LeverDeps {
   /** Fetch one configured board. `null` when the board is gone — never an invented empty board. */
   readonly fetchBoard: (board: string) => Promise<BoardRaw | null>;
@@ -112,7 +91,18 @@ export class LeverConnector implements Connector<BoardRaw, readonly JobPosting[]
     // this is courtesy rather than a published ceiling — and a job board changes daily at most.
     rateLimit: { requests: 60, windowMs: 60_000, minIntervalMs: 1000 },
     reliability: 0,
-    termsUrl: REGISTRATION.termsUrl,
+    termsUrl: 'https://github.com/lever/postings-api',
+    displayName: 'Lever (configured employer boards)',
+    // Tier 2, not tier 1: the employer wrote the posting, but Lever hosts and renders it, so this is
+    // the platform's rendering of the employer's words rather than the employer's own page.
+    sourceTier: 2,
+    legalBasis:
+      'Lever documents that postings in the `published` state "are publicly viewable" and "may be ' +
+      'scraped by third parties", and that unpublished jobs are hidden from the API entirely (read ' +
+      '2026-08-22). robots.txt is `Allow: /` with `Crawl-delay: 1`. Only boards configured by ' +
+      'Zentavio are read; nothing discovers or enumerates boards.',
+    refreshWindow: '1 day',
+    schedule: '0 */6 * * *',
     // The API returns every posting in the `published` state, so a board read completely is a
     // complete list and a disappearance means the posting is gone (ADR-0034). It says nothing about
     // whether a given run finished — that is the run's report, and expiry needs both.

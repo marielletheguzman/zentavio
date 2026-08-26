@@ -86,6 +86,14 @@ export class SemConnector implements Connector<WeisungenRaw, readonly SourcedReq
     rateLimit: { requests: 10, windowMs: 60_000, minIntervalMs: 5000 },
     reliability: 0,
     termsUrl: 'https://www.sem.admin.ch/sem/de/home/publiservice/weisungen-kreisschreiben.html',
+    displayName: 'SEM Weisungen AIG, Kapitel 4',
+    sourceTier: 1,
+    legalBasis:
+      '`sem.admin.ch` declares no `robots.txt` at all — a 404, not a challenge. Absence of a stated ' +
+      'restriction is not permission, so this connector carries the most conservative rate limit ' +
+      'here and treats the 167-page chapter as one fetch per refresh.',
+    refreshWindow: '180 days',
+    schedule: '0 3 1 * *',
   };
 
   readonly #deps: SemDeps;

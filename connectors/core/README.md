@@ -93,20 +93,35 @@ has no symptom until a run is silently short a source.
 Note that **`registerConnectorSource` is a different operation** — it writes a `connector_sources`
 row in the database. Both are called registering, and doing one is not doing the other.
 
-**And nothing in production calls it.** `registerConnectorSource` is invoked only from integration
-tests; `git-scm` and `lever` exist in the dev database because a session put them there by hand. A
-source absent from `connector_sources` is not a soft failure — `staleAfter` resolves its
+A source absent from `connector_sources` is not a soft failure — `staleAfter` resolves its
 `refresh_window` through a subquery, so the row comes back null and every posting insert fails on
 `stale_after NOT NULL`. The symptom is a NOT NULL violation that names neither the source nor the
-cause.
+cause, and this repository paid it once: `lever` was missing from the dev database on 2026-08-23.
 
-A generic registration pass cannot be written yet: **only 2 of 8 connectors export a `REGISTRATION`
-constant**, and `Connector` does not require one. Putting registration on the contract is a change to
-a published contract and therefore needs an ADR (`.claude/context/decisions.md`). Recorded here so the
-next person finds the gap before a first real run does.
+**ADR-0041 closed that gap.** The declared facts a source states about itself — `displayName`,
+`sourceTier`, `legalBasis`, `refreshWindow`, `schedule` — live on `ConnectorMeta` and are
+**required**, `toRegistration(meta)` projects them onto the row, and `syncConnectorSources` in
+`services/ingestion` writes one row per registered connector. The `REGISTRATION` constants that used
+to hold half of this are gone.
+
+**The type is the enforcement.** A connector that states no legal basis does not compile, so a source
+cannot be added without somebody writing down what they read. The registration was a *module-level*
+constant before, which is why the pass could not be written: the registry holds `Connector`
+instances, `meta` is the only per-instance data, and reaching a per-connector constant would mean
+importing connector packages by name — a build error outside `default-registry.ts`.
+
+Two things the projection fixed rather than inherited. The hand-assembled payload stored
+`{requests: 60, windowMs: 60_000}` for Lever while the connector declared `minIntervalMs: 1000`, so
+the persisted rate limit disagreed with the limiter that ran. And it could not reach `regions` at
+all — the column existed from the first migration and the payload type omitted it, so it held its
+`'{}'` default while `meta.regions` said otherwise.
+
+**Nothing schedules the pass.** `syncConnectorSources` is a function with no caller, like
+`runDueJobBoards` and `extractDuePostings`: what triggers it is a deployment decision and nothing is
+deployed.
 
 ## Related
 
-- ADR-0002 (plugin model), ADR-0005 (the lint rule that enforces it)
+- ADR-0002 (plugin model), ADR-0005 (the lint rule that enforces it), ADR-0041 (registration on `meta`)
 - `docs/architecture/connectors.md`, `docs/development/connector-guide.md`
 - `.claude/skills/connectors/SKILL.md`

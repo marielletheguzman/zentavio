@@ -16,6 +16,11 @@ function stubConnector(
     rateLimit: { requests: 1, windowMs: 1000 },
     reliability: 0,
     termsUrl: 'https://example.invalid/terms',
+    displayName: `Stub ${id}`,
+    sourceTier: 1,
+    legalBasis: 'Stub source used only by this file; nothing is fetched.',
+    refreshWindow: '30 days',
+    schedule: '0 0 * * *',
   };
   return {
     meta,

@@ -183,6 +183,14 @@ export interface ConnectorRegistration {
   readonly rateLimit: unknown;
   readonly refreshWindow: string;
   readonly schedule: string;
+  /**
+   * ISO-3166-1 alpha-2 codes this source meaningfully covers, or `['*']`.
+   *
+   * Added by ADR-0041. The column existed from the first migration and nothing could reach it, so
+   * every row written before that decision holds the `'{}'` default while `meta.regions` said
+   * otherwise — `byRegion` and the stored row disagreed by construction.
+   */
+  readonly regions: readonly string[];
 }
 
 /**
@@ -206,6 +214,7 @@ export function registerConnectorSource(db: Kysely<Database>, source: ConnectorR
       rate_limit: JSON.stringify(source.rateLimit),
       refresh_window: source.refreshWindow,
       schedule: source.schedule,
+      regions: [...source.regions],
     })
     .onConflict((conflict) =>
       conflict.column('id').doUpdateSet({
@@ -217,6 +226,7 @@ export function registerConnectorSource(db: Kysely<Database>, source: ConnectorR
         rate_limit: JSON.stringify(source.rateLimit),
         refresh_window: source.refreshWindow,
         schedule: source.schedule,
+        regions: [...source.regions],
         updated_at: new Date(),
       }),
     )

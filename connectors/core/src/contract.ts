@@ -62,6 +62,36 @@ export interface ConnectorMeta {
    */
   readonly termsUrl: string;
   /**
+   * How an operator reading `connector_sources` names this source. The source, not the connector:
+   * *"Lever (configured employer boards)"*, never `lever`, which the `id` already says.
+   */
+  readonly displayName: string;
+  /**
+   * Knowledge tier, 1–4 (`.claude/context/knowledge-sources.md`). **Declared**, and it is a ceiling
+   * rather than a score: immigration rules and salary thresholds may come from tier 1 and nowhere
+   * else. `reliability` is the observed number that moves underneath it.
+   */
+  readonly sourceTier: 1 | 2 | 3 | 4;
+  /**
+   * Why we are permitted to fetch this at all — a sentence, because "we checked" is not a record.
+   *
+   * **Required, and that is the point of ADR-0041.** A source cannot be added without somebody
+   * writing down what they read, and a default here would be the invented value the rule about
+   * inventing values exists to prevent.
+   */
+  readonly legalBasis: string;
+  /**
+   * How long a fact from this source stays current, as a PostgreSQL interval. Copied onto stored
+   * facts as their staleness horizon, so a tier-1 source past this window is treated as tier 2.
+   */
+  readonly refreshWindow: string;
+  /**
+   * Cron expression for how often a run becomes due. Read by the scheduler; the connector never
+   * consults it. **Our polling policy, not a claim about the source** — unlike `legalBasis` and
+   * `sourceTier`, nothing upstream states it.
+   */
+  readonly schedule: string;
+  /**
    * Whether a complete run of this source lists **everything live** in a scope (ADR-0034).
    *
    * A Lever board is `exhaustive` by construction — the API returns every published posting, so a
@@ -228,4 +258,57 @@ export interface DerivedSource {
 /** True when nothing in the result blocks ingestion. Warnings do not block. */
 export function isIngestible(result: ValidationResult): boolean {
   return !result.issues.some((issue) => issue.severity === 'error');
+}
+
+/**
+ * What `connector_sources` stores about a source, derived from `meta` (ADR-0041).
+ *
+ * **Structurally identical to `ConnectorRegistration` in `packages/db` and deliberately separate**:
+ * `connectors/core` must not depend on the database package, so the two shapes are checked against
+ * each other at the single call site in `services/ingestion` and by a test, rather than by sharing
+ * a declaration. Two types is the honest cost of that boundary.
+ *
+ * Everything here is **declared** state. The observed columns — `reliability`, the breaker, the
+ * failure counters, the cursor — are what running the connector produced, are absent from this
+ * shape on purpose, and `registerConnectorSource` never overwrites them.
+ */
+export interface ConnectorRegistrationInput {
+  readonly id: string;
+  readonly kind: ConnectorKind;
+  readonly displayName: string;
+  readonly connectorVersion: string;
+  readonly sourceTier: number;
+  readonly termsUrl: string;
+  readonly legalBasis: string;
+  readonly rateLimit: RateLimitSpec;
+  readonly refreshWindow: string;
+  readonly schedule: string;
+  readonly regions: readonly string[];
+}
+
+/**
+ * Project a connector's `meta` onto its registration row.
+ *
+ * Pure, total, and the only place the mapping exists. Before ADR-0041 each caller assembled this
+ * by hand from two objects plus literals, and the literals had already drifted — the stored rate
+ * limit in `posting-runner.test.ts` omitted the `minIntervalMs` the Lever connector actually
+ * enforces. A projection cannot drift from its own source.
+ *
+ * `connectorVersion` is `meta.version`: the semver of the connector's *behaviour*, so a stored row
+ * says which normalization wrote the facts beneath it.
+ */
+export function toRegistration(meta: ConnectorMeta): ConnectorRegistrationInput {
+  return {
+    id: meta.id,
+    kind: meta.kind,
+    displayName: meta.displayName,
+    connectorVersion: meta.version,
+    sourceTier: meta.sourceTier,
+    termsUrl: meta.termsUrl,
+    legalBasis: meta.legalBasis,
+    rateLimit: meta.rateLimit,
+    refreshWindow: meta.refreshWindow,
+    schedule: meta.schedule,
+    regions: meta.regions,
+  };
 }

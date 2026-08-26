@@ -104,6 +104,16 @@ export class InzConnector implements Connector<InzRaw, readonly SourcedRequireme
     rateLimit: { requests: 30, windowMs: 60_000, minIntervalMs: 2000 },
     reliability: 0,
     termsUrl: 'https://www.immigration.govt.nz/about-us/policy-and-law',
+    displayName: 'Immigration New Zealand — Operational Manual',
+    sourceTier: 1,
+    legalBasis:
+      "INZ's `robots.txt` disallows `/admin`, `/Security`, `/_search`, `/_visa-search` and " +
+      '`/_list-collection-search`; `/opsmanual/` is not among them, and no challenge is served. ' +
+      '`/opsmanual-archive/` is superseded policy and is never read for a current rule.',
+    // Immigration Instructions are amended on no fixed cycle and MBIE's minimum wage moves each
+    // April, so the window is the shortest of the immigration sources.
+    refreshWindow: '90 days',
+    schedule: '0 3 * * 1',
   };
 
   readonly #deps: InzDeps;
