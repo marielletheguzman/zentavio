@@ -44,6 +44,13 @@ resolved from this file rather than the working directory.`;
 export const seedsDirectory = fileURLToPath(new URL('../seeds/', import.meta.url));
 
 /**
+ * Where curated world facts live — dated claims about real organisations, with the sentence somebody
+ * read them in. **Not seeds**: nothing in there is replaceable by later ingestion, which is exactly
+ * what `seeds/` says of itself.
+ */
+export const curatedDirectory = fileURLToPath(new URL('../curated/', import.meta.url));
+
+/**
  * Every seeded row is tier 3, `curated`, with no `retrieved_at`.
  *
  * Not a placeholder for something better later — it is the honest tier for identifications that were

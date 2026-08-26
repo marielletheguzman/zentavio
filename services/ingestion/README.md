@@ -98,6 +98,31 @@ the point of the flag.
 A failed archive is **reported, not thrown**. The caller decides what it means — a warning today, a
 rejection once the enforcement phase lands.
 
+## Employer sponsorship arrives curated, not connected
+
+**The sponsor-registry connector cannot be built.** Of the four supported countries only New Zealand
+operates an employer-accreditation regime, and INZ's accredited-employer list is a search box whose
+endpoint — `/_list-collection-search` — its own `robots.txt` disallows. `docs/architecture/connectors.md`
+settles what that means: *"If a source disallows automated access, the answer is that we do not
+integrate it."*
+
+Two further blockers survive even that one. The list offers **no enumeration** — it answers an NZBN
+or three characters of a name, so it can verify an employer you already hold but cannot produce a
+register. And INZ states that **employers may opt out of appearing**, so a miss is never evidence of
+anything.
+
+So `syncCuratedSponsorship` applies `packages/db/curated/employer-sponsorship.json` instead: the
+employer's own page, read by a person, entered with the sentence they read it in.
+
+**A curator is not trusted more than a job board is.** Every entry's span runs through the same
+`extractSponsorship` the Lever pipeline uses, and the entry is refused unless the extractor
+independently reaches the asserted status. One vocabulary — a second one written for curated entries
+is the drift `probe2.mjs` already demonstrated when it hand-copied the benefit list into its own
+regex.
+
+**The file is currently empty.** Zoox and Zalando have both been evaluated and both refused; the
+curated README records the sentences and why. That is the rules working, not a gap in them.
+
 ## Still missing
 
 No scheduler. `de.eu-blue-card` is seeded by `pnpm seed` (`packages/db/src/immigration-pathways.ts`)

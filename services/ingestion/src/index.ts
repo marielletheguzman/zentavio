@@ -34,6 +34,18 @@ export { runDueJobBoards, type ScheduledRunReport } from './scheduled-run.ts';
 export { syncConnectorSources, type SourceRegistrationReport } from './source-registration.ts';
 
 export {
+  loadCuratedSponsorship,
+  syncCuratedSponsorship,
+  validateCuratedSponsorship,
+  type CuratedClaim,
+  type CuratedRejection,
+  type CuratedSponsorshipEntry,
+  type CuratedSponsorshipFile,
+  type CuratedSyncReport,
+  type CuratedValidation,
+} from './curated-sponsorship.ts';
+
+export {
   SPONSORSHIP_EXTRACTOR_VERSION,
   extractSponsorship,
   type BenefitFinding,
