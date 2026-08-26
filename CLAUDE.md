@@ -85,9 +85,15 @@ most harmful and least detectable thing this repository could contain.
 That count read `23` until 2026-08-26 and was stale by eleven — count the `Database` interface, do
 not trust this line.
 
-**1 947 measured tests — 990 unit (60 files), 514 integration (39 files) and 443 pytest, all three
-run 2026-08-26** against local PostgreSQL and MinIO. The unit figure has twice been stale here by
-more than a hundred — treat any count on this line as the last measurement, not as a live number. The
+**1 869 measured tests — 912 unit (57 files), 514 integration (39 files) and 443 pytest**, the unit
+and pytest figures as CI measured them on 2026-08-26 and integration run locally against PostgreSQL
+and MinIO the same day. The unit figure has twice been stale here by more than a hundred — treat any
+count on this line as the last measurement, not as a live number.
+
+**Count from CI, not from a local run.** A local `test:unit` also collects uncommitted test files: on
+2026-08-26 it reported 990 in 60 files against CI's 912 in 57, and the 78-test gap was three
+untracked files in the working tree. A number in this file describes the repository, so it has to come
+from a run that only sees what is committed. The
 integration suite needs `ZENTAVIO_TEST_DATABASE_URL` pointing at a database whose name ends `_test`;
 it is dropped and rebuilt, so it never touches the dev database. It also needs the four
 `ZENTAVIO_STORAGE_*` keys that have no default — `ENDPOINT`, `BUCKET`, `ACCESS_KEY_ID` and
