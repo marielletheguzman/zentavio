@@ -10,8 +10,8 @@
  * evidence about what is gone.
  */
 
-import { ConnectorRegistry } from '@zentavio/connectors-core';
-import { LeverConnector, REGISTRATION, type BoardRaw } from '@zentavio/connector-lever';
+import { ConnectorRegistry, toRegistration } from '@zentavio/connectors-core';
+import { LeverConnector, type BoardRaw } from '@zentavio/connector-lever';
 import { livePostings, registerConnectorSource } from '@zentavio/db';
 import type { Database } from '@zentavio/db';
 import { runJobBoards } from '@zentavio/ingestion';
@@ -23,6 +23,9 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { uuidv7 } from '../../../packages/db/src/uuid.ts';
 import { migratedTestPool } from './database.ts';
+
+/** The connector's own declared metadata — the single source the registration row is projected from (ADR-0041). */
+const CONNECTOR_META = new LeverConnector({ fetchBoard: async () => null, configuredBoards: [] }).meta;
 
 const FIXTURE = JSON.parse(
   readFileSync(fileURLToPath(new URL('../../fixtures/connectors/lever/leverdemo.json', import.meta.url)), 'utf8'),
@@ -62,18 +65,7 @@ beforeEach(async () => {
   await pool.query('DELETE FROM job_postings');
   await pool.query('DELETE FROM connector_sources');
 
-  await registerConnectorSource(db, {
-    id: REGISTRATION.id,
-    kind: REGISTRATION.kind,
-    displayName: REGISTRATION.displayName,
-    connectorVersion: '1.0.0',
-    sourceTier: REGISTRATION.sourceTier,
-    termsUrl: REGISTRATION.termsUrl,
-    legalBasis: REGISTRATION.legalBasis,
-    rateLimit: { requests: 60, windowMs: 60_000 },
-    refreshWindow: REGISTRATION.refreshWindow,
-    schedule: REGISTRATION.schedule,
-  }).execute();
+  await registerConnectorSource(db, toRegistration(CONNECTOR_META)).execute();
 });
 
 describe('a run over the registry', () => {

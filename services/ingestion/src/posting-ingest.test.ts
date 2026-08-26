@@ -11,6 +11,11 @@ const EXHAUSTIVE: ConnectorMeta = {
   rateLimit: { requests: 60, windowMs: 60_000 },
   reliability: 0,
   termsUrl: 'https://github.com/lever/postings-api',
+  displayName: 'Lever (configured employer boards)',
+  sourceTier: 2,
+  legalBasis: 'Fixture metadata for this file; the real basis lives on the connector.',
+  refreshWindow: '1 day',
+  schedule: '0 */6 * * *',
   listing: 'exhaustive',
 };
 

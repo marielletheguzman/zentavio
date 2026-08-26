@@ -31,6 +31,8 @@ export {
 
 export { runDueJobBoards, type ScheduledRunReport } from './scheduled-run.ts';
 
+export { syncConnectorSources, type SourceRegistrationReport } from './source-registration.ts';
+
 export {
   SPONSORSHIP_EXTRACTOR_VERSION,
   extractSponsorship,

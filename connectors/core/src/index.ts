@@ -16,6 +16,7 @@ export type {
   Connector,
   ConnectorKind,
   ConnectorMeta,
+  ConnectorRegistrationInput,
   Cursor,
   HealthState,
   HealthStatus,
@@ -25,7 +26,7 @@ export type {
   ValidationIssue,
   ValidationResult,
 } from './contract.ts';
-export { isIngestible } from './contract.ts';
+export { isIngestible, toRegistration } from './contract.ts';
 
 export type { ConnectorErrorOptions, FailureKind } from './errors.ts';
 export { ConnectorError, kindForStatus, parseRetryAfter } from './errors.ts';

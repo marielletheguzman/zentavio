@@ -136,6 +136,16 @@ export class BundesanzeigerConnector implements Connector<BekanntmachungRaw, rea
     // record it does not have.
     reliability: 0,
     termsUrl: 'https://www.bundesanzeiger.de/pub/de/impressum',
+    displayName: 'Bundesanzeiger — BMI Bekanntmachung to § 18g AufenthG',
+    sourceTier: 1,
+    legalBasis:
+      '`bundesanzeiger.de/robots.txt` disallows only `/nlp` and `/construction_page.html` for `*`, and ' +
+      'bans AhrefsBot and MJ12bot by name; the publication path this connector reads is permitted. ' +
+      'The documents are amtliche Bekanntmachungen of a federal ministry.',
+    // § 18g Abs. 7 obliges BMI to announce the next year's figures by 31 December, so a figure is
+    // current for a year and a monthly poll finds the new one in the first days of January.
+    refreshWindow: '365 days',
+    schedule: '0 3 1 * *',
   };
 
   readonly #deps: BundesanzeigerDeps;

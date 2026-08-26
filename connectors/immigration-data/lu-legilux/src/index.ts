@@ -108,6 +108,16 @@ export class LegiluxConnector implements Connector<LegiluxRaw, readonly SourcedR
     rateLimit: { requests: 30, windowMs: 60_000, minIntervalMs: 2000 },
     reliability: 0,
     termsUrl: 'https://legilux.public.lu/editorial/use-conditions',
+    displayName: 'Legilux — Luxembourg official journal (data.legilux.public.lu)',
+    sourceTier: 1,
+    legalBasis:
+      '`legilux.public.lu` serves an application, not documents. The machine channel is ' +
+      '`data.legilux.public.lu`, published as a CC-BY dataset on the national open-data portal: a ' +
+      'SPARQL endpoint for discovery, and a `303` from each manifestation to the file.',
+    // The règlement ministériel stating the average salary is annual, and the threshold is derived
+    // from it, so a derived figure is current for a year (ADR-0025).
+    refreshWindow: '365 days',
+    schedule: '0 3 1 * *',
   };
 
   readonly #deps: LegiluxDeps;

@@ -9,7 +9,8 @@
  * about *resources* and touches nothing about any person.
  */
 
-import { GitScmConnector, KNOWN_PAGES, REGISTRATION, type DocPageRaw } from '@zentavio/connector-git-scm';
+import { toRegistration } from '@zentavio/connectors-core';
+import { GitScmConnector, KNOWN_PAGES, type DocPageRaw } from '@zentavio/connector-git-scm';
 import { Kysely, PostgresDialect } from 'kysely';
 import type { Pool } from 'pg';
 import { readFileSync } from 'node:fs';
@@ -25,6 +26,9 @@ import {
 import type { Database } from '../../../packages/db/src/schema.ts';
 import { uuidv7 } from '../../../packages/db/src/uuid.ts';
 import { migratedTestPool } from './database.ts';
+
+/** The connector's own declared metadata — the single source the registration row is projected from (ADR-0041). */
+const CONNECTOR_META = new GitScmConnector({ fetchPage: async () => null }).meta;
 
 const FIXTURE = JSON.parse(
   readFileSync(
@@ -68,18 +72,7 @@ beforeEach(async () => {
 
 /** Register the source, then store the catalogue row the connector produced. */
 async function ingest() {
-  await registerConnectorSource(db, {
-    id: REGISTRATION.id,
-    kind: REGISTRATION.kind,
-    displayName: REGISTRATION.displayName,
-    connectorVersion: '1.0.0',
-    sourceTier: REGISTRATION.sourceTier,
-    termsUrl: REGISTRATION.termsUrl,
-    legalBasis: REGISTRATION.legalBasis,
-    rateLimit: { requests: 20, windowMs: 60_000 },
-    refreshWindow: REGISTRATION.refreshWindow,
-    schedule: REGISTRATION.schedule,
-  }).execute();
+  await registerConnectorSource(db, toRegistration(CONNECTOR_META)).execute();
 
   const rows = connector().normalize(FIXTURE);
   for (const row of rows) {
@@ -112,7 +105,7 @@ describe('registering the source', () => {
 
     const { rows } = await pool.query<{ legal_basis: string; source_tier: number; kind: string }>(
       'SELECT legal_basis, source_tier, kind FROM connector_sources WHERE id = $1',
-      [REGISTRATION.id],
+      [CONNECTOR_META.id],
     );
     expect(rows[0]?.kind).toBe('learning');
     expect(rows[0]?.source_tier).toBe(1);
@@ -126,14 +119,14 @@ describe('registering the source', () => {
     await pool.query(
       `UPDATE connector_sources SET reliability = 0.200, breaker_state = 'open', breaker_opened_at = now(),
               consecutive_failures = 4 WHERE id = $1`,
-      [REGISTRATION.id],
+      [CONNECTOR_META.id],
     );
 
     await ingest();
 
     const { rows } = await pool.query<{ reliability: string; breaker_state: string; consecutive_failures: number }>(
       'SELECT reliability, breaker_state, consecutive_failures FROM connector_sources WHERE id = $1',
-      [REGISTRATION.id],
+      [CONNECTOR_META.id],
     );
     expect(Number(rows[0]?.reliability)).toBe(0.2);
     expect(rows[0]?.breaker_state).toBe('open');

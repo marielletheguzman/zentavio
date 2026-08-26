@@ -145,6 +145,14 @@ export class BayIngGConnector implements Connector<BayIngGRaw, readonly SourcedR
     rateLimit: { requests: 30, windowMs: 60_000, minIntervalMs: 2000 },
     reliability: 0,
     termsUrl: 'https://www.gesetze-bayern.de/Home/Impressum',
+    displayName: 'BAYERN.RECHT — BayIngG Art. 2 and Art. 3',
+    sourceTier: 1,
+    legalBasis:
+      '`gesetze-bayern.de/robots.txt` is `User-agent: *` / `Allow: /`, read 2026-08-21. BAYERN.RECHT ' +
+      "is the Free State of Bavaria's official legal-information portal, and German statutes are " +
+      'amtliche Werke, uncopyrighted under § 5 UrhG.',
+    refreshWindow: '180 days',
+    schedule: '0 3 * * 1',
   };
 
   readonly #deps: BayIngGDeps;

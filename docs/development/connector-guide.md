@@ -130,6 +130,29 @@ secret store, never in the repository.
 with a `package.json` is missing from `createRegistry`. Two connectors had already shipped without
 their line when that test was written.
 
+## Step 7b — State the registration on `meta`
+
+**A different operation from Step 7, and the two are repeatedly confused.** Step 7 puts the connector
+in the registry; this puts a row in `connector_sources`. Doing one is not doing the other.
+
+`ConnectorMeta` requires five declared facts beyond the behavioural ones (ADR-0041):
+
+| Field | What it must be |
+|---|---|
+| `displayName` | how an operator reading the table names the source — not the id repeated |
+| `sourceTier` | 1–4 per `.claude/context/knowledge-sources.md`. Rules and thresholds: tier 1 only |
+| `legalBasis` | **a sentence recording what you read** — the robots.txt, the terms, the licence |
+| `refreshWindow` | a PostgreSQL interval; how long a fact from here stays current |
+| `schedule` | cron; our polling policy, the one field here that is not a claim about the source |
+
+There is nothing to write in `services/ingestion`: `syncConnectorSources` projects `meta` through
+`toRegistration` and registers whatever the registry holds.
+
+**This step is enforced by the compiler.** A connector missing any of the five does not typecheck,
+and the invariant test additionally rejects an empty `legalBasis`, a tier outside 1–4, a
+`refreshWindow` PostgreSQL would not accept and a `schedule` that is not five cron fields — because
+`legalBasis: ''` satisfies a type and satisfies nothing else.
+
 ## Step 8 — Prove it was additive
 
 ```bash

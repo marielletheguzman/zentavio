@@ -178,7 +178,11 @@ Re-ingesting is idempotent on (`sourceId`, `externalId`).
 5. Document the source identity triple in the README. **Do not derive a dedup key** — ADR-0034.
 6. Register in `connectors/core/src/default-registry.ts`. Confirm `services/ingestion` needed
    **zero** edits.
-7. Add config under `connectors.<id>.*` in `packages/config`.
+7. State the registration on `meta` — `displayName`, `sourceTier`, `legalBasis`, `refreshWindow`,
+   `schedule` (ADR-0041). A different operation from step 6: that one puts the connector in the
+   registry, this one puts a row in `connector_sources`. The compiler enforces it, and
+   `syncConnectorSources` writes the row from `meta` with no per-source code.
+8. Add config under `connectors.<id>.*` in `packages/config`.
 
 ## Related
 
@@ -187,3 +191,4 @@ Re-ingesting is idempotent on (`sourceId`, `externalId`).
 - `docs/features/job-aggregation.md`, `docs/database/entities/connector-source.md`
 - `.claude/skills/connectors/SKILL.md`, `.claude/skills/job-aggregation/SKILL.md`
 - ADR-0002 (connector plugin model), ADR-0005 (the lint rule that enforces the boundary)
+- ADR-0041 (registration on `meta`, and the pass that writes `connector_sources`)

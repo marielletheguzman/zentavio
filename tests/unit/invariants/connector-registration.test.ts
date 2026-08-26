@@ -19,6 +19,7 @@ import { existsSync, readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 
+import { toRegistration } from '@zentavio/connectors-core';
 import { createRegistry, type ConnectorDeps } from '@zentavio/connectors-core/registry';
 import { describe, expect, it } from 'vitest';
 
@@ -89,5 +90,79 @@ describe('every built connector is registered', () => {
     // `ConnectorRegistry` refuses a duplicate loudly; this asserts the guarantee rather than the
     // mechanism, so replacing the registry implementation cannot quietly drop it.
     expect(new Set(registry.ids()).size).toBe(registry.ids().length);
+  });
+});
+
+/**
+ * A cron expression the scheduler could act on: five space-separated fields.
+ *
+ * Deliberately shallow. The point is not to reimplement a cron parser here — it is that a blank
+ * string, a prose note, or a six-field Quartz expression pasted from elsewhere fails loudly instead
+ * of sitting in `connector_sources.schedule` until a scheduler tries to read it.
+ */
+function isCronish(schedule: string): boolean {
+  const fields = schedule.trim().split(/\s+/);
+  if (fields.length !== 5) return false;
+  return fields.every((field) => /^[*\d,\-/]+$/.test(field));
+}
+
+/** A PostgreSQL interval `refresh_window` can hold. `staleAfter` casts this column. */
+function isIntervalish(window: string): boolean {
+  return /^\d+ (hour|day|week|month|year)s?$/.test(window.trim());
+}
+
+/**
+ * Every registered connector states a registration the database will accept (ADR-0041).
+ *
+ * **The type already guarantees the fields exist** — that is the enforcement the ADR chose, and it
+ * is why six connectors had to be edited before this file could run. What a type cannot say is that
+ * the strings mean anything: `legalBasis: ''` compiles, and would put a source in the table with no
+ * recorded reason we are permitted to fetch it, which is the one thing the field exists to prevent.
+ */
+describe('every registered connector states a usable registration', () => {
+  it('records why we are permitted to fetch it', () => {
+    for (const connector of registry.all()) {
+      const { id, legalBasis } = toRegistration(connector.meta);
+      // A sentence, not a shrug. "We checked" is not a record, and neither is "".
+      expect(legalBasis.trim().length, `${id} states no legal basis`).toBeGreaterThan(40);
+    }
+  });
+
+  it('declares a knowledge tier the CHECK constraint accepts', () => {
+    // `ck_cs__tier CHECK (source_tier BETWEEN 1 AND 4)`. A tier outside it fails at INSERT, which
+    // is a worse place to find out than here.
+    for (const connector of registry.all()) {
+      const { id, sourceTier } = toRegistration(connector.meta);
+      expect(sourceTier, `${id} declares tier ${String(sourceTier)}`).toBeGreaterThanOrEqual(1);
+      expect(sourceTier, `${id} declares tier ${String(sourceTier)}`).toBeLessThanOrEqual(4);
+    }
+  });
+
+  it('names itself as an operator would read it, not as the id repeated', () => {
+    for (const connector of registry.all()) {
+      const { id, displayName } = toRegistration(connector.meta);
+      expect(displayName.trim().length, `${id} has no display name`).toBeGreaterThan(0);
+      expect(displayName, `${id} repeats its id as a display name`).not.toBe(id);
+    }
+  });
+
+  it('states a refresh window and a schedule the scheduler can act on', () => {
+    for (const connector of registry.all()) {
+      const { id, refreshWindow, schedule } = toRegistration(connector.meta);
+      expect(isIntervalish(refreshWindow), `${id} refreshWindow: ${refreshWindow}`).toBe(true);
+      expect(isCronish(schedule), `${id} schedule: ${schedule}`).toBe(true);
+    }
+  });
+
+  it('projects the connector own version and rate limit, never a retyped copy', () => {
+    // The defect ADR-0041 recorded: `posting-runner.test.ts` stored `{requests: 60, windowMs: 60_000}`
+    // while the Lever connector declared `minIntervalMs: 1000`, so the persisted rate limit
+    // disagreed with the limiter that actually ran. A projection cannot drift from its own source.
+    for (const connector of registry.all()) {
+      const registration = toRegistration(connector.meta);
+      expect(registration.connectorVersion).toBe(connector.meta.version);
+      expect(registration.rateLimit).toBe(connector.meta.rateLimit);
+      expect(registration.regions).toBe(connector.meta.regions);
+    }
   });
 });

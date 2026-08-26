@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { isIngestible } from '@zentavio/connectors-core';
 import { describe, expect, it } from 'vitest';
 
-import { GitScmConnector, KNOWN_PAGES, REGISTRATION, purposeOf, type DocPageRaw } from './index.ts';
+import { GitScmConnector, KNOWN_PAGES, purposeOf, type DocPageRaw } from './index.ts';
 import { parseDocPage } from './parse.ts';
 
 /** `git-scm.com/docs/git-stash` as served, captured verbatim. */
@@ -104,8 +104,9 @@ describe('the catalogue it offers', () => {
 
   it('records why we are permitted to read the source', () => {
     // "We checked" is not a record.
-    expect(REGISTRATION.legalBasis).toContain('robots.txt');
-    expect(REGISTRATION.sourceTier).toBe(1);
+    const meta = connector().meta;
+    expect(meta.legalBasis).toContain('robots.txt');
+    expect(meta.sourceTier).toBe(1);
   });
 
   it('reports degraded when a page fetches but cannot be read', async () => {

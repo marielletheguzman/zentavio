@@ -7,7 +7,8 @@
  * absence is the entire reason `dedup_basis` exists.
  */
 
-import { LeverConnector, REGISTRATION, type BoardRaw } from '@zentavio/connector-lever';
+import { toRegistration } from '@zentavio/connectors-core';
+import { LeverConnector, type BoardRaw } from '@zentavio/connector-lever';
 import { Kysely, PostgresDialect } from 'kysely';
 import type { Pool } from 'pg';
 import { readFileSync } from 'node:fs';
@@ -26,6 +27,9 @@ import {
 import type { Database } from '../../../packages/db/src/schema.ts';
 import { uuidv7 } from '../../../packages/db/src/uuid.ts';
 import { migratedTestPool } from './database.ts';
+
+/** The connector's own declared metadata — the single source the registration row is projected from (ADR-0041). */
+const CONNECTOR_META = new LeverConnector({ fetchBoard: async () => null, configuredBoards: [] }).meta;
 
 const FIXTURE = JSON.parse(
   readFileSync(fileURLToPath(new URL('../../fixtures/connectors/lever/leverdemo.json', import.meta.url)), 'utf8'),
@@ -92,18 +96,7 @@ beforeEach(async () => {
   await pool.query('DELETE FROM job_postings');
   await pool.query('DELETE FROM connector_sources');
 
-  await registerConnectorSource(db, {
-    id: REGISTRATION.id,
-    kind: REGISTRATION.kind,
-    displayName: REGISTRATION.displayName,
-    connectorVersion: '1.0.0',
-    sourceTier: REGISTRATION.sourceTier,
-    termsUrl: REGISTRATION.termsUrl,
-    legalBasis: REGISTRATION.legalBasis,
-    rateLimit: { requests: 60, windowMs: 60_000 },
-    refreshWindow: REGISTRATION.refreshWindow,
-    schedule: REGISTRATION.schedule,
-  }).execute();
+  await registerConnectorSource(db, toRegistration(CONNECTOR_META)).execute();
 });
 
 describe('identity', () => {
