@@ -109,6 +109,7 @@ An ADR is numbered sequentially and never renumbered.
 | [0037](../../docs/architecture/decisions/0037-what-the-first-match-may-claim.md) | The first thing matching computes is Skill Fit, named for the one axis it measures, and no Job Match Score is stored until its hard constraint can be evaluated — **carries a Correction: the constraint is evaluatable, the evaluator is unwired** | Accepted |
 | [0039](../../docs/architecture/decisions/0039-what-a-sponsorship-claim-may-assert.md) | Sponsorship is a four-value status carried by an explicit statement of availability, never by the topic being mentioned | Accepted |
 | [0040](../../docs/architecture/decisions/0040-employer-identity-for-a-posting.md) | A posting’s employer comes from a curated, sourced board-to-employer binding resolved at ingest, and a board slug is never a company alias | Proposed |
+| [0041](../../docs/architecture/decisions/0041-connector-registration-on-the-contract.md) | A connector states its registration on `meta`, and one pass over the registry writes `connector_sources` before any run | Accepted |
 
 0001–0004 define the boundaries every skill and context file assumes: one repository, sources as
 plugins, a polyglot contract at the `ai/` boundary, and a vector store that is an index rather
