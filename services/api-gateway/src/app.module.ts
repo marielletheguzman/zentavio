@@ -39,6 +39,8 @@ import { AssessmentsController } from './assessments/assessments.controller.ts';
 import { AssessmentsService } from './assessments/assessments.service.ts';
 import { ApplicationsController } from './applications/applications.controller.ts';
 import { ApplicationsService } from './applications/applications.service.ts';
+import { JobsController } from './jobs/jobs.controller.ts';
+import { JobsService } from './jobs/jobs.service.ts';
 import { HealthController } from './health/health.controller.ts';
 import { ParserClient } from './resume/parser-client.ts';
 import { ResumeController } from './resume/resume.controller.ts';
@@ -52,6 +54,7 @@ import { DATABASE, ELIGIBILITY_CLIENT, GAP_CLIENT, PARSER_CLIENT, SUBJECT_RESOLV
     EligibilityController,
     ComparisonController,
     ApplicationsController,
+    JobsController,
     AssessmentsController,
     LearningController,
     InterviewsController,
@@ -91,6 +94,7 @@ import { DATABASE, ELIGIBILITY_CLIENT, GAP_CLIENT, PARSER_CLIENT, SUBJECT_RESOLV
     // Depends on `GapService` by class, like `EligibilityService`: the prediction stored with an
     // application is the readiness score computed by the same code that shows it (ADR-0019).
     ApplicationsService,
+    JobsService,
     AssessmentsService,
     LearningService,
     InterviewsService,

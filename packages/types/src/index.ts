@@ -79,7 +79,15 @@ export {
   type ViabilityResponseWire,
 } from './requirement.ts';
 
-export type { JobPosting } from './job.ts';
+export type {
+  JobEmployerWire,
+  JobPosting,
+  JobPostingWire,
+  SkillFitEvidenceWire,
+  SkillFitWire,
+  SponsorshipSignalWire,
+  SponsorshipSignalsWire,
+} from './job.ts';
 
 export {
   MIN_KNOWN_FACTORS,

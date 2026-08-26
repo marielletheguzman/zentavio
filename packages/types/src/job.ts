@@ -75,3 +75,88 @@ export interface JobPosting {
   /** ISO-8601 UTC, recorded at fetch time so `normalize` stays pure. */
   readonly retrievedAt: string;
 }
+
+/**
+ * What the discovery surface shows for one posting.
+ *
+ * Shaped by the rules `docs/roadmap/backlog.md` sets for this surface, and every one of them is a
+ * property of the *shape* rather than of the code that fills it in:
+ *
+ * - **Skill Fit is an object, never a bare number.** `score: 0` and "not evaluatable" are different
+ *   answers (ADR-0037), and a `number | null` invites a UI to render both as `0%`. A caller has to
+ *   read `status` to reach the number, so the distinction cannot be skipped by accident.
+ * - **The three sponsorship signals stay separate**, each with the sentence it came from. They are
+ *   never merged into one "immigration-friendly" label: five merged signals cannot be un-merged.
+ * - **`employer` is nullable and says which case it is.** `company_id` is null on every stored
+ *   posting today, so this is the common path rather than an edge one.
+ */
+export interface JobPostingWire {
+  readonly id: string;
+  readonly title: string;
+  readonly url: string;
+  /** Where it came from, so a claim on this listing can be traced to a source. */
+  readonly source: { readonly id: string; readonly scope: string };
+  readonly employer: JobEmployerWire;
+  readonly location: {
+    readonly raw: string | null;
+    readonly countryCode: string | null;
+    /** `null` means the source said nothing — never rendered as "not remote" (ADR-0033). */
+    readonly isRemote: boolean | null;
+    readonly remoteScope: string | null;
+  };
+  readonly postedAt: string | null;
+  readonly sponsorship: SponsorshipSignalsWire;
+  readonly skillFit: SkillFitWire;
+}
+
+/**
+ * The employer, or the fact that nobody has resolved one.
+ *
+ * `nameRaw` is what the source itself supplied, which for an ATS board is nothing (ADR-0034). Both
+ * being absent is the honest state of every posting stored today, and the surface is required to
+ * show it as a gap rather than hide the column.
+ */
+export interface JobEmployerWire {
+  readonly companyId: string | null;
+  readonly name: string | null;
+  readonly nameRaw: string | null;
+}
+
+/** One sponsorship signal: the four-valued status and the sentence that stated it. */
+export interface SponsorshipSignalWire {
+  readonly status: 'stated_available' | 'stated_unavailable' | 'inferred_likely' | 'unknown';
+  /** The verbatim sentence, present only for a stated status. */
+  readonly span: string | null;
+}
+
+export interface SponsorshipSignalsWire {
+  readonly visaSponsorship: SponsorshipSignalWire;
+  readonly relocationSupport: SponsorshipSignalWire;
+  readonly immigrationAssistance: SponsorshipSignalWire;
+  /** Which extraction pass produced these, so a rule change is visible as a version rather than a diff. */
+  readonly extractorVersion: string | null;
+}
+
+/**
+ * Skill Fit, and **never a Job Match Score** (ADR-0037).
+ *
+ * `unscored` is not a failure: it is the answer when a posting states no requirements, because
+ * coverage over an empty set has no denominator and `1.0` would make the least informative posting
+ * the best match.
+ */
+export type SkillFitWire =
+  | { readonly status: 'unscored'; readonly reason: 'not-computed' | 'no-requirements' }
+  | {
+      readonly status: 'scored';
+      /** 0 is a real answer — checked, and nothing overlapped. */
+      readonly score: number;
+      readonly scorerVersion: string;
+      readonly evidence: readonly SkillFitEvidenceWire[];
+    };
+
+/** One skill's contribution, with why it counted for what it did. */
+export interface SkillFitEvidenceWire {
+  readonly skillSlug: string;
+  readonly basis: string;
+  readonly contribution: number;
+}

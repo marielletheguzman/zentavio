@@ -89,7 +89,7 @@ signals cannot be un-merged later.
 | `employer_migration_scores` | designed, **table does not exist** |
 | sponsorship / relocation fields on `job_postings` | **none** — no column matches sponsor, visa or relocation |
 | a connector for sponsor registries | none; `migration-friendly-jobs.md` tier 1 is an official register |
-| a jobs module in the gateway | none of its ten modules serves a posting |
+| a jobs module in the gateway | **built** — `GET /v1/jobs`, with the Skill Fit and sponsorship shapes above |
 | a page in `apps/web` | none of its seven pages shows one |
 | employer resolution | `company_id` null on all 239 stored postings |
 
