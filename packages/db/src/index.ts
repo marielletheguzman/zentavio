@@ -10,7 +10,7 @@
  * outside Vitest. See the README.
  */
 
-export { createCompileOnlyDb, createDb, type DbConnectionOptions } from './client.ts';
+export { configureDateParsing, createCompileOnlyDb, createDb, type DbConnectionOptions } from './client.ts';
 
 export { uuidv7, uuidv7Timestamp } from './uuid.ts';
 
@@ -210,6 +210,15 @@ export {
   type CreateCompanyInput,
   type JobBoardEmployerRow,
 } from './repositories/companies.ts';
+
+export {
+  liveSponsorshipFact,
+  liveSponsorshipFacts,
+  recordSponsorshipFact,
+  staleSponsorshipFacts,
+  type RecordSponsorshipFactInput,
+  type SponsorshipFactRow,
+} from './repositories/employer-sponsorship.ts';
 
 export {
   dueSources,

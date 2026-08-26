@@ -12,7 +12,7 @@
 
 import { Pool } from 'pg';
 import { load, testDatabaseSchema } from '@zentavio/config';
-import { applyMigrations } from '@zentavio/db';
+import { applyMigrations, configureDateParsing } from '@zentavio/db';
 
 /**
  * The guard that makes `resetSchema` safe to run.
@@ -40,6 +40,12 @@ export function assertTestDatabase(connectionString: string): void {
 export function createTestPool(): Pool {
   const { testDatabaseUrl } = load(testDatabaseSchema);
   assertTestDatabase(testDatabaseUrl);
+  // The same DATE handling production gets. `createDb` calls this; a test pool built straight from
+  // `pg` does not, and without it `pg` parses a DATE into a Date at *local* midnight — so
+  // `2026-08-26` read at UTC+8 formats as `2026-08-25`. A test asserting on a rule's validity
+  // window would then fail here and pass in CI, which runs UTC: the one direction that makes a
+  // timezone bug look like a flaky test rather than a wrong answer.
+  configureDateParsing();
   return new Pool({ connectionString: testDatabaseUrl, max: 4, connectionTimeoutMillis: 5_000 });
 }
 

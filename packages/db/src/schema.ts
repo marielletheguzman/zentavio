@@ -1036,6 +1036,62 @@ export interface JobBoardEmployersTable {
   deleted_at: Timestamp | null;
 }
 
+/** What an employer's migration support claim may assert. Closed vocabulary (ADR-0039). */
+export type SponsorshipClaimColumn =
+  | 'visa_sponsorship'
+  | 'work_permit_sponsorship'
+  | 'relocation_support'
+  | 'immigration_assistance'
+  | 'dependent_support'
+  | 'sponsor_licence_held';
+
+/** How a sponsorship fact is known. The absent fifth value — `third_party_listing` — is deliberate. */
+export type SponsorshipSourceKindColumn =
+  | 'official_register'
+  | 'employer_statement'
+  | 'posting_text'
+  | 'observed_outcome';
+
+/**
+ * What is known about an employer's migration support, per country, versioned.
+ *
+ * One live row per `(company_id, jurisdiction, claim)` — `effective_to IS NULL` is what "live"
+ * means, and superseding preserves the history an UPDATE would destroy.
+ *
+ * **`unknown` is a value and is never `stated_unavailable`.** "Nobody said" and "they said no" send
+ * a person to different places, and a column that conflates them will be read as the stronger one.
+ */
+export interface EmployerSponsorshipFactsTable {
+  id: string;
+  company_id: string;
+  /** ISO-3166-1 alpha-2. Support is per country, so it is part of the key rather than a filter. */
+  jurisdiction: string;
+  claim: SponsorshipClaimColumn;
+  status: SponsorshipStatusColumn;
+  detail: Generated<unknown>;
+  /** The connector that ingested it, or null when a person curated it by hand. */
+  source_id: string | null;
+  source_tier: number;
+  /** Required for any stated status by `ck_esf__stated_needs_url`; a claim must be re-openable. */
+  source_url: string | null;
+  source_kind: SponsorshipSourceKindColumn;
+  retrieved_at: Timestamp;
+  /**
+   * Sample size behind an `inferred_likely` row, with its window. Both required for that status:
+   * "probably sponsors" from one outcome and from forty are different facts.
+   */
+  support_count: number | null;
+  support_window: string | null;
+  effective_from: DateOnly;
+  /** Null means live. Set when a later fact supersedes this one. */
+  effective_to: DateOnly | null;
+  supersedes: string | null;
+  /** A sponsor licence lapses; staleness is stored rather than guessed from `updated_at`. */
+  refresh_after: DateOnly;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+}
+
 export type PersonFactValueType =
   | 'monetary'
   | 'integer'
@@ -1129,6 +1185,7 @@ export interface Database {
   companies: CompaniesTable;
   company_aliases: CompanyAliasesTable;
   job_board_employers: JobBoardEmployersTable;
+  employer_sponsorship_facts: EmployerSponsorshipFactsTable;
   applications: ApplicationsTable;
   outcomes: OutcomesTable;
   connector_sources: ConnectorSourcesTable;

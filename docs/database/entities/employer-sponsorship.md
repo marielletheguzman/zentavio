@@ -8,6 +8,17 @@ and the **score** (derived, recomputable, never authoritative).
 
 Specification: `docs/features/migration-friendly-jobs.md`.
 
+**`employer_sponsorship_facts` is built** — migration `20260826100000`, written through
+`packages/db/src/repositories/employer-sponsorship.ts`, with every constraint below exercised by
+direct INSERT in `tests/integration/db/employer-sponsorship-facts.test.ts`. **Nothing writes to it
+yet**: the sponsor-registry connector does not exist, no employer statement has been curated, and
+`outcomes` is recorded but unread. An empty table with its rules enforced is the honest state, and
+it is the same one `job_board_employers` shipped in.
+
+**`employer_migration_scores` is still a specification.** A composite over these facts needs its
+factor list and its scorer version decided first — the question ADR-0022 and ADR-0037 each answered
+with an ADR rather than a migration. Nothing below it has been built.
+
 ## `employer_sponsorship_facts`
 
 One row per (company, jurisdiction, claim). Versioned, because sponsor licences lapse and policies change.
@@ -42,6 +53,7 @@ CREATE TABLE employer_sponsorship_facts (
   updated_at      timestamptz  NOT NULL DEFAULT now(),
 
   CONSTRAINT fk_esf__companies FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE RESTRICT,
+  CONSTRAINT fk_esf__connector_sources FOREIGN KEY (source_id) REFERENCES connector_sources(id) ON DELETE RESTRICT,
   CONSTRAINT fk_esf__supersedes FOREIGN KEY (supersedes) REFERENCES employer_sponsorship_facts(id) ON DELETE RESTRICT,
 
   CONSTRAINT ck_esf__claim CHECK (claim IN (
@@ -64,7 +76,15 @@ CREATE TABLE employer_sponsorship_facts (
   CONSTRAINT ck_esf__stated_needs_url CHECK (
     status NOT IN ('stated_available','stated_unavailable') OR source_url IS NOT NULL
   ),
-  CONSTRAINT ck_esf__validity CHECK (effective_to IS NULL OR effective_to >= effective_from)
+  -- ADR-0039 rule 3, in the table the value was reserved for: an inference comes from a register or
+  -- from aggregated outcomes, never from prose.
+  CONSTRAINT ck_esf__inferred_source_kind CHECK (
+    status <> 'inferred_likely' OR source_kind IN ('official_register','observed_outcome')
+  ),
+  CONSTRAINT ck_esf__support_count CHECK (support_count IS NULL OR support_count > 0),
+  CONSTRAINT ck_esf__source_url CHECK (source_url IS NULL OR source_url ~ '^https?://'),
+  CONSTRAINT ck_esf__validity CHECK (effective_to IS NULL OR effective_to >= effective_from),
+  CONSTRAINT ck_esf__supersedes_self CHECK (supersedes IS NULL OR supersedes <> id)
 );
 
 CREATE UNIQUE INDEX uq_esf__current ON employer_sponsorship_facts (company_id, jurisdiction, claim)
@@ -81,6 +101,12 @@ relocates their expectations, on it.
 
 **`ck_esf__inferred_needs_support`** — an inference must carry its sample size and window. "Probably
 sponsors" from one observed outcome and from forty are different facts.
+
+**`ck_esf__inferred_source_kind`** — and the inference may only come from the two source kinds
+ADR-0039 reserved the value for. `ck_job_postings__no_inferred_sponsorship` refuses `inferred_likely`
+outright on the posting side, because a posting has only prose; this table is where the value was
+reserved *to* live, so refusing it here would be wrong and permitting it from prose would let the
+reservation evaporate one table away.
 
 **`source_kind` is a closed set of four**, and the absent fifth is deliberate: **no
 `third_party_listing`.** Aggregator "we think they sponsor" pages are not used
