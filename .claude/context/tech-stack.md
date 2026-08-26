@@ -18,15 +18,22 @@
 ### Frontend
 - **Next.js** (App Router) — `apps/web`, `apps/admin`
 - **React** + **TypeScript** (strict)
-- **Tailwind CSS** — approved for styling, **not yet installed**. `apps/web` styles with plain CSS
-  against the tokens below, and `packages/ui` ships no shadcn components. **ADR-0023 is Accepted** —
-  Tailwind v4 with `packages/ui/src/tokens.css` as its `@theme` source, Tailwind's own scales
-  disabled rather than extended, and the tokens canonical over the utilities. It **authorises** the
-  install and phases 1–3; it did not perform them. Being listed here permits it; it does not mean it
-  is there. **shadcn, Radix, `cva`, `clsx` and `tailwind-merge` are explicitly not approved by that
-  ADR** — each is reviewed in the PR that first needs it.
-- **packages/ui** — the design-token layer (`src/tokens.css`): spacing, type, radii, both themes.
-  Extend it; do not fork tokens or primitives per app. Component primitives arrive with Tailwind.
+- **Tailwind CSS v4** — **installed** (`tailwindcss` and `@tailwindcss/postcss`, both pinned at
+  4.3.3 in `apps/web`), with `packages/ui/src/tokens.css` as its `@theme` source (ADR-0023). The
+  stock palette, spacing scale, type scale, radii, shadows and breakpoints are **disabled, not
+  extended** — `packages/ui/src/tokens.test.ts` compiles `bg-red-500`, `p-7` and `rounded-xl` and
+  asserts each produces nothing. `apps/web` gained a `postcss.config.mjs` it did without before.
+  **This is phase 1 of ADR-0023's migration; phases 2 and 3 move surfaces off `globals.css` one at a
+  time, so both mechanisms coexist until they are done.** **shadcn, Radix, `cva`, `clsx` and
+  `tailwind-merge` remain explicitly not approved** — the ADR approves the vendoring pattern, and
+  each component and each transitive dependency is reviewed in the PR that first needs it.
+- **`next/font`** — build-time font self-hosting, for Inter (ADR-0038). Files are fetched once during
+  `next build` and served from this origin: no runtime request to Google, no third-party origin in a
+  CSP, no user IP handed to a font CDN. The accepted cost is that a clean build needs egress.
+- **packages/ui** — the design-token layer (`src/tokens.css`): spacing, type, radii, both themes, and
+  the `@theme` block Tailwind generates its utilities from. Extend it; do not fork tokens or
+  primitives per app. **A design value that is not declared here has no utility class**, and adding
+  one through Tailwind configuration is a defect rather than a shortcut.
 
 ### Backend
 - **NestJS** + **TypeScript** — everything under `services/`

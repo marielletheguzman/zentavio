@@ -13,6 +13,10 @@
  * with a word, an icon, or a shape — see `--shape-*` below, which exists so "low confidence" can be
  * a different *shape* rather than a lighter tint of the same badge. Understating uncertainty is a
  * correctness bug, not a styling preference.
+ *
+ * **This file is upstream of Tailwind, not derived from it** (ADR-0023). The `@theme` block at the
+ * bottom *exposes* these values as utilities; it does not define them. A design value that is not
+ * declared here has no utility class, and adding one through Tailwind configuration is a defect.
  */
 
 :root {
@@ -28,8 +32,16 @@
   --space-12: 3rem;
   --space-16: 4rem;
 
-  /* ── type: one family, restrained scale, three weights ─────────────────── */
-  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /*
+   * ── type: one family, restrained scale, three weights ──────────────────
+   *
+   * `--font-inter` is supplied by `next/font/google` in `apps/web/app/layout.tsx`, which
+   * self-hosts the file and emits the variable on `<html>` (ADR-0038). The system stack behind it
+   * is a real fallback, not decoration: it renders before the font loads and forever in any
+   * surface that does not set the variable.
+   */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    sans-serif;
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
@@ -68,6 +80,20 @@
   --caution: #e3b341;
   --negative: #ff8886;
   --info: #79c0ff;
+
+  /*
+   * The gap that is ours, not the destination's.
+   *
+   * `unmodelled` says **Zentavio has not sourced this**, and it is the one state on the comparison
+   * that is a statement about us rather than about the person or the place. It had no colour of
+   * its own and shared the neutral border with `not_applicable`, which means the opposite — that
+   * there is nothing to owe. Two states that differ only in border *style* put the whole weight of
+   * that distinction on one dotted edge.
+   *
+   * It keeps the dotted edge and the sentence naming the attribution. This adds a third signal; it
+   * does not replace either of the other two.
+   */
+  --product-gap: #c3a6ff;
 }
 
 @media (prefers-color-scheme: light) {
@@ -88,6 +114,7 @@
     --caution: #7a5000;
     --negative: #b42318;
     --info: #0b5ca8;
+    --product-gap: #6b21a8;
   }
 }
 
@@ -101,4 +128,114 @@
 :root {
   --shape-certain: solid;
   --shape-uncertain: dashed;
+}
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════════════════════════
+ * Tailwind's theme (ADR-0023)
+ * ═══════════════════════════════════════════════════════════════════════════════════════════════
+ *
+ * **Mappings, not values.** Every declaration below points at a custom property declared above.
+ * A literal colour, length, radius or shadow in this block would put a design value outside the
+ * part of the file `.claude/context/ui-guidelines.md` points at, which is the defect ADR-0023
+ * names explicitly.
+ *
+ * **`initial` disables a whole namespace.** Tailwind ships its own palette, spacing scale, type
+ * scale, radii, shadows and breakpoints. Extending them would leave two vocabularies for the same
+ * concepts, so each namespace is emptied before ours is declared — `bg-red-500`, `p-5`, `text-4xl`
+ * and `rounded-xl` then generate nothing at all. `tests/unit/ui/tailwind-theme.test.ts` asserts
+ * that rather than trusting it.
+ *
+ * **Spacing is a discrete scale, not a multiplier.** Tailwind v4's default `--spacing` makes every
+ * integer a valid step, so `p-7` would compile to 1.75rem — off-scale, and off-scale by default.
+ * Declaring the eight steps individually is what makes the 4px scale enforceable instead of
+ * conventional.
+ *
+ * **No `dark:` variant is needed for colour.** The custom properties above swap themselves under
+ * `prefers-color-scheme`, so `bg-surface` is already correct in both themes. Reaching for `dark:`
+ * to fix a colour means a literal was used where a semantic token belonged.
+ *
+ * **`inline` is load-bearing, not a preference.** Four of Tailwind's namespaces — `--font-*`,
+ * `--text-*`, `--radius-*`, `--shadow-*` — use the same names this file already declares above.
+ * A plain `@theme` re-emits each key into `:root`, so `--text-lg: var(--text-lg)` would resolve to
+ * itself and every type size would silently become invalid. `inline` makes the utility carry the
+ * resolved value instead of a second reference, which is also why a theme swap needs no `dark:`.
+ */
+@theme inline {
+  /* ── colour ───────────────────────────────────────────────────────────── */
+  --color-*: initial;
+
+  --color-canvas: var(--bg);
+  --color-surface: var(--bg-raised);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-ink: var(--fg);
+  --color-ink-muted: var(--fg-muted);
+
+  --color-accent: var(--accent);
+  --color-accent-contrast: var(--accent-contrast);
+
+  --color-positive: var(--positive);
+  --color-caution: var(--caution);
+  --color-negative: var(--negative);
+  --color-info: var(--info);
+  --color-product-gap: var(--product-gap);
+
+  /* Two utilities the token layer needs and CSS has no keyword for. */
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  /* ── spacing ──────────────────────────────────────────────────────────── */
+  --spacing: initial;
+
+  --spacing-1: var(--space-1);
+  --spacing-2: var(--space-2);
+  --spacing-3: var(--space-3);
+  --spacing-4: var(--space-4);
+  --spacing-6: var(--space-6);
+  --spacing-8: var(--space-8);
+  --spacing-12: var(--space-12);
+  --spacing-16: var(--space-16);
+
+  /* ── type ─────────────────────────────────────────────────────────────── */
+  --font-*: initial;
+  --font-sans: var(--font-sans);
+
+  --text-*: initial;
+  --text-xs: var(--text-xs);
+  --text-sm: var(--text-sm);
+  --text-base: var(--text-base);
+  --text-lg: var(--text-lg);
+  --text-xl: var(--text-xl);
+  --text-2xl: var(--text-2xl);
+  --text-3xl: var(--text-3xl);
+
+  --font-weight-*: initial;
+  --font-weight-regular: var(--weight-regular);
+  --font-weight-medium: var(--weight-medium);
+  --font-weight-semibold: var(--weight-semibold);
+
+  /* ── radius ───────────────────────────────────────────────────────────── */
+  --radius-*: initial;
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-pill: var(--radius-pill);
+
+  /* ── elevation: one level, for genuinely floating things ──────────────── */
+  --shadow-*: initial;
+  --shadow-floating: var(--shadow-floating);
+
+  /*
+   * ── breakpoints ───────────────────────────────────────────────────────
+   *
+   * Ours, for the same reason the palette is: Tailwind's `sm` is 40rem and this product's smallest
+   * designed breakpoint is 30rem, which is where `globals.css` already collapses the axes. Two
+   * scales would mean a component could be responsive at a width nothing else in the system knows
+   * about.
+   */
+  --breakpoint-*: initial;
+  --breakpoint-sm: 30rem;
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 64rem;
+  --breakpoint-xl: var(--measure);
 }
