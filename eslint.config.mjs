@@ -83,6 +83,69 @@ const relativeJsSpecifiers = ['ImportDeclaration', 'ExportNamedDeclaration', 'Ex
   }),
 );
 
+/**
+ * ADR-0023, phase 1: the arbitrary-value rule lands **before the first primitive**, not after.
+ *
+ * `packages/ui/src/tokens.css` empties Tailwind's stock namespaces, so `bg-red-500` and `p-7`
+ * compile to nothing — `packages/ui/src/tokens.test.ts` asserts that. Arbitrary values are the part
+ * that configuration cannot reach: `p-[13px]` is Tailwind's grammar rather than its theme, and v4
+ * has no setting that turns it off. The compiler will always emit it, which is why the ADR calls
+ * the syntax *"a permanent hole in the off-scale rule unless linted"* and why this is the lint.
+ *
+ * It matters more than it looks. Today, writing an off-scale value at least looks deliberate —
+ * someone types `padding: 13px` into a stylesheet. `p-[13px]` is one keystroke cheaper than looking
+ * the scale up, reads like every other utility on the line, and survives review because nothing
+ * about it looks like a decision.
+ *
+ * The escape hatch is a token, not a disable comment: a value worth having belongs in `tokens.css`,
+ * where it becomes a utility for every surface instead of one class string.
+ *
+ * **Not scoped to the `className` attribute**, and that was found by probe rather than reasoned
+ * about: the first version of this rule matched only strings inside a `className`, and
+ * `const cls = \`p-[13px]\`` two lines above the JSX walked straight past it. A class string is
+ * ordinary text and gets built wherever it is convenient, so the pattern has to be recognised by
+ * its own shape — a utility name, then a bracket — anywhere it appears.
+ */
+const ARBITRARY_UTILITY = '(^|\\s)[a-z][a-z0-9-]*-\\[[^\\]\\s]+\\]';
+
+const tailwindArbitraryValues = [
+  {
+    selector: `Literal[value=/${ARBITRARY_UTILITY}/]`,
+    message:
+      'Arbitrary Tailwind value. The 4px scale and the palette live in packages/ui/src/tokens.css — add the value there and use the utility it generates (ADR-0023).',
+  },
+  {
+    selector: `TemplateElement[value.raw=/${ARBITRARY_UTILITY}/]`,
+    message:
+      'Arbitrary Tailwind value in a template literal. The 4px scale and the palette live in packages/ui/src/tokens.css (ADR-0023).',
+  },
+];
+
+/**
+ * The same rule where Tailwind cannot see it.
+ *
+ * A `style` prop bypasses the utility layer entirely, so every guarantee above stops applying — and
+ * a literal colour there is the specific failure `.claude/context/ui-guidelines.md` calls a
+ * correctness bug rather than a styling one, because a hue that clears 4.5:1 on `#0d1117` does not
+ * clear it on white and a hardcoded one cannot swap themes at all.
+ *
+ * Deliberately narrow. It matches colour syntax inside a `style` attribute and nothing else, so it
+ * needs no path scoping to stay out of connectors and services, where a hex string is usually a
+ * checksum rather than a colour.
+ */
+const hardcodedColours = [
+  {
+    selector: 'JSXAttribute[name.name="style"] Literal[value=/#[0-9a-fA-F]{3,8}\\b/]',
+    message:
+      'Hardcoded colour in a style prop. It cannot swap themes and it clears WCAG in at most one of them — use a semantic token from packages/ui/src/tokens.css.',
+  },
+  {
+    selector: 'JSXAttribute[name.name="style"] Literal[value=/\\b(rgba?|hsla?)\\(/]',
+    message:
+      'Hardcoded colour in a style prop. It cannot swap themes and it clears WCAG in at most one of them — use a semantic token from packages/ui/src/tokens.css.',
+  },
+];
+
 export default tseslint.config(
   {
     ignores: [
@@ -251,6 +314,30 @@ export default tseslint.config(
           selector: 'MemberExpression[object.name="process"][property.name="env"]',
           message: 'Read configuration through packages/config. Untyped, undocumented env access is banned — .claude/skills/backend-service/SKILL.md.',
         },
+      ],
+    },
+  },
+
+  // ── nothing off-scale, and no colour outside the token layer ─────────────
+  // ADR-0023 phase 1. See `tailwindArbitraryValues` and `hardcodedColours` above for why the
+  // compiler cannot enforce either of these and a linter can.
+  //
+  // NOTE: same replace-not-merge trap as the two blocks above — this one matches the same files, so
+  // it must carry every selector they set or it silently switches them off. The exclusions are
+  // narrow on purpose: `packages/config` is the one place `process.env` is allowed, and a test
+  // asserting that `text-[#b91c1c]` still compiles has to be able to write it down.
+  {
+    files: ['**/*.{ts,tsx,mts,cts}'],
+    ignores: ['packages/config/**', '**/*.test.{ts,tsx,mts,cts}'],
+    rules: {
+      'no-restricted-syntax': ['error',
+        ...relativeJsSpecifiers,
+        {
+          selector: 'MemberExpression[object.name="process"][property.name="env"]',
+          message: 'Read configuration through packages/config. Untyped, undocumented env access is banned — .claude/skills/backend-service/SKILL.md.',
+        },
+        ...tailwindArbitraryValues,
+        ...hardcodedColours,
       ],
     },
   },

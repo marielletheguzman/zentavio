@@ -85,15 +85,9 @@ most harmful and least detectable thing this repository could contain.
 That count read `23` until 2026-08-26 and was stale by eleven — count the `Database` interface, do
 not trust this line.
 
-**1 869 measured tests — 912 unit (57 files), 514 integration (39 files) and 443 pytest**, the unit
-and pytest figures as CI measured them on 2026-08-26 and integration run locally against PostgreSQL
-and MinIO the same day. The unit figure has twice been stale here by more than a hundred — treat any
-count on this line as the last measurement, not as a live number.
-
-**Count from CI, not from a local run.** A local `test:unit` also collects uncommitted test files: on
-2026-08-26 it reported 990 in 60 files against CI's 912 in 57, and the 78-test gap was three
-untracked files in the working tree. A number in this file describes the repository, so it has to come
-from a run that only sees what is committed. The
+**1 947 measured tests — 990 unit (60 files), 514 integration (39 files) and 443 pytest, all three
+run 2026-08-26** against local PostgreSQL and MinIO. The unit figure has twice been stale here by
+more than a hundred — treat any count on this line as the last measurement, not as a live number. The
 integration suite needs `ZENTAVIO_TEST_DATABASE_URL` pointing at a database whose name ends `_test`;
 it is dropped and rebuilt, so it never touches the dev database. It also needs the four
 `ZENTAVIO_STORAGE_*` keys that have no default — `ENDPOINT`, `BUCKET`, `ACCESS_KEY_ID` and
@@ -103,10 +97,10 @@ that looks like a code failure and is not. CI blocking on `main`.
 
 | Built | Still a placeholder |
 |---|---|
-| `packages/db`, `config`, `types`, `auth`, `storage`; `ui` — design tokens only | `logger`, `events`, `i18n`; `ui`'s component primitives, unblocked by ADR-0023 (Accepted) but not yet installed |
+| `packages/db`, `config`, `types`, `auth`, `storage`; `ui` — design tokens **plus the `@theme` block Tailwind generates from them** (ADR-0023 phase 1 done: Tailwind v4 pinned in `apps/web`, stock scales disabled and asserted dead, arbitrary-value lint rule live) | `logger`, `events`, `i18n`; `ui`'s **shadcn** primitives — still unapproved per ADR-0023, which reserves that for phase 4. `apps/web/components/` holds hand-written primitives instead (ADR-0023's Option D) |
 | `services/api-gateway`, `services/ingestion` — requirement ingest, posting ingest, the due-source scheduler, the extraction pass, and source registration (ADR-0041: a connector states `legalBasis` and its tier on `meta`, or it does not compile); `services/matching` — Skill Fit only, **no Job Match Score** (ADR-0037) | `notifications`, `billing`; nothing calls `runDueJobBoards`, `extractDuePostings`, `scorePostingForUser` or `syncConnectorSources`, and no posting has come from the network |
 | `ai/resume-parser`, `ai/skill-gap`, `ai/shared`, `ai/career-roadmap` — eligibility, routes, viability | `embeddings`, `interview-prep`, `learning-paths` |
-| `apps/web` — upload, gap, eligibility with its routes, applications, the comparison | `apps/admin`, `apps/mobile` |
+| `apps/web` — upload, gap, eligibility with its routes, applications, the comparison; the app shell, and the primitive layer under `components/` | `apps/admin`, `apps/mobile`; **the seven surfaces still render pre-redesign markup** — ADR-0023 phases 2 and 3 migrate them one at a time |
 | `connectors/core`, `connectors/immigration-data/` — `de-bundesanzeiger`, `de-aufenthg`, `de-bayingg`, `lu-legilux`, `nz-inz`, `ch-sem`; `connectors/learning-resources/git-scm`; `connectors/job-boards/lever` | every other connector, all of `knowledge-engine/` |
 | the seeded skill graph — in `packages/db/seeds/` and four tables, **not** `knowledge-engine/` (ADR-0020) | |
 

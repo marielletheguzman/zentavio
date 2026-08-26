@@ -45,9 +45,14 @@ themes.
 **Spacing** — a 4px base scale (4/8/12/16/24/32/48/64). Nothing off-scale. Vertical rhythm
 between sections is one step larger than within them.
 
-**Typography** — one sans family. A restrained scale (12/14/16/20/24/32/40) with three
-weights (regular, medium, semibold). Body text 16px minimum. Numbers tabular wherever they
-are compared — misaligned digits in a score column read as sloppiness.
+**Typography** — **Inter** (ADR-0038), self-hosted through `next/font` and reached only through
+`--font-sans` in `packages/ui/src/tokens.css`; no component names a typeface. The stack behind it
+— `ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif` — is a real fallback,
+not decoration: it renders during `display: swap` and permanently in any surface that does not set
+`--font-inter`. A restrained scale (12/14/16/20/24/32/40) with three weights (regular, medium,
+semibold). Body text 16px minimum. Numbers tabular wherever they are compared — misaligned digits
+in a score column read as sloppiness, and whether Inter's `tnum` is actually applied is a browser
+observation nobody has made yet.
 
 **Radius** — rounded, consistently. Cards and panels use the large radius; controls the
 medium; inputs match their buttons. Nothing square, nothing pill-shaped except tags.

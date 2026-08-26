@@ -5,12 +5,27 @@
  * layout built from them — nothing off the 4px scale, no colour that is not a token, no meaning
  * carried by hue alone.
  *
- * **No Tailwind, no shadcn.** `packages/ui`'s purpose line promises a shadcn component library,
- * which needs Tailwind — a new framework, and CLAUDE.md requires an ADR before one enters the
- * stack. This pass builds the token layer the guidelines point at and leaves that decision open.
+ * **Tailwind v4 is installed; shadcn is not** (ADR-0023). The utility set is generated from
+ * `tokens.css` through its `@theme` block, Tailwind's own scales are disabled rather than extended,
+ * and the ADR approves the vendoring *pattern* for shadcn without approving a single component —
+ * each one, and each transitive dependency it pulls, is reviewed in the PR that first needs it.
+ *
+ * The rules below are the pre-Tailwind stylesheet, kept working while surfaces migrate one at a
+ * time (ADR-0023 phases 2 and 3). Two mechanisms coexisting is the migration, not the destination;
+ * a rule here that no surface still uses is dead and should leave with the surface that used it.
  */
 
+@import 'tailwindcss';
 @import '@zentavio/ui/tokens.css';
+
+/*
+ * Where Tailwind looks for class names. Stated rather than inferred: automatic detection roots
+ * itself at the process working directory, which in a monorepo is whichever package pnpm happened
+ * to run from.
+ */
+@source '../app';
+@source '../components';
+@source '../lib';
 
 *,
 *::before,
