@@ -23,7 +23,7 @@
  */
 
 import type { AnyConnector, ConnectorRegistry } from '@zentavio/connectors-core';
-import type { Database, SourceObservation } from '@zentavio/db';
+import { employerForBoard, type Database, type SourceObservation } from '@zentavio/db';
 import type { JobPosting } from '@zentavio/types';
 import type { Kysely } from 'kysely';
 
@@ -52,6 +52,14 @@ export interface ScopeReport extends PostingExecutionReport {
   readonly run: RunOutcome;
   /** `archived`, `nothing-to-archive`, `failed: …`, or `not-configured` when no store was supplied. */
   readonly archive: string;
+  /**
+   * The employer this board is bound to, or `null` when nobody has stated one (ADR-0040).
+   *
+   * Reported rather than left implicit: a run that stores 239 postings with no employer has done
+   * something different from one that resolved them, and a report that does not say so reads the
+   * same either way.
+   */
+  readonly employerCompanyId: string | null;
 }
 
 export interface RunReport {
@@ -166,6 +174,11 @@ export async function runJobBoards(registry: ConnectorRegistry, deps: RunnerDeps
     }
 
     for (const [scope, postings] of byScope(read.postings)) {
+      // Resolved once per board, not per posting: the employer is a property of the namespace, and
+      // it cannot change within a run (ADR-0040 rule 5). `null` when nothing is bound, which stores
+      // the postings with a visible gap rather than an invented employer.
+      const employerCompanyId = await employerForBoard(deps.db, connector.meta.id, scope);
+
       const plan = planPostingIngest({
         meta: connector.meta,
         sourceScope: scope,
@@ -175,6 +188,9 @@ export async function runJobBoards(registry: ConnectorRegistry, deps: RunnerDeps
           fields: {
             title: posting.title,
             url: posting.url,
+            companyId: employerCompanyId,
+            // Still whatever the source said, which for an ATS board is nothing. The binding is the
+            // evidence for `companyId`; this column is the evidence for a source that names one.
             companyNameRaw: posting.companyNameRaw,
             description: posting.description,
             requirementsText: posting.requirementsText,
@@ -202,7 +218,7 @@ export async function runJobBoards(registry: ConnectorRegistry, deps: RunnerDeps
         connectorVersion: connector.meta.version,
       });
 
-      scopes.push({ ...report, run: read.outcome, archive: read.archive });
+      scopes.push({ ...report, run: read.outcome, archive: read.archive, employerCompanyId });
     }
   }
 

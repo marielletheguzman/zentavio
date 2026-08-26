@@ -196,6 +196,22 @@ export {
 } from './repositories/jobs.ts';
 
 export {
+  backfillPostingEmployer,
+  bindBoardToCompany,
+  createCompany,
+  employerForBoard,
+  liveBoardBindings,
+  resolveCompany,
+  type BoardBindingInput,
+  type CompanyIdentityInput,
+  type CompanyResolution,
+  type CompanyResolutionBasis,
+  type CompanyRow,
+  type CreateCompanyInput,
+  type JobBoardEmployerRow,
+} from './repositories/companies.ts';
+
+export {
   dueSources,
   recordRunFailure,
   recordRunSuccess,

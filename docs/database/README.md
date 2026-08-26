@@ -66,7 +66,7 @@ Detail in `schema-overview.md`. Confusing the classes is the expensive mistake h
 | [`application.md`](entities/application.md) | person | `applications`, `application_events`, `practice_sessions` |
 | [`user-memory.md`](entities/user-memory.md) | person | certifications, AI preferences, generated documents |
 | [`person-fact.md`](entities/person-fact.md) | person | `person_fact_kinds`, `person_facts` — what a requirement asks for, and the versioned answers |
-| [`company.md`](entities/company.md) | world | `companies`, `company_aliases` — employer identity and alias resolution |
+| [`company.md`](entities/company.md) | world | `companies`, `company_aliases`, `job_board_employers` — employer identity, alias resolution, and the curated board-to-employer binding |
 | [`requirement.md`](entities/requirement.md) — also covers | world | `documents` — archived source evidence (ADR-0021) |
 | [`employer-sponsorship.md`](entities/employer-sponsorship.md) | world + derived | sponsorship facts and the employer migration score |
 | [`match.md`](entities/match.md) | derived | `matches` and its sibling score tables |

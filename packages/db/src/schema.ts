@@ -1011,6 +1011,31 @@ export interface CompanyAliasesTable {
   deleted_at: Timestamp | null;
 }
 
+/**
+ * Which employer operates a given board (ADR-0040). A curated, sourced claim — never derived from
+ * the board slug, which is a namespace and not a name.
+ *
+ * The provenance columns are NOT NULL because a binding without them cannot be told apart from a
+ * guess, and `applications` and `outcomes` end up pointing at the company it produced.
+ */
+export interface JobBoardEmployersTable {
+  id: string;
+  /** The connector's `meta.id`, matching `job_postings.source_id`. */
+  source_id: string;
+  /** The board. Empty string, never null, for a source with one global namespace (ADR-0034). */
+  source_scope: string;
+  company_id: string;
+  /** 1–3. Tier 4 is refused by CHECK: an employer identity is not an anecdote. */
+  source_tier: number;
+  source_url: string;
+  /** When the binding was last checked. A board that changes hands decays this claim silently. */
+  retrieved_at: Timestamp;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+  /** Set when the board changes hands. The row is kept — it is the evidence for what it resolved. */
+  deleted_at: Timestamp | null;
+}
+
 export type PersonFactValueType =
   | 'monetary'
   | 'integer'
@@ -1103,6 +1128,7 @@ export interface Database {
   requirement_sources: RequirementSourcesTable;
   companies: CompaniesTable;
   company_aliases: CompanyAliasesTable;
+  job_board_employers: JobBoardEmployersTable;
   applications: ApplicationsTable;
   outcomes: OutcomesTable;
   connector_sources: ConnectorSourcesTable;
