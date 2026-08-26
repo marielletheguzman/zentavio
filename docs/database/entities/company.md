@@ -136,6 +136,57 @@ existing function, not in a connector: the skill graph already learned what happ
 normalizations drift — resolution misses silently and the input lands in `unmatched`, which reads as
 a coverage gap rather than the bug it is.
 
+## `job_board_employers`
+
+**Some sources never name the employer at all.** A Lever board is a per-employer feed: the employer
+is context, not content (ADR-0034), so a posting arrives with no name to resolve and
+`company_name_raw` is null — correctly, because the source said nothing. Resolution as specified
+below has no input for those postings and will produce nothing however well it is written.
+
+ADR-0040 fills that gap with a **curated, sourced binding**: a person asserts that a board is
+operated by an employer, against a source, on a date.
+
+```sql
+CREATE TABLE job_board_employers (
+  id           uuid        PRIMARY KEY,
+  source_id    text        NOT NULL,   -- the connector's meta.id
+  source_scope text        NOT NULL,   -- the board; '' for a single global namespace
+  company_id   uuid        NOT NULL,
+  source_tier  smallint    NOT NULL,
+  source_url   text        NOT NULL,
+  retrieved_at timestamptz NOT NULL,
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  updated_at   timestamptz NOT NULL DEFAULT now(),
+  deleted_at   timestamptz,
+
+  CONSTRAINT fk_jbe__connector_sources FOREIGN KEY (source_id) REFERENCES connector_sources(id) ON DELETE RESTRICT,
+  CONSTRAINT fk_jbe__companies         FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE RESTRICT,
+  CONSTRAINT ck_jbe__tier         CHECK (source_tier BETWEEN 1 AND 3),
+  CONSTRAINT ck_jbe__source_url   CHECK (source_url ~ '^https?://'),
+  CONSTRAINT ck_jbe__source_scope CHECK (source_scope = '' OR source_scope = btrim(source_scope))
+);
+
+CREATE UNIQUE INDEX uq_jbe__source_scope ON job_board_employers (source_id, source_scope) WHERE deleted_at IS NULL;
+CREATE INDEX idx_jbe__company ON job_board_employers (company_id) WHERE deleted_at IS NULL;
+```
+
+**The three provenance columns are NOT NULL, and tier 4 is refused.** A binding with no source is
+indistinguishable from a guess, and by the time anyone notices, `applications` and `outcomes` point
+at the company it produced. Tier 4 is aggregated or anecdotal; an employer identity is precisely the
+field where "somebody said so" must not be storable.
+
+**A board slug never becomes an alias.** `uq_company_aliases__normalized` is global, so a slug stored
+as a name competes with real names — a board called `apple` operated by a small employer would
+resolve every one of its postings to Apple, and the row would look correct. The slug is a namespace;
+it stays one.
+
+**No binding means `company_id` stays null.** The postings are still stored, extracted and scored. An
+unresolved employer is a visible gap, which is the asymmetry this whole document rests on.
+
+**A board that changes hands is a new row.** The old binding is soft-deleted rather than rewritten —
+it is the evidence for every posting resolved under it — and the partial unique index keeps exactly
+one live binding per board.
+
 ## Resolution order
 
 Deduplication is the knowledge engine's job (`docs/architecture/connectors.md`); a connector emits a
@@ -177,6 +228,8 @@ the anonymous contribution survives).
 - `merged` requires `merged_into`; `merged_into` never points at itself.
 - Every row carries `source_tier`.
 - No fuzzy matching, ever.
+- One live binding per `(source_id, source_scope)`; every binding carries a tier of 1–3, a URL and a `retrieved_at`.
+- **A board slug is never stored as a company alias** (ADR-0040).
 - No sponsorship, score, or interview data on this table.
 
 ## Related
@@ -184,5 +237,6 @@ the anonymous contribution survives).
 - `application.md`, `job.md`, `outcome.md` — the three tables that reference this one
 - `employer-sponsorship.md` — what is *known about* an employer, deliberately separate
 - ADR-0020 — `knowledge-engine/` curates, `packages/db` stores
+- ADR-0040 — where an employer comes from when the source names none, and why a slug is not an alias
 - `docs/architecture/connectors.md` — why a connector produces a comparable key and resolves nothing
 - `.claude/context/knowledge-sources.md` — the tiers `source_tier` records

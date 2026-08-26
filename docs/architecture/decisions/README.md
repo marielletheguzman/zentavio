@@ -51,6 +51,8 @@ already ruled out and how the rule is enforced.
 | [0035](0035-what-an-extracted-job-requirement-may-claim.md) | A skill read out of a posting’s prose is a mention with a span, never a stated requirement | Accepted | 2026-08-23 |
 | [0036](0036-when-skill-extraction-runs.md) | Extraction is its own pass over postings that record whether they were extracted, never a step inside the ingest transaction | Accepted | 2026-08-23 |
 | [0037](0037-what-the-first-match-may-claim.md) | The first thing matching computes is Skill Fit, named for the one axis it measures, and no Job Match Score is stored until its hard constraint can be evaluated — **carries a Correction: the constraint is evaluatable, the evaluator is unwired** | Accepted | 2026-08-23 |
+| [0039](0039-what-a-sponsorship-claim-may-assert.md) | Sponsorship is a four-value status carried by an explicit statement of availability, never by the topic being mentioned, and `inferred_likely` may not be written from prose at all | Accepted | 2026-08-23 |
+| [0040](0040-employer-identity-for-a-posting.md) | A posting’s employer comes from a curated, sourced board-to-employer binding resolved at ingest, and a board slug is never a company alias | Proposed | 2026-08-25 |
 
 **0010 is Accepted, and the rename is done** — `immigration_rules` is now `requirements`, with `domain`,
 `imposed_by`, and `authority`. Regulated professions remain blocked on **data**, not schema: nursing,
