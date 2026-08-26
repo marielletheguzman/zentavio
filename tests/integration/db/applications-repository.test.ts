@@ -290,6 +290,12 @@ describe('recording an outcome', () => {
       'scorer_version',
       'country_code',
       'seniority',
+      // A `date` column, and `schema.ts` types it `DateOnly` because a rule's validity window read
+      // as a Date at local midnight is off by a day in a negative-offset timezone. Until the test
+      // pool registered production's DATE parser this column arrived as a Date object and the
+      // `typeof` filter below never saw it — so this scan silently skipped every date column in the
+      // table while appearing to cover all of them.
+      'occurred_month',
     ]);
 
     const unexpectedText = Object.entries(outcome)

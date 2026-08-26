@@ -68,7 +68,7 @@ Detail in `schema-overview.md`. Confusing the classes is the expensive mistake h
 | [`person-fact.md`](entities/person-fact.md) | person | `person_fact_kinds`, `person_facts` — what a requirement asks for, and the versioned answers |
 | [`company.md`](entities/company.md) | world | `companies`, `company_aliases`, `job_board_employers` — employer identity, alias resolution, and the curated board-to-employer binding |
 | [`requirement.md`](entities/requirement.md) — also covers | world | `documents` — archived source evidence (ADR-0021) |
-| [`employer-sponsorship.md`](entities/employer-sponsorship.md) | world + derived | sponsorship facts and the employer migration score |
+| [`employer-sponsorship.md`](entities/employer-sponsorship.md) | world + derived | `employer_sponsorship_facts` — built, versioned, and written by nothing yet; `employer_migration_scores` — still a specification |
 | [`match.md`](entities/match.md) | derived | `matches` and its sibling score tables |
 | [`outcome.md`](entities/outcome.md) | special | `outcomes` — detached on erasure, never deleted |
 
