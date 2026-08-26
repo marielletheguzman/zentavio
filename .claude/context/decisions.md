@@ -111,6 +111,7 @@ An ADR is numbered sequentially and never renumbered.
 | [0039](../../docs/architecture/decisions/0039-what-a-sponsorship-claim-may-assert.md) | Sponsorship is a four-value status carried by an explicit statement of availability, never by the topic being mentioned | Accepted |
 | [0040](../../docs/architecture/decisions/0040-employer-identity-for-a-posting.md) | A posting’s employer comes from a curated, sourced board-to-employer binding resolved at ingest, and a board slug is never a company alias | Proposed |
 | [0041](../../docs/architecture/decisions/0041-connector-registration-on-the-contract.md) | A connector states its registration on `meta`, and one pass over the registry writes `connector_sources` before any run | Accepted |
+| [0042](../../docs/architecture/decisions/0042-what-the-employer-migration-score-may-be.md) | Employer migration support is reported as its factors, and no composite score is computed — work authorization gates the job rather than weighting it | Proposed |
 
 0001–0004 define the boundaries every skill and context file assumes: one repository, sources as
 plugins, a polyglot contract at the `ai/` boundary, and a vector store that is an index rather

@@ -55,6 +55,7 @@ already ruled out and how the rule is enforced.
 | [0039](0039-what-a-sponsorship-claim-may-assert.md) | Sponsorship is a four-value status carried by an explicit statement of availability, never by the topic being mentioned, and `inferred_likely` may not be written from prose at all | Accepted | 2026-08-23 |
 | [0040](0040-employer-identity-for-a-posting.md) | A posting’s employer comes from a curated, sourced board-to-employer binding resolved at ingest, and a board slug is never a company alias | Proposed | 2026-08-25 |
 | [0041](0041-connector-registration-on-the-contract.md) | A connector states its registration on `meta` and nothing may be registered without a legal basis, so one pass over the registry can write `connector_sources` before any run | Accepted | 2026-08-26 |
+| [0042](0042-what-the-employer-migration-score-may-be.md) | Employer migration support is reported as its factors and no composite score is computed — ADR-0022 narrowed to the fact that work authorization gates the job rather than weighting it | Proposed | 2026-08-26 |
 
 **0010 is Accepted, and the rename is done** — `immigration_rules` is now `requirements`, with `domain`,
 `imposed_by`, and `authority`. Regulated professions remain blocked on **data**, not schema: nursing,
